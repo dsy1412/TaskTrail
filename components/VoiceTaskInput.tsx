@@ -18,8 +18,10 @@ type RecognitionLike = {
 
 export function VoiceTaskInput({
   onParsedTask,
+  disabled = false,
 }: {
   onParsedTask: (task: ParsedTaskInput) => void;
+  disabled?: boolean;
 }) {
   const [language, setLanguage] = useState<VoiceLanguage>("auto");
   const [listening, setListening] = useState(false);
@@ -33,6 +35,7 @@ export function VoiceTaskInput({
   }, []);
 
   function startListening() {
+    if (disabled) return;
     if (!isSupported) {
       setMessage("SpeechRecognition is not available in this browser. You can still paste text and parse it.");
       return;
@@ -71,6 +74,7 @@ export function VoiceTaskInput({
   }
 
   function parseTypedText() {
+    if (disabled) return;
     if (!transcript.trim()) return;
     onParsedTask(parseVoiceTask(transcript));
   }
@@ -91,6 +95,7 @@ export function VoiceTaskInput({
                 language === value ? "bg-white text-slate-950 shadow-sm" : ""
               }`}
               onClick={() => setLanguage(value as VoiceLanguage)}
+              disabled={disabled}
             >
               {label}
             </button>
@@ -105,6 +110,7 @@ export function VoiceTaskInput({
             listening ? "bg-rose-500 text-white" : "bg-slate-950 text-white hover:bg-slate-800"
           }`}
           onClick={listening ? stopListening : startListening}
+          disabled={disabled}
         >
           {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         </button>
@@ -116,6 +122,7 @@ export function VoiceTaskInput({
           onChange={(event) => setTranscript(event.target.value)}
           placeholder="Say or paste: Tomorrow afternoon, project code, two hours..."
           className="min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm outline-none transition focus:border-slate-400"
+          disabled={disabled}
         />
         <button
           type="button"
@@ -123,6 +130,7 @@ export function VoiceTaskInput({
           title="Parse voice text"
           className="rounded-full bg-white p-2.5 text-slate-700 shadow-sm transition hover:text-slate-950"
           onClick={parseTypedText}
+          disabled={disabled}
         >
           <Wand2 className="h-4 w-4" />
         </button>

@@ -16,6 +16,7 @@ export function TodayCanvas({
   onNextDay,
   onToday,
   onDeleteBlock,
+  canEdit,
 }: {
   state: PlannerState;
   tasksById: Map<string, Task>;
@@ -26,6 +27,7 @@ export function TodayCanvas({
   onNextDay: () => void;
   onToday: () => void;
   onDeleteBlock: (blockId: string) => void;
+  canEdit: boolean;
 }) {
   return (
     <section className="glass-panel overflow-hidden rounded-[1.6rem] sm:rounded-[2rem]">
@@ -88,6 +90,7 @@ export function TodayCanvas({
           columnCount={columnCount}
           canvasRef={canvasRef}
           onDeleteBlock={onDeleteBlock}
+          canEdit={canEdit}
         />
       </div>
     </section>

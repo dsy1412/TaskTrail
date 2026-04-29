@@ -1,13 +1,28 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlannerApp } from "@/components/PlannerApp";
 import { createSeedState, savePlannerState } from "@/lib/storage";
 import { todayIsoDate } from "@/lib/date";
 
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: { user: { email: "tester@example.com", name: "Test User" } },
+    status: "authenticated",
+  }),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  SessionProvider: ({ children }: { children: ReactNode }) => children,
+}));
+
 describe("PlannerApp", () => {
   beforeEach(() => {
     vi.setSystemTime(new Date("2026-04-26T12:00:00-04:00"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(new Error("API routes are not mounted in component tests"))),
+    );
   });
 
   it("renders the Today Canvas, Task Backpack, and Add task button visibly by default", async () => {

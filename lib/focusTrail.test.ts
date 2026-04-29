@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveFocusTrail, summarizeFocusByModule } from "@/lib/focusTrail";
 import type { PlannerState } from "@/lib/types";
 
@@ -70,6 +70,10 @@ const state: PlannerState = {
 };
 
 describe("Focus Trail derivation", () => {
+  beforeEach(() => {
+    vi.setSystemTime(new Date("2026-04-23T12:00:00-04:00"));
+  });
+
   it("connects continuous dates and ignores deleted schedule blocks", () => {
     const segments = deriveFocusTrail(state, "week", "2026-04-23");
     const project = segments.find((segment) => segment.label === "Project App");

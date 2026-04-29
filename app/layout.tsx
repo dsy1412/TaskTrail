@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tasktrail-six.vercel.app"),
   title: "TaskTrail",
   description: "A modular planning MVP with Today Canvas, Task Backpack, and Focus Trail.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({
@@ -13,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

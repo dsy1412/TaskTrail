@@ -11,6 +11,43 @@ npm run dev
 
 Open the local URL printed by Next.js, usually `http://localhost:3000`.
 
+## Vercel Deployment
+
+Production domain: `https://tasktrail-six.vercel.app`
+
+Latest deployment:
+
+- Deployment URL: `https://tasktrail-gcaea79wq-dsy1412s-projects.vercel.app`
+- Status: Ready
+- Created: Just now by `dsy1412`
+- Source: `github/dsy1412`, branch `main`, commit `238ee35`
+- Commit message: `Initial TaskTrail MVP`
+
+Project settings are tracked in `vercel.json`:
+
+- Framework: Next.js
+- Install command: `npm install`
+- Build command: `npm run build`
+- Development command: `npm run dev`
+
+### Login and Sync
+
+TaskTrail uses Google sign-in for edit mode. Visitors who are not signed in see a read-only preview, and write actions are disabled. After signing in, planner data is loaded and saved through `/api/planner-state`, keyed by the Google account email on the server.
+
+Required Vercel environment variables:
+
+- `NEXTAUTH_URL`: `https://tasktrail-six.vercel.app`
+- `NEXTAUTH_SECRET`: random secret for NextAuth session signing
+- `GOOGLE_CLIENT_ID`: Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+
+For durable cross-device sync, attach Vercel KV or Upstash Redis and set one of these variable pairs:
+
+- `KV_REST_API_URL` and `KV_REST_API_TOKEN`
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+
+Without KV/Upstash variables, local development falls back to in-memory server storage. That is useful for testing the login flow, but it is not persistent across server restarts or Vercel instances.
+
 ## Voice Input
 
 The Backpack includes a microphone button and a language toggle for English, Chinese, or Auto/Mixed. The MVP uses the browser `SpeechRecognition` / `webkitSpeechRecognition` API when available. If the browser does not support it, TaskTrail shows a fallback message and lets you paste text into the same parser field.

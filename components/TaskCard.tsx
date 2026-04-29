@@ -28,6 +28,7 @@ export function TaskCard({
   block,
   variant = "backpack",
   style,
+  disabled = false,
   onDelete,
   onEdit,
   onSchedule,
@@ -36,6 +37,7 @@ export function TaskCard({
   block?: ScheduleBlock;
   variant?: "backpack" | "scheduled";
   style?: CSSProperties;
+  disabled?: boolean;
   onDelete?: () => void;
   onEdit?: () => void;
   onSchedule?: () => void;
@@ -43,6 +45,7 @@ export function TaskCard({
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block ? `block:${block.id}` : `task:${task.id}`,
     data: { taskId: task.id, blockId: block?.id },
+    disabled,
   });
 
   const dragStyle: CSSProperties = {
@@ -64,19 +67,21 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-none cursor-grab active:cursor-grabbing ${variant === "scheduled" ? "absolute" : "relative"} rounded-2xl border border-white/70 bg-white/82 p-3 shadow-soft backdrop-blur-xl`}
+      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${variant === "scheduled" ? "absolute" : "relative"} rounded-2xl border border-white/70 bg-white/82 p-3 shadow-soft backdrop-blur-xl`}
     >
       <div className="flex items-start gap-2">
-        <button
-          type="button"
-          aria-label="Drag task"
-          title="Drag"
-          suppressHydrationWarning
-          tabIndex={-1}
-          className="mt-0.5 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
+        {!disabled ? (
+          <button
+            type="button"
+            aria-label="Drag task"
+            title="Drag"
+            suppressHydrationWarning
+            tabIndex={-1}
+            className="mt-0.5 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        ) : null}
         <div className="min-w-0 flex-1 select-none">
           <TaskCardBody task={task} block={block} />
           {onSchedule ? (

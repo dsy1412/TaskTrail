@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { todayIsoDate } from "@/lib/date";
+import { isPlannerState } from "@/lib/plannerStateSchema";
 import {
   createEvent,
   createSeedState,
@@ -13,18 +14,93 @@ import {
 } from "@/lib/storage";
 import type { ModuleName, PlannerState, Priority, Task } from "@/lib/types";
 
-export function usePlannerStore() {
+export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "error";
+
+export function usePlannerStore({
+  canEdit = true,
+  syncToCloud = false,
+}: {
+  canEdit?: boolean;
+  syncToCloud?: boolean;
+} = {}) {
   const [state, setState] = useState<PlannerState>(() => createSeedState());
   const [hydrated, setHydrated] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<PlannerSyncStatus>(canEdit ? "loading" : "readonly");
+  const loadGeneration = useRef(0);
 
   useEffect(() => {
-    setState(loadPlannerState());
-    setHydrated(true);
-  }, []);
+    const generation = loadGeneration.current + 1;
+    loadGeneration.current = generation;
+
+    if (!canEdit) {
+      setState(createSeedState());
+      setHydrated(true);
+      setSyncStatus("readonly");
+      return;
+    }
+
+    if (!syncToCloud) {
+      setState(loadPlannerState());
+      setHydrated(true);
+      setSyncStatus("local");
+      return;
+    }
+
+    setHydrated(false);
+    setSyncStatus("loading");
+
+    fetch("/api/planner-state", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Planner state request failed with ${response.status}`);
+        return (await response.json()) as { state?: unknown };
+      })
+      .then((body) => {
+        if (loadGeneration.current !== generation) return;
+        setState(isPlannerState(body.state) ? body.state : createSeedState());
+        setHydrated(true);
+        setSyncStatus("synced");
+      })
+      .catch(() => {
+        if (loadGeneration.current !== generation) return;
+        setState(loadPlannerState());
+        setHydrated(true);
+        setSyncStatus("error");
+      });
+  }, [canEdit, syncToCloud]);
 
   useEffect(() => {
-    if (hydrated) savePlannerState(state);
-  }, [hydrated, state]);
+    if (!hydrated || !canEdit) return;
+
+    if (!syncToCloud) {
+      savePlannerState(state);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setSyncStatus("saving");
+      fetch("/api/planner-state", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state }),
+        signal: controller.signal,
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error(`Planner state save failed with ${response.status}`);
+          setSyncStatus("synced");
+        })
+        .catch((error) => {
+          if (error?.name === "AbortError") return;
+          savePlannerState(state);
+          setSyncStatus("error");
+        });
+    }, 450);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [canEdit, hydrated, state, syncToCloud]);
 
   const tasksById = useMemo(() => new Map(state.tasks.map((task) => [task.id, task])), [state.tasks]);
 
@@ -37,6 +113,7 @@ export function usePlannerStore() {
       notes?: string;
     }) => {
       const task = makeTask(input);
+      if (!canEdit) return task;
       setState((current) => ({
         ...current,
         tasks: [...current.tasks, task],
@@ -44,10 +121,11 @@ export function usePlannerStore() {
       }));
       return task;
     },
-    [],
+    [canEdit],
   );
 
   const updateTask = useCallback((taskId: string, patch: Partial<Omit<Task, "id" | "createdAt">>) => {
+    if (!canEdit) return;
     setState((current) => {
       const previous = current.tasks.find((task) => task.id === taskId);
       if (!previous) return current;
@@ -61,9 +139,10 @@ export function usePlannerStore() {
         ],
       };
     });
-  }, []);
+  }, [canEdit]);
 
   const deleteTask = useCallback((taskId: string) => {
+    if (!canEdit) return;
     const deletedAt = timestamp();
     setState((current) => ({
       ...current,
@@ -76,10 +155,11 @@ export function usePlannerStore() {
         createEvent("TASK_DELETED", { scope: "task", deletedAt }, taskId),
       ],
     }));
-  }, []);
+  }, [canEdit]);
 
   const scheduleTask = useCallback(
     (taskId: string, input: { date?: string; timeSlot: string; columnIndex: number }) => {
+      if (!canEdit) return;
       const task = tasksById.get(taskId);
       if (!task) return;
       const block = makeScheduleBlock(task, {
@@ -96,10 +176,11 @@ export function usePlannerStore() {
         ],
       }));
     },
-    [tasksById],
+    [canEdit, tasksById],
   );
 
   const moveScheduleBlock = useCallback((blockId: string, input: { timeSlot: string; columnIndex: number }) => {
+    if (!canEdit) return;
     const updatedAt = timestamp();
     setState((current) => {
       const previous = current.scheduleBlocks.find((block) => block.id === blockId);
@@ -119,9 +200,10 @@ export function usePlannerStore() {
         ],
       };
     });
-  }, []);
+  }, [canEdit]);
 
   const deleteScheduleBlock = useCallback((blockId: string) => {
+    if (!canEdit) return;
     const deletedAt = timestamp();
     setState((current) => {
       const block = current.scheduleBlocks.find((candidate) => candidate.id === blockId);
@@ -137,11 +219,12 @@ export function usePlannerStore() {
         ],
       };
     });
-  }, []);
+  }, [canEdit]);
 
   return {
     state,
     hydrated,
+    syncStatus,
     tasksById,
     createTask,
     updateTask,

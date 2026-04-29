@@ -178,7 +178,7 @@ export function MonthActivityCalendar({ state }: { state: PlannerState }) {
                   <motion.div
                     key={task.blockId}
                     layout
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={false}
                     animate={{ opacity: 1, y: 0 }}
                     className={`rounded-2xl ${style.bg} p-3 ring-1 ${style.ring}`}
                   >
@@ -199,7 +199,7 @@ export function MonthActivityCalendar({ state }: { state: PlannerState }) {
               })
             ) : (
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={false}
                 animate={{ opacity: 1 }}
                 className="rounded-2xl border border-dashed border-slate-200 bg-white/58 p-5 text-center text-sm font-semibold text-slate-500"
               >

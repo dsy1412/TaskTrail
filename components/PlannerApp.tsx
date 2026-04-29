@@ -11,7 +11,8 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { CalendarDays, Route, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarDays, Cloud, LogIn, LogOut, Route, Sparkles } from "lucide-react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
@@ -20,12 +21,14 @@ import { FocusTrail } from "@/components/FocusTrail";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
 import { addDaysIso, TIME_SLOTS, todayIsoDate } from "@/lib/date";
 import { getScheduledColumnCount, getVisibleColumnCount } from "@/lib/columns";
-import { usePlannerStore } from "@/lib/usePlannerStore";
+import { type PlannerSyncStatus, usePlannerStore } from "@/lib/usePlannerStore";
 
 const MAX_COLUMNS = 4;
 
 export function PlannerApp() {
-  const planner = usePlannerStore();
+  const { data: session, status: authStatus } = useSession();
+  const canEdit = authStatus === "authenticated";
+  const planner = usePlannerStore({ canEdit, syncToCloud: canEdit });
   const [hasMounted, setHasMounted] = useState(false);
   const [view, setView] = useState<"today" | "trail">("today");
   const [draftColumnCount, setDraftColumnCount] = useState(1);
@@ -69,6 +72,7 @@ export function PlannerApp() {
   }, [activeDragId, planner.state.scheduleBlocks, planner.tasksById]);
 
   function quickScheduleTask(taskId: string) {
+    if (!canEdit) return;
     const occupied = new Set(
       planner.state.scheduleBlocks
         .filter((block) => !block.deletedAt && block.date === selectedDate && block.columnIndex === 0)
@@ -94,11 +98,13 @@ export function PlannerApp() {
   }
 
   function handleDragStart(event: DragStartEvent) {
+    if (!canEdit) return;
     setActiveDragId(String(event.active.id));
     setDraftColumnCount(scheduledMaxColumn);
   }
 
   function handleDragMove(event: DragMoveEvent) {
+    if (!canEdit) return;
     const rect = canvasRef.current?.getBoundingClientRect();
     const translated = event.active.rect.current.translated;
     if (!rect || !translated || visibleColumns >= MAX_COLUMNS) return;
@@ -109,6 +115,7 @@ export function PlannerApp() {
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (!canEdit) return;
     setActiveDragId(null);
     setDraftColumnCount(1);
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -138,6 +145,7 @@ export function PlannerApp() {
   }
 
   function handleDragCancel(_event: DragCancelEvent) {
+    if (!canEdit) return;
     setActiveDragId(null);
     setDraftColumnCount(1);
   }
@@ -183,27 +191,30 @@ export function PlannerApp() {
               <h1 className="mt-2 text-4xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
             </div>
 
-            <div className="glass-panel grid grid-cols-2 rounded-full p-1">
-              <button
-                type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  view === "today" ? "bg-white shadow-soft" : "text-slate-500"
-                }`}
-                onClick={() => setView("today")}
-              >
-                <CalendarDays className="h-4 w-4" />
-                Today
-              </button>
-              <button
-                type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
-                }`}
-                onClick={() => setView("trail")}
-              >
-                <Route className="h-4 w-4" />
-                Focus Trail
-              </button>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
+              <div className="glass-panel grid grid-cols-2 rounded-full p-1">
+                <button
+                  type="button"
+                  className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    view === "today" ? "bg-white shadow-soft" : "text-slate-500"
+                  }`}
+                  onClick={() => setView("today")}
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Today
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
+                  }`}
+                  onClick={() => setView("trail")}
+                >
+                  <Route className="h-4 w-4" />
+                  Focus Trail
+                </button>
+              </div>
             </div>
           </header>
 
@@ -222,6 +233,7 @@ export function PlannerApp() {
                   onNextDay={() => changeSelectedDate(1)}
                   onToday={returnToToday}
                   onDeleteBlock={planner.deleteScheduleBlock}
+                  canEdit={canEdit}
                 />
                 <WeeklyMonthlySummary state={planner.state} />
             </section>
@@ -238,6 +250,7 @@ export function PlannerApp() {
           onUpdateTask={planner.updateTask}
           onDeleteTask={planner.deleteTask}
           onScheduleTask={quickScheduleTask}
+          canEdit={canEdit}
         />
         <DragOverlay dropAnimation={null} zIndex={100}>
           {activeDragPreview ? <div className="w-80 max-w-[80vw]">{activeDragPreview}</div> : null}
@@ -245,6 +258,63 @@ export function PlannerApp() {
       </DndContext>
     </main>
   );
+}
+
+function AuthControls({
+  authStatus,
+  email,
+  syncStatus,
+}: {
+  authStatus: "authenticated" | "loading" | "unauthenticated";
+  email?: string | null;
+  syncStatus: PlannerSyncStatus;
+}) {
+  if (authStatus === "loading") {
+    return (
+      <div className="glass-panel inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-slate-500">
+        <Cloud className="h-4 w-4" />
+        Checking sign-in
+      </div>
+    );
+  }
+
+  if (authStatus !== "authenticated") {
+    return (
+      <button
+        type="button"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        onClick={() => void signIn("google")}
+      >
+        <LogIn className="h-4 w-4" />
+        Sign in to edit
+      </button>
+    );
+  }
+
+  return (
+    <div className="glass-panel flex flex-wrap items-center justify-end gap-2 rounded-full px-3 py-2 text-xs font-semibold text-slate-500">
+      {syncStatus === "error" ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Cloud className="h-4 w-4" />}
+      <span className="max-w-[11rem] truncate">{email}</span>
+      <span>{syncLabel(syncStatus)}</span>
+      <button
+        type="button"
+        aria-label="Sign out"
+        title="Sign out"
+        className="rounded-full bg-white p-1.5 text-slate-600 shadow-sm transition hover:text-slate-950"
+        onClick={() => void signOut()}
+      >
+        <LogOut className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+function syncLabel(status: PlannerSyncStatus) {
+  if (status === "saving") return "Saving";
+  if (status === "synced") return "Synced";
+  if (status === "loading") return "Loading";
+  if (status === "error") return "Local backup";
+  return "Editable";
 }
 
 function snapToGrid(clientX: number, clientY: number, rect: DOMRect, columnCount: number) {

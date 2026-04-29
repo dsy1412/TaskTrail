@@ -16,6 +16,7 @@ export function TimeGrid({
   columnCount,
   canvasRef,
   onDeleteBlock,
+  canEdit,
 }: {
   state: PlannerState;
   tasksById: Map<string, Task>;
@@ -23,6 +24,7 @@ export function TimeGrid({
   columnCount: number;
   canvasRef: RefObject<HTMLDivElement | null>;
   onDeleteBlock: (blockId: string) => void;
+  canEdit: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: "today-canvas" });
   const blocks = state.scheduleBlocks.filter((block) => !block.deletedAt && block.date === date);
@@ -79,6 +81,7 @@ export function TimeGrid({
                 task={task}
                 columnCount={columnCount}
                 onDelete={() => onDeleteBlock(block.id)}
+                canEdit={canEdit}
               />
             );
           })}
@@ -93,11 +96,13 @@ function ScheduledBlockCard({
   task,
   columnCount,
   onDelete,
+  canEdit,
 }: {
   block: ScheduleBlock;
   task: Task;
   columnCount: number;
   onDelete: () => void;
+  canEdit: boolean;
 }) {
   const rowIndex = Math.max(0, TIME_SLOTS.indexOf(block.timeSlot));
   const columnWidth = 100 / columnCount;
@@ -109,7 +114,8 @@ function ScheduledBlockCard({
       task={task}
       block={block}
       variant="scheduled"
-      onDelete={onDelete}
+      disabled={!canEdit}
+      onDelete={canEdit ? onDelete : undefined}
       style={{
         top,
         left: `calc(${block.columnIndex * columnWidth}% + 0.45rem)`,

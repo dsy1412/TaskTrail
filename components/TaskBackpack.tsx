@@ -94,13 +94,15 @@ export function TaskBackpack({
   return (
     <aside
       data-testid="task-backpack"
-      className="fixed inset-x-2 bottom-2 z-40 mx-auto max-w-7xl sm:inset-x-3 sm:bottom-3"
+      className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 mx-auto max-w-7xl sm:inset-x-3 sm:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]"
     >
       <div className="glass-panel overflow-hidden rounded-[1.5rem] sm:rounded-[2rem]">
         <div className="flex items-center justify-between gap-3 border-b border-white/70 px-3 py-3 sm:px-4">
           <div>
             <h2 className="text-base font-semibold">Task Backpack</h2>
-            <p className="text-xs font-medium text-slate-500">Drag cards into the canvas. Backpack tasks stay here.</p>
+            <p className="hidden text-xs font-medium text-slate-500 sm:block">
+              Drag cards into the canvas. Backpack tasks stay here.
+            </p>
             {!canEdit ? <p className="mt-1 text-xs font-semibold text-amber-700">Read-only preview</p> : null}
           </div>
           <div className="flex items-center gap-2">
@@ -129,7 +131,7 @@ export function TaskBackpack({
 
         {open ? (
           <div className="overflow-hidden">
-              <div className="fine-scrollbar grid max-h-[58vh] gap-3 overflow-y-auto p-3 sm:max-h-[21rem] sm:gap-4 sm:p-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
+              <div className="fine-scrollbar grid max-h-[62dvh] gap-3 overflow-y-auto p-3 sm:max-h-[21rem] sm:gap-4 sm:p-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
                 <div className="flex flex-col gap-3">
                   <VoiceTaskInput onParsedTask={useParsedVoiceTask} disabled={!canEdit} />
                   <form className="rounded-2xl border border-white/70 bg-white/62 p-3" onSubmit={submitTask}>

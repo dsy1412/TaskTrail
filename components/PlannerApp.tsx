@@ -152,18 +152,19 @@ export function PlannerApp() {
 
   if (!hasMounted) {
     return (
-      <main className="min-h-screen px-3 pb-[18rem] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
+      <main className="min-h-screen px-3 pb-[calc(62dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-5">
-          <header className="flex flex-col gap-4 rounded-[2rem] px-1 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[2rem] px-1">
+            <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
                 <Sparkles className="h-4 w-4" />
                 Modular planning MVP
               </div>
-              <h1 className="mt-2 text-4xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
+              <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
             </div>
-            <div className="glass-panel rounded-full px-4 py-2 text-sm font-semibold text-slate-500">
-              Loading workspace
+            <div className="glass-panel justify-self-end rounded-full px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4">
+              <span className="sm:hidden">Loading</span>
+              <span className="hidden sm:inline">Loading workspace</span>
             </div>
           </header>
         </div>
@@ -172,7 +173,7 @@ export function PlannerApp() {
   }
 
   return (
-    <main className="min-h-screen px-3 pb-[18rem] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
+    <main className="min-h-screen px-3 pb-[calc(62dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
       <DndContext
         id="tasktrail-planner-dnd"
         sensors={sensors}
@@ -182,39 +183,39 @@ export function PlannerApp() {
         onDragCancel={handleDragCancel}
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-5">
-          <header className="flex flex-col gap-4 rounded-[2rem] px-1 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[2rem] px-1">
+            <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
                 <Sparkles className="h-4 w-4" />
                 Modular planning MVP
               </div>
-              <h1 className="mt-2 text-4xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
+              <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
             </div>
 
-            <div className="flex flex-col gap-2 sm:items-end">
+            <div className="justify-self-end">
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
-              <div className="glass-panel grid grid-cols-2 rounded-full p-1">
-                <button
-                  type="button"
-                  className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    view === "today" ? "bg-white shadow-soft" : "text-slate-500"
-                  }`}
-                  onClick={() => setView("today")}
-                >
-                  <CalendarDays className="h-4 w-4" />
-                  Today
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
-                  }`}
-                  onClick={() => setView("trail")}
-                >
-                  <Route className="h-4 w-4" />
-                  Focus Trail
-                </button>
-              </div>
+            </div>
+            <div className="glass-panel col-span-2 grid w-full grid-cols-2 rounded-full p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  view === "today" ? "bg-white shadow-soft" : "text-slate-500"
+                }`}
+                onClick={() => setView("today")}
+              >
+                <CalendarDays className="h-4 w-4" />
+                Today
+              </button>
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
+                }`}
+                onClick={() => setView("trail")}
+              >
+                <Route className="h-4 w-4" />
+                Focus Trail
+              </button>
             </div>
           </header>
 
@@ -273,7 +274,8 @@ function AuthControls({
     return (
       <div className="glass-panel inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-slate-500">
         <Cloud className="h-4 w-4" />
-        Checking sign-in
+        <span className="hidden sm:inline">Checking sign-in</span>
+        <span className="sm:hidden">Checking</span>
       </div>
     );
   }
@@ -282,19 +284,21 @@ function AuthControls({
     return (
       <button
         type="button"
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        aria-label="Sign in with Google"
+        className="inline-flex shrink-0 items-center justify-center gap-2 justify-self-end rounded-full bg-slate-950 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:px-4"
         onClick={() => void signIn("google")}
       >
         <LogIn className="h-4 w-4" />
-        Sign in to edit
+        <span className="sm:hidden">Google</span>
+        <span className="hidden sm:inline">Sign in with Google</span>
       </button>
     );
   }
 
   return (
-    <div className="glass-panel flex flex-wrap items-center justify-end gap-2 rounded-full px-3 py-2 text-xs font-semibold text-slate-500">
+    <div className="glass-panel flex max-w-full flex-wrap items-center justify-end gap-2 rounded-full px-3 py-2 text-xs font-semibold text-slate-500">
       {syncStatus === "error" ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Cloud className="h-4 w-4" />}
-      <span className="max-w-[11rem] truncate">{email}</span>
+      <span className="hidden max-w-[11rem] truncate sm:inline">{email}</span>
       <span>{syncLabel(syncStatus)}</span>
       <button
         type="button"

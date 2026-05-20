@@ -39,6 +39,7 @@ describe("PlannerApp", () => {
     render(<PlannerApp />);
 
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getByTestId("mobile-day-agenda")).toBeInTheDocument();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();

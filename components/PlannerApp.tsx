@@ -18,6 +18,7 @@ import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
 import { FocusTrail } from "@/components/FocusTrail";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { PlanningCalendar } from "@/components/PlanningCalendar";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
 import { addDaysIso, TIME_SLOTS, todayIsoDate } from "@/lib/date";
@@ -193,7 +194,8 @@ export function PlannerApp() {
               <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
             </div>
 
-            <div className="justify-self-end">
+            <div className="flex flex-wrap justify-end gap-2 justify-self-end">
+              <InstallAppButton />
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
             <div className="glass-panel col-span-2 grid w-full grid-cols-3 rounded-full p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">

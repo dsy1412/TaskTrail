@@ -59,6 +59,24 @@ describe("PlannerApp", () => {
     expect(screen.getByText("Read-only preview")).toBeVisible();
   });
 
+  it("shows an install action when the browser exposes a PWA install prompt", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    const prompt = vi.fn(() => Promise.resolve());
+    render(<PlannerApp />);
+
+    window.dispatchEvent(
+      Object.assign(new Event("beforeinstallprompt"), {
+        prompt,
+        userChoice: Promise.resolve({ outcome: "accepted", platform: "web" }),
+      }),
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Install TaskTrail app" }));
+
+    expect(prompt).toHaveBeenCalled();
+  });
+
   it("creates a backpack task and records it in the visible module group", async () => {
     localStorage.clear();
     const user = userEvent.setup();

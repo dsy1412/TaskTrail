@@ -19,9 +19,11 @@ type RecognitionLike = {
 export function VoiceTaskInput({
   onParsedTask,
   disabled = false,
+  compact = false,
 }: {
   onParsedTask: (task: ParsedTaskInput) => void;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const [language, setLanguage] = useState<VoiceLanguage>("auto");
   const [listening, setListening] = useState(false);
@@ -80,8 +82,8 @@ export function VoiceTaskInput({
   }
 
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/62 p-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className={`rounded-2xl border border-white/70 bg-white/62 ${compact ? "p-2.5" : "p-3"}`}>
+      <div className={`flex gap-3 sm:flex-row sm:items-center sm:justify-between ${compact ? "items-center" : "flex-col"}`}>
         <div className="grid grid-cols-3 rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-500">
           {[
             ["auto", "Auto"],
@@ -106,7 +108,7 @@ export function VoiceTaskInput({
           type="button"
           aria-label={listening ? "Stop voice input" : "Start voice input"}
           title={listening ? "Stop voice input" : "Start voice input"}
-          className={`self-start rounded-full p-2.5 shadow-sm transition sm:self-auto ${
+          className={`${compact ? "shrink-0" : "self-start sm:self-auto"} rounded-full p-2.5 shadow-sm transition ${
             listening ? "bg-rose-500 text-white" : "bg-slate-950 text-white hover:bg-slate-800"
           }`}
           onClick={listening ? stopListening : startListening}
@@ -116,11 +118,11 @@ export function VoiceTaskInput({
         </button>
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <div className={`${compact ? "mt-2" : "mt-3"} flex gap-2`}>
         <input
           value={transcript}
           onChange={(event) => setTranscript(event.target.value)}
-          placeholder="Say or paste: Tomorrow afternoon, project code, two hours..."
+          placeholder={compact ? "Say or paste a task..." : "Say or paste: Tomorrow afternoon, project code, two hours..."}
           className="min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm outline-none transition focus:border-slate-400"
           disabled={disabled}
         />

@@ -124,6 +124,39 @@ export function usePlannerStore({
     [canEdit],
   );
 
+  const createTaskAndSchedule = useCallback(
+    (
+      input: {
+        title: string;
+        module: ModuleName;
+        priority: Priority;
+        estimatedDurationMinutes: number;
+        notes?: string;
+      },
+      scheduleInput: { date?: string; timeSlot: string; columnIndex: number },
+    ) => {
+      const task = makeTask(input);
+      const block = makeScheduleBlock(task, {
+        date: scheduleInput.date ?? todayIsoDate(),
+        timeSlot: scheduleInput.timeSlot,
+        columnIndex: scheduleInput.columnIndex,
+      });
+      if (!canEdit) return task;
+      setState((current) => ({
+        ...current,
+        tasks: [...current.tasks, task],
+        scheduleBlocks: [...current.scheduleBlocks, block],
+        events: [
+          ...current.events,
+          createEvent("TASK_CREATED", { task }, task.id),
+          createEvent("TASK_SCHEDULED", { block }, task.id, block.id),
+        ],
+      }));
+      return task;
+    },
+    [canEdit],
+  );
+
   const updateTask = useCallback((taskId: string, patch: Partial<Omit<Task, "id" | "createdAt">>) => {
     if (!canEdit) return;
     setState((current) => {
@@ -227,6 +260,7 @@ export function usePlannerStore({
     syncStatus,
     tasksById,
     createTask,
+    createTaskAndSchedule,
     updateTask,
     deleteTask,
     scheduleTask,

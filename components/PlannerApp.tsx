@@ -75,18 +75,34 @@ export function PlannerApp() {
 
   function quickScheduleTask(taskId: string) {
     if (!canEdit) return;
+    planner.scheduleTask(taskId, getNextOpenScheduleSlot());
+    setView("today");
+  }
+
+  function quickCreateAndScheduleTask(input: {
+    title: string;
+    module: Parameters<typeof planner.createTask>[0]["module"];
+    priority: Parameters<typeof planner.createTask>[0]["priority"];
+    estimatedDurationMinutes: number;
+    notes?: string;
+  }) {
+    if (!canEdit) return;
+    planner.createTaskAndSchedule(input, getNextOpenScheduleSlot());
+    setView("today");
+  }
+
+  function getNextOpenScheduleSlot() {
     const occupied = new Set(
       planner.state.scheduleBlocks
         .filter((block) => !block.deletedAt && block.date === selectedDate && block.columnIndex === 0)
         .map((block) => block.timeSlot),
     );
     const timeSlot = TIME_SLOTS.find((slot) => !occupied.has(slot)) ?? TIME_SLOTS[0];
-    planner.scheduleTask(taskId, {
+    return {
       date: selectedDate,
       timeSlot,
       columnIndex: 0,
-    });
-    setView("today");
+    };
   }
 
   function changeSelectedDate(days: number) {
@@ -154,7 +170,7 @@ export function PlannerApp() {
 
   if (!hasMounted) {
     return (
-      <main className="min-h-screen px-3 pb-[calc(62dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
+      <main className="min-h-screen px-3 pb-[calc(48dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-5">
           <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[2rem] px-1">
             <div className="min-w-0">
@@ -175,7 +191,7 @@ export function PlannerApp() {
   }
 
   return (
-    <main className="min-h-screen px-3 pb-[calc(62dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
+    <main className="min-h-screen px-3 pb-[calc(48dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
       <DndContext
         id="tasktrail-planner-dnd"
         sensors={sensors}
@@ -273,6 +289,7 @@ export function PlannerApp() {
         <TaskBackpack
           state={planner.state}
           onCreateTask={planner.createTask}
+          onCreateAndScheduleTask={quickCreateAndScheduleTask}
           onUpdateTask={planner.updateTask}
           onDeleteTask={planner.deleteTask}
           onScheduleTask={quickScheduleTask}

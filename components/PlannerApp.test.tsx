@@ -196,6 +196,20 @@ describe("PlannerApp", () => {
     });
   });
 
+  it("creates and schedules a mobile preset task in one tap", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    const before = await screen.findAllByTestId("scheduled-task-card");
+    await user.click(screen.getByRole("button", { name: "Add preset Deep work block" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("scheduled-task-card").length).toBe(before.length + 1);
+    });
+    expect(screen.getByRole("button", { name: "Expand backpack" })).toBeVisible();
+  });
+
   it("exposes whole task cards as draggable targets, not only the grip icon", async () => {
     localStorage.clear();
     render(<PlannerApp />);

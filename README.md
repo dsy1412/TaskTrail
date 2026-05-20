@@ -1,6 +1,6 @@
 # TaskTrail
 
-TaskTrail is a personal modular planning MVP: Task Backpack, Today Canvas, bilingual voice task capture, and an event-derived Focus Trail.
+TaskTrail is a personal modular planning MVP: Task Backpack, Today Canvas, Planning Calendar, bilingual voice task capture, and an event-derived Focus Trail.
 
 ## Run
 
@@ -80,7 +80,14 @@ Scheduled blocks and task deletions are soft-deleted, so history is preserved. T
 
 ## Mobile Use
 
-TaskTrail is mobile-first for personal use. The Today Canvas scrolls horizontally when the timetable needs more width, and the Task Backpack behaves like a compact bottom sheet with its own scroll area.
+TaskTrail is mobile-first for personal use. The Today Canvas and Planning Calendar scroll horizontally when they need more width, and the Task Backpack behaves like a compact bottom sheet with its own scroll area.
+
+TaskTrail is also installable as a PWA:
+
+- iPhone Safari: open the production site, tap Share, then tap Add to Home Screen.
+- Android Chrome: open the production site, tap the browser menu, then tap Install app or Add to Home screen.
+
+The installed app opens in a standalone mobile window and keeps the same Google sign-in and sync behavior as the website.
 
 ## Backend Plan
 

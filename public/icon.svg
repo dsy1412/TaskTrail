@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="TaskTrail icon">
+  <rect width="512" height="512" rx="112" fill="#111827"/>
+  <path d="M140 168c0-20 16-36 36-36h160c20 0 36 16 36 36v176c0 20-16 36-36 36H176c-20 0-36-16-36-36V168Z" fill="#f8fafc"/>
+  <path d="M184 132v60M328 132v60" stroke="#111827" stroke-width="28" stroke-linecap="round"/>
+  <path d="M184 244h144M184 300h84" stroke="#111827" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="332" cy="302" r="32" fill="#14b8a6"/>
+</svg>

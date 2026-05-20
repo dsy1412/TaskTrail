@@ -94,6 +94,22 @@ describe("PlannerApp", () => {
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
   });
 
+  it("switches to the Planning Calendar and opens the selected day in Today Canvas", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Calendar" }));
+
+    expect(await screen.findByRole("heading", { name: "Planning Calendar" })).toBeVisible();
+    expect(screen.getByTestId("planning-calendar-view")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Open selected day in Today Canvas" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-26");
+  });
+
   it("switches the canvas date with previous, today, and next controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();

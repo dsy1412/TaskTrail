@@ -11,13 +11,14 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, CalendarDays, Cloud, LogIn, LogOut, Route, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarDays, CalendarRange, Cloud, LogIn, LogOut, Route, Sparkles } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
 import { FocusTrail } from "@/components/FocusTrail";
+import { PlanningCalendar } from "@/components/PlanningCalendar";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
 import { addDaysIso, TIME_SLOTS, todayIsoDate } from "@/lib/date";
 import { getScheduledColumnCount, getVisibleColumnCount } from "@/lib/columns";
@@ -30,7 +31,7 @@ export function PlannerApp() {
   const canEdit = authStatus === "authenticated";
   const planner = usePlannerStore({ canEdit, syncToCloud: canEdit });
   const [hasMounted, setHasMounted] = useState(false);
-  const [view, setView] = useState<"today" | "trail">("today");
+  const [view, setView] = useState<"today" | "calendar" | "trail">("today");
   const [draftColumnCount, setDraftColumnCount] = useState(1);
   const [selectedDate, setSelectedDate] = useState(todayIsoDate());
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -195,10 +196,10 @@ export function PlannerApp() {
             <div className="justify-self-end">
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
-            <div className="glass-panel col-span-2 grid w-full grid-cols-2 rounded-full p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">
+            <div className="glass-panel col-span-2 grid w-full grid-cols-3 rounded-full p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition sm:px-4 ${
                   view === "today" ? "bg-white shadow-soft" : "text-slate-500"
                 }`}
                 onClick={() => setView("today")}
@@ -208,7 +209,17 @@ export function PlannerApp() {
               </button>
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "calendar" ? "bg-white shadow-soft" : "text-slate-500"
+                }`}
+                onClick={() => setView("calendar")}
+              >
+                <CalendarRange className="h-4 w-4" />
+                Calendar
+              </button>
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition sm:px-4 ${
                   view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
                 }`}
                 onClick={() => setView("trail")}
@@ -238,11 +249,23 @@ export function PlannerApp() {
                 />
                 <WeeklyMonthlySummary state={planner.state} />
             </section>
-          ) : (
+          ) : null}
+
+          {view === "calendar" ? (
+            <PlanningCalendar
+              state={planner.state}
+              tasksById={planner.tasksById}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              onOpenDay={() => setView("today")}
+            />
+          ) : null}
+
+          {view === "trail" ? (
             <section data-testid="trail-view">
                 <FocusTrail state={planner.state} />
             </section>
-          )}
+          ) : null}
         </div>
 
         <TaskBackpack

@@ -4,16 +4,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { CalendarPlus, Clock, GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
+import { moduleTheme } from "@/lib/moduleTheme";
 import type { ScheduleBlock, Task } from "@/lib/types";
-
-const moduleTone: Record<Task["module"], string> = {
-  Study: "bg-sky-50 text-sky-700 ring-sky-100",
-  Project: "bg-indigo-50 text-indigo-700 ring-indigo-100",
-  Health: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  Career: "bg-rose-50 text-rose-700 ring-rose-100",
-  "Weekly Plan": "bg-amber-50 text-amber-700 ring-amber-100",
-  "Monthly Plan": "bg-teal-50 text-teal-700 ring-teal-100",
-};
 
 export function TaskCardPreview({ task, block }: { task: Task; block?: ScheduleBlock }) {
   return (
@@ -50,6 +42,8 @@ export function TaskCard({
 
   const dragStyle: CSSProperties = {
     ...style,
+    borderLeftColor: moduleTheme[task.module].color,
+    borderLeftWidth: 4,
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : style?.transform,
     zIndex: isDragging ? 50 : style?.zIndex,
     opacity: isDragging ? 0.62 : 1,
@@ -67,7 +61,7 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${variant === "scheduled" ? "absolute" : "relative"} rounded-2xl border border-white/70 bg-white/82 p-3 shadow-soft backdrop-blur-xl`}
+      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${variant === "scheduled" ? "absolute" : "relative"} rounded-lg border bg-white p-3 shadow-sm`}
     >
       <div className="flex items-start gap-2">
         {!disabled ? (
@@ -144,7 +138,7 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
       <div className="flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950">{task.title}</h3>
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[0.68rem] font-semibold ring-1 ${moduleTone[task.module]}`}
+          className={`shrink-0 rounded-md border px-2 py-0.5 text-[0.68rem] font-semibold ${moduleTheme[task.module].soft} ${moduleTheme[task.module].text} ${moduleTheme[task.module].border}`}
         >
           {task.module}
         </span>

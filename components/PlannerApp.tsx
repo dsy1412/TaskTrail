@@ -177,7 +177,7 @@ export function PlannerApp() {
   }
 
   return (
-    <main className="min-h-screen px-3 pb-[calc(48dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
+    <main className="min-h-screen px-3 pb-[calc(48dvh+2rem)] pt-3 text-ink sm:px-5 sm:pb-[24rem] lg:px-6 xl:px-8">
       <DndContext
         id="tasktrail-planner-dnd"
         sensors={sensors}
@@ -186,24 +186,24 @@ export function PlannerApp() {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-5">
-          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[2rem] px-1">
+        <div className="mx-auto flex w-full max-w-[112rem] flex-col gap-4">
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-1">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
                 <Sparkles className="h-4 w-4" />
                 Modular planning MVP
               </div>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
+              <h1 className="mt-1 text-3xl font-semibold tracking-normal sm:text-4xl">TaskTrail</h1>
             </div>
 
             <div className="flex flex-wrap justify-end gap-2 justify-self-end">
               <InstallAppButton />
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
-            <div className="glass-panel col-span-2 grid w-full grid-cols-3 rounded-full p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">
+            <div className="glass-panel col-span-2 grid w-full grid-cols-3 rounded-xl p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
                   view === "today" ? "bg-white shadow-soft" : "text-slate-500"
                 }`}
                 onClick={() => setView("today")}
@@ -213,7 +213,7 @@ export function PlannerApp() {
               </button>
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
                   view === "calendar" ? "bg-white shadow-soft" : "text-slate-500"
                 }`}
                 onClick={() => setView("calendar")}
@@ -223,7 +223,7 @@ export function PlannerApp() {
               </button>
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
                   view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
                 }`}
                 onClick={() => setView("trail")}
@@ -237,7 +237,7 @@ export function PlannerApp() {
           {view === "today" ? (
             <section
               data-testid="today-view"
-              className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]"
+               className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"
             >
                 <TodayCanvas
                   state={planner.state}

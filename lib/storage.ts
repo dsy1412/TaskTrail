@@ -168,6 +168,7 @@ export function makeTask(input: {
   priority: Priority;
   estimatedDurationMinutes: number;
   notes?: string;
+  queued?: boolean;
 }): Task {
   return {
     id: id("task"),
@@ -177,6 +178,7 @@ export function makeTask(input: {
     estimatedDurationMinutes: normalizeDuration(input.estimatedDurationMinutes),
     notes: input.notes?.trim() ?? "",
     createdAt: now(),
+    queued: input.queued ?? true,
   };
 }
 

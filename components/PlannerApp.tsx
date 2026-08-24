@@ -78,12 +78,19 @@ export function PlannerApp() {
     setView("today");
   }
 
+  function quickScheduleTaskOnce(taskId: string) {
+    if (!canEdit) return;
+    planner.scheduleTaskOnce(taskId, getNextOpenScheduleSlot());
+    setView("today");
+  }
+
   function quickCreateAndScheduleTask(input: {
     title: string;
     module: Parameters<typeof planner.createTask>[0]["module"];
     priority: Parameters<typeof planner.createTask>[0]["priority"];
     estimatedDurationMinutes: number;
     notes?: string;
+    queued?: boolean;
   }) {
     if (!canEdit) return;
     planner.createTaskAndSchedule(input, getNextOpenScheduleSlot());
@@ -269,6 +276,7 @@ export function PlannerApp() {
           onUpdateTask={planner.updateTask}
           onDeleteTask={planner.deleteTask}
           onScheduleTask={quickScheduleTask}
+          onScheduleTaskOnce={quickScheduleTaskOnce}
           canEdit={canEdit}
         />
         <DragOverlay dropAnimation={null} zIndex={100}>

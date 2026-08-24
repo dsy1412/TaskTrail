@@ -25,6 +25,7 @@ export function TaskCard({
   onDelete,
   onEdit,
   onSchedule,
+  onScheduleOnce,
 }: {
   task: Task;
   block?: ScheduleBlock;
@@ -34,6 +35,7 @@ export function TaskCard({
   onDelete?: () => void;
   onEdit?: () => void;
   onSchedule?: () => void;
+  onScheduleOnce?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block ? `block:${block.id}` : `task:${task.id}`,
@@ -84,21 +86,40 @@ export function TaskCard({
         ) : null}
         <div className="min-w-0 flex-1 select-none">
           <TaskCardBody task={task} block={block} />
-          {onSchedule ? (
-            <button
-              type="button"
-              aria-label={`Schedule ${task.title} today`}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition brightness-100 hover:brightness-110"
-              style={{ backgroundColor: accent.color, color: accent.foreground }}
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                onSchedule();
-              }}
-            >
-              <CalendarPlus className="h-3.5 w-3.5" />
-              Today
-            </button>
+          {onSchedule || onScheduleOnce ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {onSchedule ? (
+                <button
+                  type="button"
+                  aria-label={`Schedule ${task.title} today`}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition brightness-100 hover:brightness-110"
+                  style={{ backgroundColor: accent.color, color: accent.foreground }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSchedule();
+                  }}
+                >
+                  <CalendarPlus className="h-3.5 w-3.5" />
+                  Today
+                </button>
+              ) : null}
+              {onScheduleOnce ? (
+                <button
+                  type="button"
+                  aria-label={`Schedule ${task.title} once today`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onScheduleOnce();
+                  }}
+                >
+                  <CalendarPlus className="h-3.5 w-3.5" />
+                  Once
+                </button>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </div>

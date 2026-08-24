@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -93,6 +93,33 @@ describe("PlannerApp", () => {
       expect(screen.getByText("Write integration tests")).toBeVisible();
     });
     expect(screen.getByText("Cover the drag and schedule flows.")).toBeVisible();
+  });
+
+  it("creates a one-time task on today without leaving it in the task queue", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.type(await screen.findByPlaceholderText("Task title"), "Faculty meeting");
+    await user.click(screen.getByRole("button", { name: "Keep in queue" }));
+    await user.click(screen.getAllByRole("button", { name: "Add once today" })[0]);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Faculty meeting").length).toBeGreaterThan(0);
+    });
+    expect(within(screen.getByTestId("task-backpack")).queryByText("Faculty meeting")).not.toBeInTheDocument();
+  });
+
+  it("schedules an existing task once and removes it from the task queue", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Schedule Read paper notes once today" }));
+
+    await waitFor(() => {
+      expect(within(screen.getByTestId("task-backpack")).queryByText("Read paper notes")).not.toBeInTheDocument();
+    });
   });
 
   it("focuses the task title when Add is clicked without a title", async () => {

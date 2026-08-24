@@ -111,6 +111,7 @@ export function usePlannerStore({
       priority: Priority;
       estimatedDurationMinutes: number;
       notes?: string;
+      queued?: boolean;
     }) => {
       const task = makeTask(input);
       if (!canEdit) return task;
@@ -132,6 +133,7 @@ export function usePlannerStore({
         priority: Priority;
         estimatedDurationMinutes: number;
         notes?: string;
+        queued?: boolean;
       },
       scheduleInput: { date?: string; timeSlot: string; columnIndex: number },
     ) => {
@@ -212,6 +214,30 @@ export function usePlannerStore({
     [canEdit, tasksById],
   );
 
+  const scheduleTaskOnce = useCallback(
+    (taskId: string, input: { date?: string; timeSlot: string; columnIndex: number }) => {
+      if (!canEdit) return;
+      const task = tasksById.get(taskId);
+      if (!task) return;
+      const block = makeScheduleBlock(task, {
+        date: input.date ?? todayIsoDate(),
+        timeSlot: input.timeSlot,
+        columnIndex: input.columnIndex,
+      });
+      setState((current) => ({
+        ...current,
+        tasks: current.tasks.map((candidate) => (candidate.id === taskId ? { ...candidate, queued: false } : candidate)),
+        scheduleBlocks: [...current.scheduleBlocks, block],
+        events: [
+          ...current.events,
+          createEvent("TASK_UPDATED", { before: task, after: { ...task, queued: false }, scope: "queue" }, task.id),
+          createEvent("TASK_SCHEDULED", { block, once: true }, task.id, block.id),
+        ],
+      }));
+    },
+    [canEdit, tasksById],
+  );
+
   const moveScheduleBlock = useCallback((blockId: string, input: { timeSlot: string; columnIndex: number }) => {
     if (!canEdit) return;
     const updatedAt = timestamp();
@@ -264,6 +290,7 @@ export function usePlannerStore({
     updateTask,
     deleteTask,
     scheduleTask,
+    scheduleTaskOnce,
     moveScheduleBlock,
     deleteScheduleBlock,
   };

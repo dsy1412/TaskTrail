@@ -15,6 +15,7 @@ const defaultForm = {
   priority: "Medium" as Priority,
   estimatedDurationMinutes: 60,
   notes: "",
+  queued: true,
 };
 
 const quickDurations = [
@@ -43,6 +44,7 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "High",
     estimatedDurationMinutes: 90,
     notes: "One focused output, no context switching.",
+    queued: true,
   },
   {
     title: "Study review",
@@ -50,6 +52,7 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "Medium",
     estimatedDurationMinutes: 60,
     notes: "Review notes and extract next actions.",
+    queued: true,
   },
   {
     title: "Workout",
@@ -57,6 +60,7 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "Medium",
     estimatedDurationMinutes: 45,
     notes: "Keep the habit alive.",
+    queued: true,
   },
   {
     title: "Career outreach",
@@ -64,6 +68,7 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "High",
     estimatedDurationMinutes: 40,
     notes: "Send one clear message.",
+    queued: true,
   },
   {
     title: "Weekly review",
@@ -71,6 +76,7 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "Medium",
     estimatedDurationMinutes: 30,
     notes: "Compare plan with actual trail.",
+    queued: true,
   },
   {
     title: "Monthly direction",
@@ -78,6 +84,7 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "High",
     estimatedDurationMinutes: 60,
     notes: "Choose the next planning theme.",
+    queued: true,
   },
 ];
 
@@ -88,6 +95,7 @@ export function TaskBackpack({
   onUpdateTask,
   onDeleteTask,
   onScheduleTask,
+  onScheduleTaskOnce,
   canEdit,
 }: {
   state: PlannerState;
@@ -96,6 +104,7 @@ export function TaskBackpack({
   onUpdateTask: (taskId: string, patch: Partial<Omit<Task, "id" | "createdAt">>) => void;
   onDeleteTask: (taskId: string) => void;
   onScheduleTask: (taskId: string) => void;
+  onScheduleTaskOnce: (taskId: string) => void;
   canEdit: boolean;
 }) {
   const [open, setOpen] = useState(true);
@@ -105,7 +114,10 @@ export function TaskBackpack({
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
-  const activeTasks = useMemo(() => state.tasks.filter((task) => !task.deletedAt), [state.tasks]);
+  const activeTasks = useMemo(
+    () => state.tasks.filter((task) => !task.deletedAt && task.queued !== false),
+    [state.tasks],
+  );
   const visibleTasks = useMemo(
     () => (moduleFilter === "All" ? activeTasks : activeTasks.filter((task) => task.module === moduleFilter)),
     [activeTasks, moduleFilter],
@@ -125,8 +137,10 @@ export function TaskBackpack({
     if (editingTaskId) {
       onUpdateTask(editingTaskId, submittedForm);
       setEditingTaskId(null);
-    } else {
+    } else if (submittedForm.queued) {
       onCreateTask(submittedForm);
+    } else {
+      onCreateAndScheduleTask(submittedForm);
     }
     setForm(defaultForm);
     titleInputRef.current?.focus();
@@ -150,12 +164,13 @@ export function TaskBackpack({
       priority: task.priority,
       estimatedDurationMinutes: task.estimatedDurationMinutes,
       notes: task.notes,
+      queued: task.queued ?? true,
     });
   }
 
   function createAndSchedulePreset(preset: typeof defaultForm) {
     if (!canEdit) return;
-    onCreateAndScheduleTask(preset);
+    onCreateAndScheduleTask({ ...preset, queued: false });
     setOpen(false);
     setMobileMode("quick");
   }
@@ -289,7 +304,7 @@ export function TaskBackpack({
                           disabled={!canEdit}
                         >
                           <Save className="h-3.5 w-3.5" />
-                          {editingTaskId ? "Save" : "Add"}
+                          {editingTaskId ? "Save" : form.queued ? "Add" : "Add once"}
                         </button>
                       </div>
                       <MobileTaskFormFields
@@ -297,6 +312,7 @@ export function TaskBackpack({
                         setForm={setForm}
                         titleInputRef={titleInputRef}
                         disabled={!canEdit}
+                        submitLabel={editingTaskId ? "Save task" : form.queued ? "Add task" : "Add once today"}
                       />
                     </form>
                   </div>
@@ -315,7 +331,7 @@ export function TaskBackpack({
                         disabled={!canEdit}
                       >
                         <Save className="h-3.5 w-3.5" />
-                        {editingTaskId ? "Save" : "Add"}
+                        {editingTaskId ? "Save" : form.queued ? "Add" : "Add once"}
                       </button>
                     </div>
                     <MobileTaskFormFields
@@ -323,7 +339,7 @@ export function TaskBackpack({
                       setForm={setForm}
                       titleInputRef={titleInputRef}
                       disabled={!canEdit}
-                      submitLabel={editingTaskId ? "Save task" : "Add task"}
+                      submitLabel={editingTaskId ? "Save task" : form.queued ? "Add task" : "Add once today"}
                     />
                   </form>
                 </div>
@@ -374,6 +390,7 @@ export function TaskBackpack({
                         onEdit={canEdit ? () => editTask(task) : undefined}
                         onDelete={canEdit ? () => onDeleteTask(task.id) : undefined}
                         onSchedule={canEdit ? () => onScheduleTask(task.id) : undefined}
+                        onScheduleOnce={canEdit ? () => onScheduleTaskOnce(task.id) : undefined}
                       />
                     ))}
                   </div>
@@ -423,17 +440,32 @@ function MobileTaskFormFields({
           disabled={disabled}
         />
       </label>
+      <fieldset className="grid gap-1.5">
+        <legend className="text-xs font-semibold text-slate-400">Module</legend>
+        <div className="grid grid-cols-2 gap-1.5">
+          {MODULES.map((module) => {
+            const selected = form.module === module;
+            return (
+              <button
+                key={module}
+                type="button"
+                aria-pressed={selected}
+                className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                  selected
+                    ? "border-transparent text-slate-950"
+                    : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500 hover:text-slate-50"
+                }`}
+                style={selected ? { backgroundColor: moduleTheme[module].color } : undefined}
+                onClick={() => setForm((current) => ({ ...current, module }))}
+                disabled={disabled}
+              >
+                {module}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
       <div className="grid grid-cols-2 gap-2">
-        <select
-          value={form.module}
-          onChange={(event) => setForm((current) => ({ ...current, module: event.target.value as ModuleName }))}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none"
-          disabled={disabled}
-        >
-          {MODULES.map((module) => (
-            <option key={module}>{module}</option>
-          ))}
-        </select>
         <select
           value={form.priority}
           onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as Priority }))}
@@ -444,6 +476,19 @@ function MobileTaskFormFields({
             <option key={priority}>{priority}</option>
           ))}
         </select>
+        <button
+          type="button"
+          aria-pressed={!form.queued}
+          className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+            form.queued
+              ? "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500 hover:text-slate-50"
+              : "border-cyan-300 bg-cyan-300 text-slate-950"
+          }`}
+          onClick={() => setForm((current) => ({ ...current, queued: !current.queued }))}
+          disabled={disabled}
+        >
+          {form.queued ? "Keep in queue" : "One-time"}
+        </button>
       </div>
       <DurationField
         value={form.estimatedDurationMinutes}

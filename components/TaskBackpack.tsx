@@ -3,8 +3,7 @@
 import { CalendarPlus, ChevronDown, ChevronUp, ListPlus, Plus, Save, Sparkles } from "lucide-react";
 import { type Dispatch, FormEvent, type RefObject, type SetStateAction, useMemo, useRef, useState } from "react";
 import { TaskCard } from "@/components/TaskCard";
-import { VoiceTaskInput } from "@/components/VoiceTaskInput";
-import { MODULES, type ModuleName, type ParsedTaskInput, type PlannerState, type Priority, type Task } from "@/lib/types";
+import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
 const priorityOptions: Priority[] = ["High", "Medium", "Low"];
 
@@ -119,20 +118,6 @@ export function TaskBackpack({
     setOpen(true);
     setMobileMode("custom");
     setEditingTaskId(task.id);
-    setForm({
-      title: task.title,
-      module: task.module,
-      priority: task.priority,
-      estimatedDurationMinutes: task.estimatedDurationMinutes,
-      notes: task.notes,
-    });
-  }
-
-  function useParsedVoiceTask(task: ParsedTaskInput) {
-    if (!canEdit) return;
-    setOpen(true);
-    setMobileMode("custom");
-    setEditingTaskId(null);
     setForm({
       title: task.title,
       module: task.module,
@@ -268,7 +253,6 @@ export function TaskBackpack({
                   </div>
                 ) : (
                   <div className="grid gap-3">
-                    <VoiceTaskInput onParsedTask={useParsedVoiceTask} disabled={!canEdit} compact />
                     <form className="rounded-2xl border border-white/70 bg-white/62 p-3" onSubmit={submitTask}>
                       <div className="mb-3 flex items-center justify-between">
                         <h3 className="text-sm font-semibold">{editingTaskId ? "Edit task" : "Create task"}</h3>
@@ -293,9 +277,8 @@ export function TaskBackpack({
                 )}
               </div>
 
-              <div className="fine-scrollbar hidden max-h-[62dvh] gap-3 overflow-y-auto p-3 sm:grid sm:max-h-[21rem] sm:gap-4 sm:p-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
+              <div className="fine-scrollbar hidden max-h-[62dvh] gap-3 overflow-y-auto p-3 sm:grid sm:max-h-[21rem] sm:gap-4 sm:p-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
                 <div className="flex flex-col gap-3">
-                  <VoiceTaskInput onParsedTask={useParsedVoiceTask} disabled={!canEdit} />
                   <form className="rounded-2xl border border-white/70 bg-white/62 p-3" onSubmit={submitTask}>
                     <div className="mb-3 flex items-center justify-between">
                       <h3 className="text-sm font-semibold">{editingTaskId ? "Edit task" : "Create task"}</h3>
@@ -309,68 +292,13 @@ export function TaskBackpack({
                         {editingTaskId ? "Save" : "Add"}
                       </button>
                     </div>
-                    <div className="grid gap-2">
-                      <input
-                        ref={titleInputRef}
-                        name="title"
-                        value={form.title}
-                        onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                        placeholder="Task title"
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-400"
-                        disabled={!canEdit}
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <select
-                          value={form.module}
-                          onChange={(event) => setForm((current) => ({ ...current, module: event.target.value as ModuleName }))}
-                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
-                          disabled={!canEdit}
-                        >
-                          {MODULES.map((module) => (
-                            <option key={module}>{module}</option>
-                          ))}
-                        </select>
-                        <select
-                          value={form.priority}
-                          onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as Priority }))}
-                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
-                          disabled={!canEdit}
-                        >
-                          {priorityOptions.map((priority) => (
-                            <option key={priority}>{priority}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <input
-                        type="number"
-                        min={15}
-                        step={15}
-                        value={form.estimatedDurationMinutes}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            estimatedDurationMinutes: Number(event.target.value),
-                          }))
-                        }
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
-                        disabled={!canEdit}
-                      />
-                      <textarea
-                        value={form.notes}
-                        onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-                        placeholder="Optional notes"
-                        className="min-h-16 resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-400"
-                        disabled={!canEdit}
-                      />
-                      <button
-                        type="submit"
-                        className="flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                        disabled={!canEdit}
-                      >
-                        <Save className="h-4 w-4" />
-                        {editingTaskId ? "Save task" : "Add task"}
-                      </button>
-                    </div>
+                    <MobileTaskFormFields
+                      form={form}
+                      setForm={setForm}
+                      titleInputRef={titleInputRef}
+                      disabled={!canEdit}
+                      submitLabel={editingTaskId ? "Save task" : "Add task"}
+                    />
                   </form>
                 </div>
 
@@ -414,11 +342,13 @@ function MobileTaskFormFields({
   setForm,
   titleInputRef,
   disabled,
+  submitLabel = "Add task",
 }: {
   form: typeof defaultForm;
   setForm: Dispatch<SetStateAction<typeof defaultForm>>;
   titleInputRef: RefObject<HTMLInputElement | null>;
   disabled: boolean;
+  submitLabel?: string;
 }) {
   return (
     <div className="grid gap-2">
@@ -473,7 +403,7 @@ function MobileTaskFormFields({
         disabled={disabled}
       >
         <Save className="h-4 w-4" />
-        Add task
+        {submitLabel}
       </button>
     </div>
   );

@@ -44,7 +44,7 @@ export function TimeGrid({
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-[1.6rem] border border-white/70 bg-white/44">
+      <div className="overflow-hidden rounded-[1.6rem] border border-slate-700 bg-slate-950/70">
         <div className="grid" style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}>
           {Array.from({ length: columnCount }, (_, index) => (
             <PriorityColumn key={index} index={index} />
@@ -53,20 +53,20 @@ export function TimeGrid({
 
         <div
           ref={setRefs}
-          className={`relative transition ${isOver ? "bg-white/60" : "bg-white/20"}`}
+          className={`relative transition ${isOver ? "bg-slate-800/80" : "bg-slate-900/60"}`}
           style={{ height: TIME_SLOTS.length * SLOT_HEIGHT }}
         >
           {TIME_SLOTS.map((slot, index) => (
             <div
               key={slot}
-              className="absolute left-0 right-0 border-t border-slate-200/72"
+              className="absolute left-0 right-0 border-t border-slate-700"
               style={{ top: index * SLOT_HEIGHT }}
             />
           ))}
           {Array.from({ length: columnCount - 1 }, (_, index) => (
             <div
               key={index}
-              className="absolute bottom-0 top-0 border-l border-slate-200/72"
+              className="absolute bottom-0 top-0 border-l border-slate-700"
               style={{ left: `${((index + 1) / columnCount) * 100}%` }}
             />
           ))}

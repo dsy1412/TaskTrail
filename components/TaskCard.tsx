@@ -41,6 +41,10 @@ export function TaskCard({
     disabled,
   });
   const accent = taskAccent(task);
+  const isScheduled = variant === "scheduled";
+  const actionBarVisibility = isScheduled
+    ? "opacity-100"
+    : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100";
 
   const dragStyle: CSSProperties = {
     ...style,
@@ -63,7 +67,7 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${variant === "scheduled" ? "absolute" : "relative"} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
+      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute" : "relative"} ${onDelete ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
     >
       <div className="flex items-start gap-2">
         {!disabled ? (
@@ -99,35 +103,35 @@ export function TaskCard({
         </div>
       </div>
 
-      <div className="absolute bottom-2 right-2 flex gap-1 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+      <div className={`absolute bottom-2 right-2 flex gap-2 transition ${actionBarVisibility}`}>
         {onEdit ? (
           <button
             type="button"
-            aria-label="Edit task"
+            aria-label={`Edit ${task.title}`}
             title="Edit"
-            className="rounded-md border border-slate-700 bg-slate-950 p-1.5 text-slate-400 shadow-sm transition hover:text-slate-100"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:border-slate-500 hover:text-slate-100"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
               onEdit();
             }}
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil className="h-5 w-5" />
           </button>
         ) : null}
         {onDelete ? (
           <button
             type="button"
-            aria-label="Delete task"
-            title="Delete"
-            className="rounded-md border border-slate-700 bg-slate-950 p-1.5 text-slate-400 shadow-sm transition hover:text-rose-300"
+            aria-label={block ? `Remove ${task.title} from schedule` : `Delete ${task.title}`}
+            title={block ? "Remove from schedule" : "Delete task"}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/12 text-rose-200 shadow-sm transition hover:border-rose-300 hover:bg-rose-500/22 hover:text-white"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
               onDelete();
             }}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-5 w-5" />
           </button>
         ) : null}
       </div>

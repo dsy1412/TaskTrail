@@ -189,6 +189,19 @@ describe("PlannerApp", () => {
     });
   });
 
+  it("removes a scheduled task with the enlarged schedule remove action", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    const before = await screen.findAllByTestId("scheduled-task-card");
+    await user.click(screen.getByRole("button", { name: "Remove Build TaskTrail drag MVP from schedule" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("scheduled-task-card").length).toBe(before.length - 1);
+    });
+  });
+
   it("creates and schedules a mobile preset task in one tap", async () => {
     localStorage.clear();
     const user = userEvent.setup();

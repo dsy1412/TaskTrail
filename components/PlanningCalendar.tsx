@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { todayIsoDate } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
 import { moduleTheme } from "@/lib/moduleTheme";
+import { taskAccent } from "@/lib/taskTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
 const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -43,14 +44,18 @@ export function PlanningCalendar({
       .forEach((block) => {
         const task = tasksById.get(block.taskId);
         if (!task || task.deletedAt) return;
+        const accent = taskAccent(task);
         const plannedBlock: PlannedBlock = {
           id: block.id,
+          taskId: task.id,
           date: block.date,
           timeSlot: block.timeSlot,
           durationMinutes: block.durationMinutes,
           title: task.title,
           module: task.module,
           priority: task.priority,
+          accentColor: accent.color,
+          accentSoftColor: accent.softColor,
         };
         grouped.set(block.date, [...(grouped.get(block.date) ?? []), plannedBlock]);
       });
@@ -187,7 +192,7 @@ export function PlanningCalendar({
               <div
                 key={block.id}
                 className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 shadow-sm"
-                style={{ borderLeftColor: moduleTheme[block.module].color, borderLeftWidth: 4 }}
+                style={{ borderLeftColor: block.accentColor, borderLeftWidth: 4 }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -195,7 +200,7 @@ export function PlanningCalendar({
                     <p className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-400">
                       <span
                         className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: moduleTheme[block.module].color }}
+                        style={{ backgroundColor: block.accentColor }}
                       />
                       {block.module}
                     </p>
@@ -269,6 +274,7 @@ function CalendarDay({
   const dayMinutes = blocks.reduce((sum, block) => sum + block.durationMinutes, 0);
   const activeModules = new Set(blocks.map((block) => block.module));
   const topModules = [...activeModules].slice(0, 2);
+  const visibleTaskColors = blocks.slice(0, 5);
 
   return (
     <button
@@ -300,22 +306,30 @@ function CalendarDay({
       </div>
 
       <div className="mt-3 grid gap-1">
-        {MODULES.map((module) => (
+        {visibleTaskColors.length ? (
+          visibleTaskColors.map((block) => (
+            <span
+              key={block.id}
+              className="h-1.5 rounded-full"
+              style={{ backgroundColor: block.accentColor }}
+              title={block.title}
+            />
+          ))
+        ) : (
           <span
-            key={module}
             className="h-1.5 rounded-full"
-            style={{
-              backgroundColor: activeModules.has(module) ? moduleTheme[module].color : "rgba(30, 41, 59, 0.72)",
-              opacity: activeModules.has(module) ? 1 : 0.55,
-            }}
-            title={module}
+            style={{ backgroundColor: "rgba(30, 41, 59, 0.72)" }}
           />
-        ))}
+        )}
       </div>
 
       <div className="mt-3 space-y-1.5">
         {blocks.slice(0, 2).map((block) => (
-          <div key={block.id} className="min-w-0 rounded-md bg-slate-900 px-2 py-1">
+          <div
+            key={block.id}
+            className="min-w-0 rounded-md border-l-2 bg-slate-900 px-2 py-1"
+            style={{ borderLeftColor: block.accentColor, backgroundColor: block.accentSoftColor }}
+          >
             <p className="truncate text-[0.72rem] font-semibold text-slate-100">{block.title}</p>
             <p className="mt-0.5 text-[0.62rem] font-semibold text-slate-500">{block.timeSlot}</p>
           </div>
@@ -346,12 +360,15 @@ function CalendarDay({
 
 interface PlannedBlock {
   id: string;
+  taskId: string;
   date: string;
   timeSlot: string;
   durationMinutes: number;
   title: string;
   module: ModuleName;
   priority: Priority;
+  accentColor: string;
+  accentSoftColor: string;
 }
 
 interface MonthDay {

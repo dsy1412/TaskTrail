@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { CalendarPlus, Clock, GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { formatDuration } from "@/lib/duration";
-import { moduleTheme } from "@/lib/moduleTheme";
+import { taskAccent } from "@/lib/taskTheme";
 import type { ScheduleBlock, Task } from "@/lib/types";
 
 export function TaskCardPreview({ task, block }: { task: Task; block?: ScheduleBlock }) {
@@ -40,10 +40,11 @@ export function TaskCard({
     data: { taskId: task.id, blockId: block?.id },
     disabled,
   });
+  const accent = taskAccent(task);
 
   const dragStyle: CSSProperties = {
     ...style,
-    borderLeftColor: moduleTheme[task.module].color,
+    borderLeftColor: accent.color,
     borderLeftWidth: 4,
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : style?.transform,
     zIndex: isDragging ? 50 : style?.zIndex,
@@ -83,7 +84,8 @@ export function TaskCard({
             <button
               type="button"
               aria-label={`Schedule ${task.title} today`}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition brightness-100 hover:brightness-110"
+              style={{ backgroundColor: accent.color, color: accent.foreground }}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
@@ -134,13 +136,15 @@ export function TaskCard({
 }
 
 function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
+  const accent = taskAccent(task);
+
   return (
     <>
       <div className="flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-50">{task.title}</h3>
         <span
           className="shrink-0 rounded-md px-2 py-0.5 text-[0.68rem] font-bold text-white"
-          style={{ backgroundColor: moduleTheme[task.module].color }}
+          style={{ backgroundColor: accent.color, color: accent.foreground }}
         >
           {task.module}
         </span>

@@ -154,6 +154,7 @@ export function PlanningCalendar({
                   selectedDate={selectedDate}
                   blocks={blocksByDate.get(day.date) ?? []}
                   onSelectDate={onSelectDate}
+                  onOpenDay={onOpenDay}
                 />
               ))}
             </div>
@@ -262,12 +263,14 @@ function CalendarDay({
   selectedDate,
   blocks,
   onSelectDate,
+  onOpenDay,
 }: {
   day: MonthDay;
   today: string;
   selectedDate: string;
   blocks: PlannedBlock[];
   onSelectDate: (date: string) => void;
+  onOpenDay: () => void;
 }) {
   const isSelected = selectedDate === day.date;
   const isToday = today === day.date;
@@ -280,8 +283,11 @@ function CalendarDay({
     <button
       type="button"
       data-testid={`planning-day-${day.date}`}
-      aria-label={`Select ${day.date}`}
-      onClick={() => onSelectDate(day.date)}
+      aria-label={`Open ${day.date} in Today Canvas`}
+      onClick={() => {
+        onSelectDate(day.date);
+        onOpenDay();
+      }}
       className={`relative min-h-[9.25rem] rounded-lg border p-2 text-left transition hover:-translate-y-0.5 hover:shadow-xl ${
         isSelected
           ? "border-cyan-300 bg-slate-950 shadow-[0_0_0_1px_rgba(103,232,249,0.4)]"

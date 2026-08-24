@@ -148,6 +148,18 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-26");
   });
 
+  it("opens a clicked calendar day directly in the matching Today Canvas", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Calendar" }));
+    await user.click(await screen.findByRole("button", { name: "Open 2026-04-27 in Today Canvas" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-27");
+  });
+
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();

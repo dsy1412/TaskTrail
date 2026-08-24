@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarPlus, ChevronDown, ChevronUp, ListPlus, Plus, Save, Sparkles } from "lucide-react";
+import { CalendarPlus, ChevronDown, ChevronUp, Clock3, ListPlus, Plus, Save, Sparkles, Zap } from "lucide-react";
 import { type Dispatch, FormEvent, type RefObject, type SetStateAction, useMemo, useRef, useState } from "react";
 import { TaskCard } from "@/components/TaskCard";
+import { durationToMinutes, durationUnitMinutes, formatDuration, type DurationUnit } from "@/lib/duration";
 import { moduleTheme } from "@/lib/moduleTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
@@ -15,6 +16,25 @@ const defaultForm = {
   estimatedDurationMinutes: 60,
   notes: "",
 };
+
+const quickDurations = [
+  { label: "Instant", minutes: 0 },
+  { label: "15m", minutes: 15 },
+  { label: "30m", minutes: 30 },
+  { label: "1h", minutes: 60 },
+  { label: "2h", minutes: 120 },
+  { label: "1d", minutes: durationUnitMinutes.days },
+  { label: "1w", minutes: durationUnitMinutes.weeks },
+  { label: "1mo", minutes: durationUnitMinutes.months },
+];
+
+const durationUnits: Array<{ value: DurationUnit; label: string }> = [
+  { value: "minutes", label: "min" },
+  { value: "hours", label: "hours" },
+  { value: "days", label: "days" },
+  { value: "weeks", label: "weeks" },
+  { value: "months", label: "months" },
+];
 
 const quickTaskPresets: Array<typeof defaultForm> = [
   {
@@ -222,7 +242,7 @@ export function TaskBackpack({
                           >
                             <span className="block text-sm font-semibold text-slate-50">{preset.title}</span>
                             <span className="mt-1 block text-xs font-semibold text-slate-400">
-                              {preset.module} - {preset.estimatedDurationMinutes}m
+                              {preset.module} - {formatDuration(preset.estimatedDurationMinutes)}
                             </span>
                           </button>
                         ))}
@@ -412,18 +432,14 @@ function MobileTaskFormFields({
           ))}
         </select>
       </div>
-      <input
-        type="number"
-        min={15}
-        step={15}
+      <DurationField
         value={form.estimatedDurationMinutes}
-        onChange={(event) =>
+        onChange={(estimatedDurationMinutes) =>
           setForm((current) => ({
             ...current,
-            estimatedDurationMinutes: Number(event.target.value),
+            estimatedDurationMinutes,
           }))
         }
-        className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none"
         disabled={disabled}
       />
       <button
@@ -436,4 +452,74 @@ function MobileTaskFormFields({
       </button>
     </div>
   );
+}
+
+function DurationField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (minutes: number) => void;
+  disabled: boolean;
+}) {
+  const [unit, setUnit] = useState<DurationUnit>("minutes");
+  const customValue = value > 0 ? trimNumber(value / durationUnitMinutes[unit]) : "";
+
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          {value === 0 ? <Zap className="h-3.5 w-3.5 text-cyan-300" /> : <Clock3 className="h-3.5 w-3.5" />}
+          {value === 0 ? "Instant capture" : formatDuration(value)}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-4 gap-1">
+        {quickDurations.map((duration) => (
+          <button
+            key={duration.label}
+            type="button"
+            className={`rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+              value === duration.minutes
+                ? "bg-cyan-300 text-slate-950"
+                : "bg-slate-900 text-slate-400 hover:text-slate-100"
+            }`}
+            onClick={() => onChange(duration.minutes)}
+            disabled={disabled}
+          >
+            {duration.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_7rem] gap-2">
+        <input
+          inputMode="decimal"
+          value={customValue}
+          onChange={(event) => onChange(durationToMinutes(Number(event.target.value), unit))}
+          placeholder="Custom"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
+          disabled={disabled}
+        />
+        <select
+          value={unit}
+          onChange={(event) => setUnit(event.target.value as DurationUnit)}
+          className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100 outline-none"
+          disabled={disabled}
+        >
+          {durationUnits.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function trimNumber(value: number) {
+  if (!Number.isFinite(value)) return "";
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, "");
 }

@@ -1,4 +1,5 @@
 import { addDaysIso, todayIsoDate } from "@/lib/date";
+import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
   ActivityEventType,
@@ -173,7 +174,7 @@ export function makeTask(input: {
     title: input.title.trim() || "Untitled task",
     module: input.module,
     priority: input.priority,
-    estimatedDurationMinutes: Math.max(15, input.estimatedDurationMinutes || 60),
+    estimatedDurationMinutes: normalizeDuration(input.estimatedDurationMinutes),
     notes: input.notes?.trim() ?? "",
     createdAt: now(),
   };

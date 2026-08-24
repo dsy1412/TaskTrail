@@ -4,6 +4,7 @@ import { Calendar, ChevronLeft, ChevronRight, Clock3, Columns3, LocateFixed, Tra
 import type { RefObject } from "react";
 import { TimeGrid } from "@/components/TimeGrid";
 import { formatFriendlyDate, TIME_SLOTS } from "@/lib/date";
+import { formatDuration } from "@/lib/duration";
 import type { PlannerState, Task } from "@/lib/types";
 
 export function TodayCanvas({
@@ -155,7 +156,7 @@ function MobileDayAgenda({
                           </h3>
                           <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                             <Clock3 className="h-3.5 w-3.5" />
-                            {task.estimatedDurationMinutes}m - {task.module}
+                            {formatDuration(task.estimatedDurationMinutes)} - {task.module}
                           </p>
                         </div>
                         {canEdit ? (

@@ -3,6 +3,7 @@
 import { CalendarRange, ChevronLeft, ChevronRight, Clock3, Layers3, LocateFixed, Maximize2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { todayIsoDate } from "@/lib/date";
+import { formatDuration } from "@/lib/duration";
 import { moduleTheme } from "@/lib/moduleTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
@@ -205,7 +206,7 @@ export function PlanningCalendar({
                 </div>
                 <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                   <Clock3 className="h-3.5 w-3.5" />
-                  {block.timeSlot} / {formatMinutes(block.durationMinutes)}
+                  {block.timeSlot} / {formatDuration(block.durationMinutes)}
                 </p>
               </div>
             ))
@@ -293,7 +294,7 @@ function CalendarDay({
         </span>
         {blocks.length ? (
           <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[0.65rem] font-bold text-slate-200">
-            {formatMinutes(dayMinutes)}
+            {formatDuration(dayMinutes)}
           </span>
         ) : null}
       </div>

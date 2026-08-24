@@ -107,7 +107,7 @@ function ScheduledBlockCard({
   const rowIndex = Math.max(0, TIME_SLOTS.indexOf(block.timeSlot));
   const columnWidth = 100 / columnCount;
   const top = rowIndex * SLOT_HEIGHT + 8;
-  const height = Math.max(58, (block.durationMinutes / 60) * SLOT_HEIGHT - 10);
+  const height = Math.min(220, Math.max(58, (block.durationMinutes / 60) * SLOT_HEIGHT - 10));
 
   return (
     <TaskCard

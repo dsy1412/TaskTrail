@@ -43,6 +43,7 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("task-backpack")).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();
+    expect(screen.queryByText("Goal cards")).not.toBeInTheDocument();
   });
 
   it("shows a private sign-in screen when signed out", async () => {

@@ -345,36 +345,53 @@ export function TaskBackpack({
                 </div>
 
                 <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/45 p-3">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(38rem,0.9fr)] xl:items-end">
                     <div>
                       <h3 className="text-sm font-semibold text-slate-50">Task queue</h3>
                       <p className="text-xs font-medium text-slate-400">
                         {visibleTasks.length} shown / {activeTasks.length} total
                       </p>
                     </div>
-                    <div className="fine-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-1 text-xs font-semibold">
+                    <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-800 bg-slate-950 p-1.5 text-xs font-semibold sm:grid-cols-4 xl:grid-cols-7">
                       <button
                         type="button"
-                        className={`shrink-0 rounded-md px-2.5 py-1 transition ${
-                          moduleFilter === "All" ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+                        className={`grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-3 py-2 text-left transition ${
+                          moduleFilter === "All"
+                            ? "bg-slate-100 text-slate-950 shadow-sm"
+                            : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                         }`}
                         onClick={() => setModuleFilter("All")}
                       >
-                        All {activeTasks.length}
+                        <span className="truncate">All</span>
+                        <span
+                          className={`rounded-md px-1.5 py-0.5 text-[0.68rem] ${
+                            moduleFilter === "All" ? "bg-slate-950/10" : "bg-slate-800 text-slate-400"
+                          }`}
+                        >
+                          {activeTasks.length}
+                        </span>
                       </button>
                       {MODULES.map((module) => {
                         const count = activeTasks.filter((task) => task.module === module).length;
+                        const selected = moduleFilter === module;
                         return (
                           <button
                             key={module}
                             type="button"
-                            className={`shrink-0 rounded-md px-2.5 py-1 transition ${
-                              moduleFilter === module ? "text-white" : "text-slate-400 hover:text-slate-100"
+                            className={`grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-3 py-2 text-left transition ${
+                              selected ? "text-white shadow-sm" : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                             }`}
-                            style={moduleFilter === module ? { backgroundColor: moduleTheme[module].color } : undefined}
+                            style={selected ? { backgroundColor: moduleTheme[module].color } : undefined}
                             onClick={() => setModuleFilter(module)}
                           >
-                            {module} {count}
+                            <span className="truncate">{module}</span>
+                            <span
+                              className={`rounded-md px-1.5 py-0.5 text-[0.68rem] ${
+                                selected ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"
+                              }`}
+                            >
+                              {count}
+                            </span>
                           </button>
                         );
                       })}

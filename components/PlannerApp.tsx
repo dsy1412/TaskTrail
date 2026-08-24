@@ -11,13 +11,12 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, CalendarDays, CalendarRange, Cloud, LockKeyhole, LogIn, LogOut, Route, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarDays, CalendarRange, Cloud, LockKeyhole, LogIn, LogOut, Sparkles } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
-import { FocusTrail } from "@/components/FocusTrail";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { PlanningCalendar } from "@/components/PlanningCalendar";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
@@ -32,7 +31,7 @@ export function PlannerApp() {
   const canEdit = authStatus === "authenticated";
   const planner = usePlannerStore({ canEdit, syncToCloud: canEdit });
   const [hasMounted, setHasMounted] = useState(false);
-  const [view, setView] = useState<"today" | "calendar" | "trail">("today");
+  const [view, setView] = useState<"today" | "calendar">("today");
   const [draftColumnCount, setDraftColumnCount] = useState(1);
   const [selectedDate, setSelectedDate] = useState(todayIsoDate());
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -200,7 +199,7 @@ export function PlannerApp() {
               <InstallAppButton />
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
-            <div className="glass-panel grid w-full grid-cols-3 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
+            <div className="glass-panel grid w-full grid-cols-2 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
               <button
                 type="button"
                 className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
@@ -220,16 +219,6 @@ export function PlannerApp() {
               >
                 <CalendarRange className="h-4 w-4" />
                 Calendar
-              </button>
-              <button
-                type="button"
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
-                  view === "trail" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
-                }`}
-                onClick={() => setView("trail")}
-              >
-                <Route className="h-4 w-4" />
-                Focus Trail
               </button>
             </div>
           </header>
@@ -265,11 +254,6 @@ export function PlannerApp() {
             />
           ) : null}
 
-          {view === "trail" ? (
-            <section data-testid="trail-view">
-                <FocusTrail state={planner.state} />
-            </section>
-          ) : null}
         </div>
 
         <TaskBackpack

@@ -102,18 +102,6 @@ describe("PlannerApp", () => {
     expect(screen.getByPlaceholderText("Task title")).toHaveFocus();
   });
 
-  it("switches to Focus Trail without losing the Backpack controls", async () => {
-    localStorage.clear();
-    const user = userEvent.setup();
-    render(<PlannerApp />);
-
-    await user.click(await screen.findByRole("button", { name: "Focus Trail" }));
-
-    expect(await screen.findByRole("heading", { name: "Focus Trail" })).toBeVisible();
-    expect(screen.getByTestId("task-backpack")).toBeVisible();
-    expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
-  });
-
   it("switches to the Planning Calendar and opens the selected day in Today Canvas", async () => {
     localStorage.clear();
     const user = userEvent.setup();

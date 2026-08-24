@@ -1,6 +1,6 @@
 # TaskTrail
 
-TaskTrail is a personal modular planning MVP: Task Backpack, Today Canvas, Planning Calendar, and an event-derived Focus Trail.
+TaskTrail is a personal modular planning MVP: Task Backpack, Today Canvas, and Planning Calendar.
 
 ## Run
 
@@ -51,7 +51,7 @@ For durable cross-device sync, attach Vercel KV or Upstash Redis and set one of 
 
 Without KV/Upstash variables, local development falls back to in-memory server storage. That is useful for testing the login flow, but it is not persistent across server restarts or Vercel instances.
 
-## Focus Trail
+## Activity Log
 
 TaskTrail keeps an event log in LocalStorage:
 
@@ -61,7 +61,7 @@ TaskTrail keeps an event log in LocalStorage:
 - `TASK_DELETED`
 - `TASK_UPDATED`
 
-Scheduled blocks and task deletions are soft-deleted, so history is preserved. The Focus Trail is derived from the current non-deleted scheduled blocks plus the event log context. Scheduling, moving, deleting, or editing a task updates LocalStorage and the trail immediately. The Month view shows a calendar of completed focus blocks with per-day details and module mix.
+Scheduled blocks and task deletions are soft-deleted, so history is preserved. Scheduling, moving, deleting, or editing a task updates LocalStorage immediately.
 
 ## Mobile Use
 
@@ -82,4 +82,4 @@ The MVP is LocalStorage-first, with a small data layer in `lib/usePlannerStore.t
 
 - PostgreSQL tables for tasks, schedule blocks, and activity events.
 - FastAPI endpoints for task CRUD, schedule changes, and event ingestion.
-- Server-derived Focus Trail segments for cross-device sync and analytics.
+- Server-derived calendar summaries for cross-device sync and analytics.

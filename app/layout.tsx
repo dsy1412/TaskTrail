@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://tasktrail-six.vercel.app"),
   title: "TaskTrail",
-  description: "A modular planning MVP with Today Canvas, Task Backpack, and Focus Trail.",
+  description: "A modular planning app with Today Canvas, Task Backpack, and Planning Calendar.",
   applicationName: "TaskTrail",
   manifest: "/manifest.webmanifest",
   appleWebApp: {

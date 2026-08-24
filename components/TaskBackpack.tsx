@@ -410,16 +410,19 @@ function MobileTaskFormFields({
         className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
         disabled={disabled}
       />
-      <textarea
-        name="notes"
-        value={form.notes}
-        onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-        placeholder="Notes"
-        aria-label="Task notes"
-        rows={3}
-        className="min-h-20 resize-none rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm leading-5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-        disabled={disabled}
-      />
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-400">
+        Notes / 备注
+        <textarea
+          name="notes"
+          value={form.notes}
+          onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+          placeholder="Add context, next step, or links"
+          aria-label="Task notes"
+          rows={3}
+          className="min-h-20 resize-none rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-normal leading-5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
+          disabled={disabled}
+        />
+      </label>
       <div className="grid grid-cols-2 gap-2">
         <select
           value={form.module}

@@ -86,7 +86,7 @@ describe("PlannerApp", () => {
     render(<PlannerApp />);
 
     await user.type(await screen.findByPlaceholderText("Task title"), "Write integration tests");
-    await user.type(screen.getByPlaceholderText("Notes"), "Cover the drag and schedule flows.");
+    await user.type(screen.getByLabelText("Task notes"), "Cover the drag and schedule flows.");
     await user.click(screen.getAllByRole("button", { name: "Add task" })[0]);
 
     await waitFor(() => {

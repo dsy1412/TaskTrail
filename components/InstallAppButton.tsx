@@ -60,7 +60,7 @@ export function InstallAppButton() {
     <button
       type="button"
       aria-label="Install TaskTrail app"
-      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:text-slate-950"
+      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 shadow-sm transition hover:text-cyan-200"
       onClick={() => void installApp()}
     >
       <Download className="h-4 w-4" />

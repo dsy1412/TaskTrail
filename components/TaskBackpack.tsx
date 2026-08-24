@@ -3,6 +3,7 @@
 import { CalendarPlus, ChevronDown, ChevronUp, ListPlus, Plus, Save, Sparkles } from "lucide-react";
 import { type Dispatch, FormEvent, type RefObject, type SetStateAction, useMemo, useRef, useState } from "react";
 import { TaskCard } from "@/components/TaskCard";
+import { moduleTheme } from "@/lib/moduleTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
 const priorityOptions: Priority[] = ["High", "Medium", "Low"];
@@ -79,11 +80,16 @@ export function TaskBackpack({
 }) {
   const [open, setOpen] = useState(true);
   const [mobileMode, setMobileMode] = useState<"quick" | "custom">("quick");
+  const [moduleFilter, setModuleFilter] = useState<ModuleName | "All">("All");
   const [form, setForm] = useState(defaultForm);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTasks = useMemo(() => state.tasks.filter((task) => !task.deletedAt), [state.tasks]);
+  const visibleTasks = useMemo(
+    () => (moduleFilter === "All" ? activeTasks : activeTasks.filter((task) => task.module === moduleFilter)),
+    [activeTasks, moduleFilter],
+  );
 
   function submitTask(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -140,12 +146,12 @@ export function TaskBackpack({
       className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 mx-auto max-w-[112rem] sm:inset-x-5 sm:bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:inset-x-6 xl:inset-x-8"
     >
       <div className="glass-panel overflow-hidden rounded-xl">
-        <div className="flex items-center justify-between gap-3 border-b border-white/70 px-3 py-3 sm:px-4">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-3 py-3 sm:px-4">
           <div>
-            <h2 className="text-base font-semibold sm:hidden">Quick Tasks</h2>
-            <h2 className="hidden text-base font-semibold sm:block">Task Backpack</h2>
-            <p className="hidden text-xs font-medium text-slate-500 sm:block">
-              Drag cards into the canvas. Backpack tasks stay here.
+            <h2 className="text-base font-semibold text-slate-50 sm:hidden">Quick Tasks</h2>
+            <h2 className="hidden text-base font-semibold text-slate-50 sm:block">Task Backpack</h2>
+            <p className="hidden text-xs font-medium text-slate-400 sm:block">
+              Capture, filter, and schedule from one queue.
             </p>
             {!canEdit ? <p className="mt-1 text-xs font-semibold text-amber-700">Read-only preview</p> : null}
           </div>
@@ -154,7 +160,7 @@ export function TaskBackpack({
               type="button"
               aria-label="Focus task title"
               title="Add task"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-2 text-xs font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-200"
               onClick={focusCreateTask}
               disabled={!canEdit}
             >
@@ -165,7 +171,7 @@ export function TaskBackpack({
               type="button"
               aria-label={open ? "Collapse backpack" : "Expand backpack"}
               title={open ? "Collapse" : "Expand"}
-              className="rounded-full bg-white p-2 text-slate-600 shadow-sm transition hover:text-slate-950"
+              className="rounded-lg border border-slate-700 bg-slate-950 p-2 text-slate-300 shadow-sm transition hover:text-slate-50"
               onClick={() => setOpen((value) => !value)}
             >
               {open ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -176,11 +182,11 @@ export function TaskBackpack({
         {open ? (
           <div className="overflow-hidden">
               <div className="fine-scrollbar grid max-h-[48dvh] gap-3 overflow-y-auto p-3 sm:hidden">
-                <div className="grid grid-cols-2 rounded-lg bg-white p-1 text-xs font-semibold text-slate-500 shadow-sm">
+                <div className="grid grid-cols-2 rounded-lg border border-slate-700 bg-slate-950 p-1 text-xs font-semibold text-slate-400 shadow-sm">
                   <button
                     type="button"
                       className={`rounded-md px-3 py-2 transition ${
-                      mobileMode === "quick" ? "bg-slate-950 text-white shadow-sm" : ""
+                      mobileMode === "quick" ? "bg-cyan-300 text-slate-950 shadow-sm" : ""
                     }`}
                     onClick={() => setMobileMode("quick")}
                   >
@@ -189,7 +195,7 @@ export function TaskBackpack({
                   <button
                     type="button"
                       className={`rounded-md px-3 py-2 transition ${
-                      mobileMode === "custom" ? "bg-slate-950 text-white shadow-sm" : ""
+                      mobileMode === "custom" ? "bg-cyan-300 text-slate-950 shadow-sm" : ""
                     }`}
                     onClick={() => setMobileMode("custom")}
                   >
@@ -199,9 +205,9 @@ export function TaskBackpack({
 
                 {mobileMode === "quick" ? (
                   <div className="grid gap-3">
-                    <section className="rounded-2xl border border-white/70 bg-white/56 p-3">
-                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                        <Sparkles className="h-4 w-4 text-slate-500" />
+                    <section className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-100">
+                        <Sparkles className="h-4 w-4 text-slate-400" />
                         Presets
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -210,12 +216,12 @@ export function TaskBackpack({
                             key={preset.title}
                             type="button"
                             aria-label={`Add preset ${preset.title}`}
-                            className="min-h-20 rounded-2xl bg-white/86 p-3 text-left shadow-sm transition active:scale-[0.98]"
+                            className="min-h-20 rounded-lg border border-slate-800 bg-slate-900 p-3 text-left shadow-sm transition active:scale-[0.98]"
                             onClick={() => createAndSchedulePreset(preset)}
                             disabled={!canEdit}
                           >
-                            <span className="block text-sm font-semibold text-slate-950">{preset.title}</span>
-                            <span className="mt-1 block text-xs font-semibold text-slate-500">
+                            <span className="block text-sm font-semibold text-slate-50">{preset.title}</span>
+                            <span className="mt-1 block text-xs font-semibold text-slate-400">
                               {preset.module} - {preset.estimatedDurationMinutes}m
                             </span>
                           </button>
@@ -223,9 +229,9 @@ export function TaskBackpack({
                       </div>
                     </section>
 
-                    <section className="rounded-2xl border border-white/70 bg-white/46 p-3">
-                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                        <ListPlus className="h-4 w-4 text-slate-500" />
+                    <section className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-100">
+                        <ListPlus className="h-4 w-4 text-slate-400" />
                         Existing tasks
                       </div>
                       <div className="grid gap-2">
@@ -234,7 +240,7 @@ export function TaskBackpack({
                             key={task.id}
                             type="button"
                             aria-label={`Plan ${task.title} today`}
-                            className="flex items-center justify-between gap-3 rounded-2xl bg-white/78 px-3 py-2 text-left shadow-sm transition active:scale-[0.98]"
+                            className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-left shadow-sm transition active:scale-[0.98]"
                             onClick={() => {
                               onScheduleTask(task.id);
                               setOpen(false);
@@ -242,10 +248,10 @@ export function TaskBackpack({
                             disabled={!canEdit}
                           >
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold text-slate-950">{task.title}</span>
-                              <span className="block text-xs font-semibold text-slate-500">{task.module}</span>
+                              <span className="block truncate text-sm font-semibold text-slate-50">{task.title}</span>
+                              <span className="block text-xs font-semibold text-slate-400">{task.module}</span>
                             </span>
-                            <CalendarPlus className="h-4 w-4 shrink-0 text-slate-500" />
+                            <CalendarPlus className="h-4 w-4 shrink-0 text-slate-400" />
                           </button>
                         ))}
                       </div>
@@ -253,13 +259,13 @@ export function TaskBackpack({
                   </div>
                 ) : (
                   <div className="grid gap-3">
-                    <form className="rounded-2xl border border-white/70 bg-white/62 p-3" onSubmit={submitTask}>
+                    <form className="rounded-lg border border-slate-800 bg-slate-950/60 p-3" onSubmit={submitTask}>
                       <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">{editingTaskId ? "Edit task" : "Create task"}</h3>
+                        <h3 className="text-sm font-semibold text-slate-50">{editingTaskId ? "Edit task" : "Create task"}</h3>
                         <button
                           type="submit"
                           aria-label={editingTaskId ? "Save task" : "Add task"}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
                           disabled={!canEdit}
                         >
                           <Save className="h-3.5 w-3.5" />
@@ -279,13 +285,13 @@ export function TaskBackpack({
 
               <div className="fine-scrollbar hidden max-h-[62dvh] gap-3 overflow-y-auto p-3 sm:grid sm:max-h-[20rem] sm:gap-4 sm:p-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
                 <div className="flex flex-col gap-3">
-                  <form className="rounded-2xl border border-white/70 bg-white/62 p-3" onSubmit={submitTask}>
+                  <form className="rounded-lg border border-slate-800 bg-slate-950/60 p-3" onSubmit={submitTask}>
                     <div className="mb-3 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">{editingTaskId ? "Edit task" : "Create task"}</h3>
+                      <h3 className="text-sm font-semibold text-slate-50">{editingTaskId ? "Edit task" : "Create task"}</h3>
                       <button
                         type="submit"
                         aria-label={editingTaskId ? "Save task" : "Add task"}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
                         disabled={!canEdit}
                       >
                         <Save className="h-3.5 w-3.5" />
@@ -302,33 +308,56 @@ export function TaskBackpack({
                   </form>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {MODULES.map((module) => {
-                    const tasks = activeTasks.filter((task) => task.module === module);
-                    return (
-                      <section key={module} className="min-h-32 rounded-2xl border border-white/70 bg-white/46 p-3">
-                        <div className="mb-3 flex items-center justify-between">
-                          <h3 className="text-sm font-semibold">{module}</h3>
-                          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-500 shadow-sm">
-                            {tasks.length}
-                          </span>
-                        </div>
-                        <div className="grid gap-2">
-                          {tasks.map((task) => (
-                            <TaskCard
-                              key={task.id}
-                              task={task}
-                              disabled={!canEdit}
-                              onEdit={canEdit ? () => editTask(task) : undefined}
-                              onDelete={canEdit ? () => onDeleteTask(task.id) : undefined}
-                              onSchedule={canEdit ? () => onScheduleTask(task.id) : undefined}
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    );
-                  })}
-                </div>
+                <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/45 p-3">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-50">Task queue</h3>
+                      <p className="text-xs font-medium text-slate-400">
+                        {visibleTasks.length} shown / {activeTasks.length} total
+                      </p>
+                    </div>
+                    <div className="fine-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-1 text-xs font-semibold">
+                      <button
+                        type="button"
+                        className={`shrink-0 rounded-md px-2.5 py-1 transition ${
+                          moduleFilter === "All" ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+                        }`}
+                        onClick={() => setModuleFilter("All")}
+                      >
+                        All {activeTasks.length}
+                      </button>
+                      {MODULES.map((module) => {
+                        const count = activeTasks.filter((task) => task.module === module).length;
+                        return (
+                          <button
+                            key={module}
+                            type="button"
+                            className={`shrink-0 rounded-md px-2.5 py-1 transition ${
+                              moduleFilter === module ? "text-white" : "text-slate-400 hover:text-slate-100"
+                            }`}
+                            style={moduleFilter === module ? { backgroundColor: moduleTheme[module].color } : undefined}
+                            onClick={() => setModuleFilter(module)}
+                          >
+                            {module} {count}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
+                    {visibleTasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        disabled={!canEdit}
+                        onEdit={canEdit ? () => editTask(task) : undefined}
+                        onDelete={canEdit ? () => onDeleteTask(task.id) : undefined}
+                        onSchedule={canEdit ? () => onScheduleTask(task.id) : undefined}
+                      />
+                    ))}
+                  </div>
+                </section>
               </div>
           </div>
         ) : null}
@@ -358,14 +387,14 @@ function MobileTaskFormFields({
         value={form.title}
         onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
         placeholder="Task title"
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-400"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
         disabled={disabled}
       />
       <div className="grid grid-cols-2 gap-2">
         <select
           value={form.module}
           onChange={(event) => setForm((current) => ({ ...current, module: event.target.value as ModuleName }))}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none"
           disabled={disabled}
         >
           {MODULES.map((module) => (
@@ -375,7 +404,7 @@ function MobileTaskFormFields({
         <select
           value={form.priority}
           onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as Priority }))}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none"
           disabled={disabled}
         >
           {priorityOptions.map((priority) => (
@@ -394,12 +423,12 @@ function MobileTaskFormFields({
             estimatedDurationMinutes: Number(event.target.value),
           }))
         }
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none"
         disabled={disabled}
       />
       <button
         type="submit"
-        className="flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+        className="flex items-center justify-center gap-2 rounded-lg bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
         disabled={disabled}
       >
         <Save className="h-4 w-4" />

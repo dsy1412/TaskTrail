@@ -9,9 +9,9 @@ import { MODULES, type ModuleName, type PlannerState, type Priority, type Task }
 const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const priorityTone: Record<Priority, string> = {
-  High: "bg-rose-50 text-rose-700 border-rose-200",
-  Medium: "bg-amber-50 text-amber-700 border-amber-200",
-  Low: "bg-slate-100 text-slate-600 border-slate-200",
+  High: "border-rose-500/40 bg-rose-500/12 text-rose-200",
+  Medium: "border-amber-500/40 bg-amber-500/12 text-amber-200",
+  Low: "border-slate-500/40 bg-slate-700 text-slate-200",
 };
 
 export function PlanningCalendar({
@@ -79,28 +79,28 @@ export function PlanningCalendar({
 
   return (
     <section data-testid="planning-calendar-view" className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_24rem]">
-      <div className="glass-panel overflow-visible rounded-xl">
-        <div className="flex flex-col gap-4 border-b border-slate-200/80 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="glass-panel overflow-hidden rounded-xl">
+        <div className="flex flex-col gap-4 border-b border-slate-800 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-400">
               <CalendarRange className="h-4 w-4" />
               Month planning map
             </div>
             <div className="mt-1 flex flex-wrap items-end gap-x-4 gap-y-1">
-              <h2 className="text-2xl font-semibold tracking-normal text-slate-950">Planning Calendar</h2>
-              <p className="text-sm font-semibold text-slate-500">
+              <h2 className="text-2xl font-semibold tracking-normal text-slate-50">Planning Calendar</h2>
+              <p className="text-sm font-semibold text-slate-400">
                 {plannedDays} active days / {formatMinutes(totalMinutes)}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-950 p-1 shadow-sm">
               <button
                 type="button"
                 aria-label="Previous month"
                 title="Previous month"
-                className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+                className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-slate-50"
                 onClick={() => shiftMonth(-1)}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -109,7 +109,7 @@ export function PlanningCalendar({
                 type="button"
                 aria-label="Go to current month"
                 title="Current month"
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-slate-50"
                 onClick={jumpToToday}
               >
                 <LocateFixed className="h-3.5 w-3.5" />
@@ -119,13 +119,13 @@ export function PlanningCalendar({
                 type="button"
                 aria-label="Next month"
                 title="Next month"
-                className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+                className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-slate-50"
                 onClick={() => shiftMonth(1)}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm">
+            <div className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-100 shadow-sm">
               {month.label}
             </div>
           </div>
@@ -133,7 +133,7 @@ export function PlanningCalendar({
 
         <div className="fine-scrollbar overflow-x-auto px-3 pb-4 pt-3 lg:px-4">
           <div className="min-w-[64rem]">
-            <div className="grid grid-cols-7 gap-2 text-center text-[0.68rem] font-bold uppercase text-slate-400">
+            <div className="grid grid-cols-7 gap-2 text-center text-[0.68rem] font-bold uppercase text-slate-500">
               {weekdayLabels.map((label) => (
                 <span key={label}>{label}</span>
               ))}
@@ -147,7 +147,6 @@ export function PlanningCalendar({
                   today={today}
                   selectedDate={selectedDate}
                   blocks={blocksByDate.get(day.date) ?? []}
-                  blocksByDate={blocksByDate}
                   onSelectDate={onSelectDate}
                 />
               ))}
@@ -159,17 +158,17 @@ export function PlanningCalendar({
       <aside className="glass-panel rounded-xl p-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-400">
               <Layers3 className="h-4 w-4" />
               {selectedDate}
             </div>
-            <h3 className="mt-1 text-xl font-semibold text-slate-950">Day plan</h3>
+            <h3 className="mt-1 text-xl font-semibold text-slate-50">Day plan</h3>
           </div>
           <button
             type="button"
             aria-label="Open selected day in Today Canvas"
             title="Open in Today Canvas"
-            className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:text-slate-950"
+            className="rounded-lg border border-slate-700 bg-slate-950 p-2 text-slate-300 shadow-sm transition hover:text-slate-50"
             onClick={onOpenDay}
           >
             <Maximize2 className="h-4 w-4" />
@@ -186,12 +185,13 @@ export function PlanningCalendar({
             selectedBlocks.map((block) => (
               <div
                 key={block.id}
-                className={`rounded-lg border bg-white p-3 shadow-sm ${moduleTheme[block.module].border}`}
+                className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 shadow-sm"
+                style={{ borderLeftColor: moduleTheme[block.module].color, borderLeftWidth: 4 }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950">{block.title}</p>
-                    <p className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500">
+                    <p className="truncate text-sm font-semibold text-slate-50">{block.title}</p>
+                    <p className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-400">
                       <span
                         className="h-2.5 w-2.5 rounded-full"
                         style={{ backgroundColor: moduleTheme[block.module].color }}
@@ -203,21 +203,21 @@ export function PlanningCalendar({
                     {block.priority}
                   </span>
                 </div>
-                <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                   <Clock3 className="h-3.5 w-3.5" />
                   {block.timeSlot} / {formatMinutes(block.durationMinutes)}
                 </p>
               </div>
             ))
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm font-semibold text-slate-500">
+            <div className="rounded-lg border border-dashed border-slate-700 bg-slate-950/50 p-6 text-center text-sm font-semibold text-slate-400">
               No planned blocks on this day yet.
             </div>
           )}
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-bold uppercase text-slate-400">Month color lanes</p>
+          <p className="text-xs font-bold uppercase text-slate-500">Month color lanes</p>
           <div className="mt-3 space-y-2">
             {MODULES.map((module) => {
               const stat = moduleStats.find((item) => item.module === module);
@@ -227,14 +227,14 @@ export function PlanningCalendar({
 
               return (
                 <div key={module}>
-                  <div className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+                  <div className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold text-slate-300">
                     <span className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: moduleTheme[module].color }} />
                       {module}
                     </span>
-                    <span>{count}</span>
+                    <span className="text-slate-500">{count}</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-slate-800">
                     <div
                       className="h-full rounded-full"
                       style={{ width: `${width}%`, backgroundColor: moduleTheme[module].color }}
@@ -255,14 +255,12 @@ function CalendarDay({
   today,
   selectedDate,
   blocks,
-  blocksByDate,
   onSelectDate,
 }: {
   day: MonthDay;
   today: string;
   selectedDate: string;
   blocks: PlannedBlock[];
-  blocksByDate: Map<string, PlannedBlock[]>;
   onSelectDate: (date: string) => void;
 }) {
   const isSelected = selectedDate === day.date;
@@ -270,7 +268,6 @@ function CalendarDay({
   const dayMinutes = blocks.reduce((sum, block) => sum + block.durationMinutes, 0);
   const activeModules = new Set(blocks.map((block) => block.module));
   const topModules = [...activeModules].slice(0, 2);
-  const dayOfWeek = new Date(`${day.date}T00:00:00`).getDay();
 
   return (
     <button
@@ -278,50 +275,47 @@ function CalendarDay({
       data-testid={`planning-day-${day.date}`}
       aria-label={`Select ${day.date}`}
       onClick={() => onSelectDate(day.date)}
-      className={`relative min-h-[9.25rem] rounded-lg border bg-white p-2 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
-        isSelected ? "border-slate-950 shadow-lg" : blocks.length ? "border-slate-200 shadow-sm" : "border-slate-200/80"
+      className={`relative min-h-[9.25rem] rounded-lg border p-2 text-left transition hover:-translate-y-0.5 hover:shadow-xl ${
+        isSelected
+          ? "border-cyan-300 bg-slate-950 shadow-[0_0_0_1px_rgba(103,232,249,0.4)]"
+          : blocks.length
+            ? "border-slate-700 bg-slate-950/82"
+            : "border-slate-800 bg-slate-950/46"
       } ${day.isCurrentMonth ? "" : "opacity-35"}`}
     >
       <div className="flex items-start justify-between gap-1">
         <span
           className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold ${
-            isToday ? "bg-slate-950 text-white" : "text-slate-700"
+            isToday ? "bg-cyan-300 text-slate-950" : "text-slate-200"
           }`}
         >
           {day.dayOfMonth}
         </span>
         {blocks.length ? (
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[0.65rem] font-bold text-slate-600">
+          <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[0.65rem] font-bold text-slate-200">
             {formatMinutes(dayMinutes)}
           </span>
         ) : null}
       </div>
 
       <div className="mt-3 grid gap-1">
-        {MODULES.map((module) => {
-          const isActive = activeModules.has(module);
-          if (!isActive) return <span key={module} className="h-1.5" />;
-
-          const continuesFromPrevious = dayOfWeek !== 1 && hasModule(blocksByDate, offsetIsoDate(day.date, -1), module);
-          const continuesToNext = dayOfWeek !== 0 && hasModule(blocksByDate, offsetIsoDate(day.date, 1), module);
-
-          return (
-            <span
-              key={module}
-              className={`relative z-10 h-1.5 ${
-                continuesFromPrevious ? "-ml-4 rounded-l-none" : "rounded-l-full"
-              } ${continuesToNext ? "-mr-4 rounded-r-none" : "rounded-r-full"}`}
-              style={{ backgroundColor: moduleTheme[module].color }}
-              title={module}
-            />
-          );
-        })}
+        {MODULES.map((module) => (
+          <span
+            key={module}
+            className="h-1.5 rounded-full"
+            style={{
+              backgroundColor: activeModules.has(module) ? moduleTheme[module].color : "rgba(30, 41, 59, 0.72)",
+              opacity: activeModules.has(module) ? 1 : 0.55,
+            }}
+            title={module}
+          />
+        ))}
       </div>
 
       <div className="mt-3 space-y-1.5">
         {blocks.slice(0, 2).map((block) => (
-          <div key={block.id} className="min-w-0 rounded-md bg-slate-50 px-2 py-1">
-            <p className="truncate text-[0.72rem] font-semibold text-slate-900">{block.title}</p>
+          <div key={block.id} className="min-w-0 rounded-md bg-slate-900 px-2 py-1">
+            <p className="truncate text-[0.72rem] font-semibold text-slate-100">{block.title}</p>
             <p className="mt-0.5 text-[0.62rem] font-semibold text-slate-500">{block.timeSlot}</p>
           </div>
         ))}
@@ -339,7 +333,7 @@ function CalendarDay({
             </span>
           ))}
           {activeModules.size > 2 ? (
-            <span className="rounded-md bg-slate-200 px-1.5 py-0.5 text-[0.6rem] font-bold text-slate-700">
+            <span className="rounded-md bg-slate-700 px-1.5 py-0.5 text-[0.6rem] font-bold text-slate-200">
               +{activeModules.size - 2}
             </span>
           ) : null}
@@ -400,21 +394,11 @@ function summarizeModules(blocks: PlannedBlock[]) {
   return [...stats.values()].sort((left, right) => right.minutes - left.minutes);
 }
 
-function hasModule(blocksByDate: Map<string, PlannedBlock[]>, date: string, module: ModuleName) {
-  return Boolean(blocksByDate.get(date)?.some((block) => block.module === module));
-}
-
-function offsetIsoDate(date: string, offsetDays: number) {
-  const next = new Date(`${date}T00:00:00`);
-  next.setDate(next.getDate() + offsetDays);
-  return next.toISOString().slice(0, 10);
-}
-
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <p className="text-lg font-semibold text-slate-950">{value}</p>
-      <p className="text-[0.65rem] font-bold uppercase text-slate-400">{label}</p>
+    <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 shadow-sm">
+      <p className="text-lg font-semibold text-slate-50">{value}</p>
+      <p className="text-[0.65rem] font-bold uppercase text-slate-500">{label}</p>
     </div>
   );
 }

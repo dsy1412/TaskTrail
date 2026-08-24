@@ -187,24 +187,24 @@ export function PlannerApp() {
         onDragCancel={handleDragCancel}
       >
         <div className="mx-auto flex w-full max-w-[112rem] flex-col gap-4">
-          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-1">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+          <header className="grid gap-3 px-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-start">
+            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
                 <Sparkles className="h-4 w-4" />
                 Modular planning MVP
               </div>
-              <h1 className="mt-1 text-3xl font-semibold tracking-normal sm:text-4xl">TaskTrail</h1>
+              <h1 className="mt-1 text-3xl font-semibold tracking-normal text-slate-50 sm:text-4xl">TaskTrail</h1>
             </div>
 
-            <div className="flex flex-wrap justify-end gap-2 justify-self-end">
+            <div className="flex flex-wrap justify-end gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
               <InstallAppButton />
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
-            <div className="glass-panel col-span-2 grid w-full grid-cols-3 rounded-xl p-1 sm:col-start-2 sm:w-auto sm:justify-self-end">
+            <div className="glass-panel grid w-full grid-cols-3 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
               <button
                 type="button"
-                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
-                  view === "today" ? "bg-white shadow-soft" : "text-slate-500"
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "today" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
                 }`}
                 onClick={() => setView("today")}
               >
@@ -213,8 +213,8 @@ export function PlannerApp() {
               </button>
               <button
                 type="button"
-                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
-                  view === "calendar" ? "bg-white shadow-soft" : "text-slate-500"
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "calendar" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
                 }`}
                 onClick={() => setView("calendar")}
               >
@@ -223,8 +223,8 @@ export function PlannerApp() {
               </button>
               <button
                 type="button"
-                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
-                  view === "trail" ? "bg-white shadow-soft" : "text-slate-500"
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "trail" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
                 }`}
                 onClick={() => setView("trail")}
               >
@@ -334,7 +334,7 @@ function AuthControls({
 }) {
   if (authStatus === "loading") {
     return (
-      <div className="glass-panel inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-slate-500">
+      <div className="glass-panel inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold text-slate-400">
         <Cloud className="h-4 w-4" />
         <span className="hidden sm:inline">Checking sign-in</span>
         <span className="sm:hidden">Checking</span>
@@ -347,7 +347,7 @@ function AuthControls({
       <button
         type="button"
         aria-label="Sign in with Google"
-        className="inline-flex shrink-0 items-center justify-center gap-2 justify-self-end rounded-full bg-slate-950 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:px-4"
+        className="inline-flex shrink-0 items-center justify-center gap-2 justify-self-end rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-200 sm:px-4"
         onClick={() => void signIn("google")}
       >
         <LogIn className="h-4 w-4" />
@@ -358,15 +358,15 @@ function AuthControls({
   }
 
   return (
-    <div className="glass-panel flex max-w-full flex-wrap items-center justify-end gap-2 rounded-full px-3 py-2 text-xs font-semibold text-slate-500">
-      {syncStatus === "error" ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Cloud className="h-4 w-4" />}
+    <div className="glass-panel flex max-w-full flex-wrap items-center justify-end gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-400">
+      {syncStatus === "error" ? <AlertTriangle className="h-4 w-4 text-amber-300" /> : <Cloud className="h-4 w-4" />}
       <span className="hidden max-w-[11rem] truncate sm:inline">{email}</span>
       <span>{syncLabel(syncStatus)}</span>
       <button
         type="button"
         aria-label="Sign out"
         title="Sign out"
-        className="rounded-full bg-white p-1.5 text-slate-600 shadow-sm transition hover:text-slate-950"
+        className="rounded-md border border-slate-700 bg-slate-950 p-1.5 text-slate-300 shadow-sm transition hover:text-slate-50"
         onClick={() => void signOut()}
       >
         <LogOut className="h-3.5 w-3.5" />

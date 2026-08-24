@@ -9,7 +9,7 @@ import type { ScheduleBlock, Task } from "@/lib/types";
 
 export function TaskCardPreview({ task, block }: { task: Task; block?: ScheduleBlock }) {
   return (
-    <article className="rounded-2xl border border-white/70 bg-white/90 p-3 shadow-glass backdrop-blur-xl">
+    <article className="rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-glass">
       <TaskCardBody task={task} block={block} />
     </article>
   );
@@ -61,7 +61,7 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${variant === "scheduled" ? "absolute" : "relative"} rounded-lg border bg-white p-3 shadow-sm`}
+      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${variant === "scheduled" ? "absolute" : "relative"} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
     >
       <div className="flex items-start gap-2">
         {!disabled ? (
@@ -71,7 +71,7 @@ export function TaskCard({
             title="Drag"
             suppressHydrationWarning
             tabIndex={-1}
-            className="mt-0.5 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="mt-0.5 rounded-md p-1 text-slate-500 transition hover:bg-slate-800 hover:text-slate-200"
           >
             <GripVertical className="h-4 w-4" />
           </button>
@@ -82,7 +82,7 @@ export function TaskCard({
             <button
               type="button"
               aria-label={`Schedule ${task.title} today`}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
@@ -102,7 +102,7 @@ export function TaskCard({
             type="button"
             aria-label="Edit task"
             title="Edit"
-            className="rounded-full bg-white p-1.5 text-slate-500 shadow-sm transition hover:text-slate-950"
+            className="rounded-md border border-slate-700 bg-slate-950 p-1.5 text-slate-400 shadow-sm transition hover:text-slate-100"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
@@ -117,7 +117,7 @@ export function TaskCard({
             type="button"
             aria-label="Delete task"
             title="Delete"
-            className="rounded-full bg-white p-1.5 text-slate-500 shadow-sm transition hover:text-rose-600"
+            className="rounded-md border border-slate-700 bg-slate-950 p-1.5 text-slate-400 shadow-sm transition hover:text-rose-300"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
@@ -136,21 +136,22 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
   return (
     <>
       <div className="flex items-start justify-between gap-2">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950">{task.title}</h3>
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-50">{task.title}</h3>
         <span
-          className={`shrink-0 rounded-md border px-2 py-0.5 text-[0.68rem] font-semibold ${moduleTheme[task.module].soft} ${moduleTheme[task.module].text} ${moduleTheme[task.module].border}`}
+          className="shrink-0 rounded-md px-2 py-0.5 text-[0.68rem] font-bold text-white"
+          style={{ backgroundColor: moduleTheme[task.module].color }}
         >
           {task.module}
         </span>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.72rem] font-medium text-slate-500">
-        <span className="rounded-full bg-slate-100 px-2 py-0.5">{task.priority}</span>
-        <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.72rem] font-medium text-slate-400">
+        <span className="rounded-md bg-slate-800 px-2 py-0.5">{task.priority}</span>
+        <span className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-0.5">
           <Clock className="h-3 w-3" />
           {block?.durationMinutes ?? task.estimatedDurationMinutes}m
         </span>
       </div>
-      {task.notes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{task.notes}</p> : null}
+      {task.notes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{task.notes}</p> : null}
     </>
   );
 }

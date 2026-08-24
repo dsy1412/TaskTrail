@@ -109,6 +109,11 @@ export function PlannerApp() {
     setDraftColumnCount(1);
   }
 
+  function selectDate(date: string) {
+    setSelectedDate(date);
+    setDraftColumnCount(1);
+  }
+
   function returnToToday() {
     setSelectedDate(todayIsoDate());
     setDraftColumnCount(1);
@@ -237,6 +242,7 @@ export function PlannerApp() {
                   onPreviousDay={() => changeSelectedDate(-1)}
                   onNextDay={() => changeSelectedDate(1)}
                   onToday={returnToToday}
+                  onSelectDate={selectDate}
                   onDeleteBlock={planner.deleteScheduleBlock}
                   canEdit={canEdit}
                 />
@@ -249,7 +255,7 @@ export function PlannerApp() {
               state={planner.state}
               tasksById={planner.tasksById}
               selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
+              onSelectDate={selectDate}
               onOpenDay={() => setView("today")}
             />
           ) : null}

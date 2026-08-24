@@ -16,6 +16,7 @@ export function TodayCanvas({
   onPreviousDay,
   onNextDay,
   onToday,
+  onSelectDate,
   onDeleteBlock,
   canEdit,
 }: {
@@ -27,6 +28,7 @@ export function TodayCanvas({
   onPreviousDay: () => void;
   onNextDay: () => void;
   onToday: () => void;
+  onSelectDate: (date: string) => void;
   onDeleteBlock: (blockId: string) => void;
   canEdit: boolean;
 }) {
@@ -71,6 +73,18 @@ export function TodayCanvas({
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
+            <label className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-300 shadow-sm transition focus-within:border-cyan-300 focus-within:text-slate-50">
+              <Calendar className="h-3.5 w-3.5" />
+              <input
+                type="date"
+                aria-label="Jump to date"
+                value={date}
+                onChange={(event) => {
+                  if (event.target.value) onSelectDate(event.target.value);
+                }}
+                className="min-w-[7.5rem] bg-transparent text-slate-100 outline-none [color-scheme:dark]"
+              />
+            </label>
           </div>
           <h2 className="mt-1 text-xl font-semibold tracking-normal text-slate-50 sm:text-2xl">Today Canvas</h2>
         </div>

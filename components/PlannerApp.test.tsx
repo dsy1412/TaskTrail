@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -118,7 +118,7 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-26");
   });
 
-  it("switches the canvas date with previous, today, and next controls", async () => {
+  it("switches the canvas date with previous, today, next, and direct jump controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<PlannerApp />);
@@ -134,6 +134,9 @@ describe("PlannerApp", () => {
     await user.click(screen.getByRole("button", { name: "Next day" }));
     await user.click(screen.getByRole("button", { name: "Go to today" }));
     expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-26");
+
+    fireEvent.change(screen.getByLabelText("Jump to date"), { target: { value: "2026-05-03" } });
+    expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-05-03");
   });
 
   it("derives priority columns from the selected date and shrinks on an empty day", async () => {

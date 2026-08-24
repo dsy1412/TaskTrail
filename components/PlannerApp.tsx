@@ -11,7 +11,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, CalendarDays, CalendarRange, Cloud, LogIn, LogOut, Route, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarDays, CalendarRange, Cloud, LockKeyhole, LogIn, LogOut, Route, Sparkles } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TaskBackpack } from "@/components/TaskBackpack";
@@ -168,26 +168,12 @@ export function PlannerApp() {
     setDraftColumnCount(1);
   }
 
-  if (!hasMounted) {
-    return (
-      <main className="min-h-screen px-3 pb-[calc(48dvh+2rem)] pt-4 text-ink sm:px-6 sm:pb-[25rem] lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5">
-          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[2rem] px-1">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                <Sparkles className="h-4 w-4" />
-                Modular planning MVP
-              </div>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-5xl">TaskTrail</h1>
-            </div>
-            <div className="glass-panel justify-self-end rounded-full px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4">
-              <span className="sm:hidden">Loading</span>
-              <span className="hidden sm:inline">Loading workspace</span>
-            </div>
-          </header>
-        </div>
-      </main>
-    );
+  if (!hasMounted || authStatus === "loading") {
+    return <PrivateAccessScreen mode="checking" />;
+  }
+
+  if (!canEdit) {
+    return <PrivateAccessScreen mode="sign-in" />;
   }
 
   return (
@@ -299,6 +285,40 @@ export function PlannerApp() {
           {activeDragPreview ? <div className="w-80 max-w-[80vw]">{activeDragPreview}</div> : null}
         </DragOverlay>
       </DndContext>
+    </main>
+  );
+}
+
+function PrivateAccessScreen({ mode }: { mode: "checking" | "sign-in" }) {
+  const isChecking = mode === "checking";
+
+  return (
+    <main className="grid min-h-screen place-items-center px-4 py-8 text-ink">
+      <section className="glass-panel w-full max-w-md rounded-[2rem] p-6 shadow-soft sm:p-8">
+        <div className="mb-5 inline-flex rounded-full bg-white p-3 text-slate-700 shadow-sm">
+          {isChecking ? <Cloud className="h-5 w-5" /> : <LockKeyhole className="h-5 w-5" />}
+        </div>
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+          <Sparkles className="h-4 w-4" />
+          Private planner
+        </div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-4xl">TaskTrail</h1>
+        <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+          {isChecking
+            ? "Checking your signed-in account."
+            : "Sign in with your approved Google account to open your daily tasks and planning trail."}
+        </p>
+        <button
+          type="button"
+          aria-label="Sign in with Google"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-wait disabled:bg-slate-500"
+          onClick={() => void signIn("google")}
+          disabled={isChecking}
+        >
+          <LogIn className="h-4 w-4" />
+          {isChecking ? "Checking" : "Sign in with Google"}
+        </button>
+      </section>
     </main>
   );
 }

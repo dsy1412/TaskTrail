@@ -30,9 +30,9 @@ Project settings are tracked in `vercel.json`:
 - Build command: `npm run build`
 - Development command: `npm run dev`
 
-### Login and Sync
+### Private Login and Sync
 
-TaskTrail uses Google sign-in for edit mode. Visitors who are not signed in see a read-only preview, and write actions are disabled. After signing in, planner data is loaded and saved through `/api/planner-state`, keyed by the Google account email on the server.
+TaskTrail uses Google sign-in and is intended to run as a private planner. Visitors who are not signed in only see a private sign-in screen. After signing in, planner data is loaded and saved through `/api/planner-state`, keyed by the Google account email on the server.
 
 Required Vercel environment variables:
 
@@ -40,6 +40,9 @@ Required Vercel environment variables:
 - `NEXTAUTH_SECRET`: random secret for NextAuth session signing
 - `GOOGLE_CLIENT_ID`: Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+- `TASKTRAIL_ALLOWED_EMAILS`: comma-separated Google account emails that can use the app, for example `you@example.com`
+
+If `TASKTRAIL_ALLOWED_EMAILS` is empty, any authenticated Google account can sign in. Set it in production to keep the app private.
 
 For durable cross-device sync, attach Vercel KV or Upstash Redis and set one of these variable pairs:
 
@@ -88,6 +91,8 @@ TaskTrail is also installable as a PWA:
 - Android Chrome: open the production site, tap the browser menu, then tap Install app or Add to Home screen.
 
 The installed app opens in a standalone mobile window and keeps the same Google sign-in and sync behavior as the website.
+
+When a new version is deployed, the installed mobile PWA keeps using the same production URL and service worker. It will pick up code and UI updates after reopening or refreshing the app, while task data syncs through the signed-in Google account and `/api/planner-state`.
 
 ## Backend Plan
 

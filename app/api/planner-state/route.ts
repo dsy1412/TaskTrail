@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { authOptions, isAllowedPlannerEmail } from "@/lib/auth";
 import { isPlannerState } from "@/lib/plannerStateSchema";
 import { createSeedState } from "@/lib/storage";
 import { readUserPlannerState, writeUserPlannerState } from "@/lib/server/plannerStateStore";
@@ -8,21 +8,21 @@ import { readUserPlannerState, writeUserPlannerState } from "@/lib/server/planne
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const email = await signedInEmail();
+  const auth = await authorizedEmail();
 
-  if (!email) {
-    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  if (auth.response) {
+    return auth.response;
   }
 
-  const state = await readUserPlannerState(email);
+  const state = await readUserPlannerState(auth.email);
   return NextResponse.json({ state: state ?? createSeedState(), persisted: Boolean(state) });
 }
 
 export async function PUT(request: Request) {
-  const email = await signedInEmail();
+  const auth = await authorizedEmail();
 
-  if (!email) {
-    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  if (auth.response) {
+    return auth.response;
   }
 
   const body = (await request.json()) as { state?: unknown };
@@ -31,11 +31,23 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid planner state" }, { status: 400 });
   }
 
-  await writeUserPlannerState(email, body.state);
+  await writeUserPlannerState(auth.email, body.state);
   return NextResponse.json({ ok: true });
 }
 
-async function signedInEmail() {
+async function authorizedEmail(): Promise<
+  { email: string; response?: never } | { email?: never; response: NextResponse }
+> {
   const session = await getServerSession(authOptions);
-  return session?.user?.email ?? null;
+  const email = session?.user?.email;
+
+  if (!email) {
+    return { response: NextResponse.json({ error: "Sign in required" }, { status: 401 }) };
+  }
+
+  if (!isAllowedPlannerEmail(email)) {
+    return { response: NextResponse.json({ error: "This account is not allowed to use TaskTrail" }, { status: 403 }) };
+  }
+
+  return { email };
 }

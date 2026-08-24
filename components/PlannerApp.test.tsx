@@ -45,7 +45,7 @@ describe("PlannerApp", () => {
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();
   });
 
-  it("shows a top-right Google sign-in action when signed out", async () => {
+  it("shows a private sign-in screen when signed out", async () => {
     authMock.useSession.mockReturnValue({
       data: null,
       status: "unauthenticated",
@@ -57,7 +57,8 @@ describe("PlannerApp", () => {
     await user.click(await screen.findByRole("button", { name: "Sign in with Google" }));
 
     expect(authMock.signIn).toHaveBeenCalledWith("google");
-    expect(screen.getByText("Read-only preview")).toBeVisible();
+    expect(screen.getByText("Private planner")).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Today Canvas" })).not.toBeInTheDocument();
   });
 
   it("shows an install action when the browser exposes a PWA install prompt", async () => {

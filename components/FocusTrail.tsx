@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Activity, Database, GitBranch } from "lucide-react";
+import { Activity, GitBranch } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MonthActivityCalendar } from "@/components/MonthActivityCalendar";
 import { TrailRow } from "@/components/TrailRow";
@@ -61,34 +60,7 @@ export function FocusTrail({ state }: { state: PlannerState }) {
         </div>
       </section>
 
-      <div className="grid gap-5">
-        <WeeklyMonthlySummary state={state} />
-        <section className="glass-panel rounded-[2rem] p-5">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-500">
-            <Database className="h-4 w-4" />
-            Event log
-          </div>
-          <div className="fine-scrollbar max-h-80 space-y-2 overflow-y-auto pr-1">
-            {state.events
-              .slice()
-              .reverse()
-              .slice(0, 12)
-              .map((event) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl bg-white/62 p-3"
-                >
-                  <p className="text-xs font-semibold text-slate-950">{event.type}</p>
-                  <p className="mt-1 text-[0.7rem] font-medium text-slate-500">
-                    {new Date(event.createdAt).toLocaleString()}
-                  </p>
-                </motion.div>
-              ))}
-          </div>
-        </section>
-      </div>
+      <WeeklyMonthlySummary state={state} />
     </div>
   );
 }

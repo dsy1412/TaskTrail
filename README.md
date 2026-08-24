@@ -51,18 +51,6 @@ For durable cross-device sync, attach Vercel KV or Upstash Redis and set one of 
 
 Without KV/Upstash variables, local development falls back to in-memory server storage. That is useful for testing the login flow, but it is not persistent across server restarts or Vercel instances.
 
-## Activity Log
-
-TaskTrail keeps an event log in LocalStorage:
-
-- `TASK_CREATED`
-- `TASK_SCHEDULED`
-- `TASK_MOVED`
-- `TASK_DELETED`
-- `TASK_UPDATED`
-
-Scheduled blocks and task deletions are soft-deleted, so history is preserved. Scheduling, moving, deleting, or editing a task updates LocalStorage immediately.
-
 ## Mobile Use
 
 TaskTrail is mobile-first for personal use. The Today Canvas and Planning Calendar scroll horizontally when they need more width, and the Task Backpack behaves like a compact bottom sheet with its own scroll area.

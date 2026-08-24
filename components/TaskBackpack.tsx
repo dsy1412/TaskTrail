@@ -410,6 +410,16 @@ function MobileTaskFormFields({
         className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
         disabled={disabled}
       />
+      <textarea
+        name="notes"
+        value={form.notes}
+        onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+        placeholder="Notes"
+        aria-label="Task notes"
+        rows={3}
+        className="min-h-20 resize-none rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm leading-5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
+        disabled={disabled}
+      />
       <div className="grid grid-cols-2 gap-2">
         <select
           value={form.module}

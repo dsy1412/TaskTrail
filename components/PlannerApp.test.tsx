@@ -80,17 +80,19 @@ describe("PlannerApp", () => {
     expect(prompt).toHaveBeenCalled();
   });
 
-  it("creates a backpack task and records it in the visible module group", async () => {
+  it("creates a backpack task with notes and records it in the visible module group", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<PlannerApp />);
 
     await user.type(await screen.findByPlaceholderText("Task title"), "Write integration tests");
+    await user.type(screen.getByPlaceholderText("Notes"), "Cover the drag and schedule flows.");
     await user.click(screen.getAllByRole("button", { name: "Add task" })[0]);
 
     await waitFor(() => {
       expect(screen.getByText("Write integration tests")).toBeVisible();
     });
+    expect(screen.getByText("Cover the drag and schedule flows.")).toBeVisible();
   });
 
   it("focuses the task title when Add is clicked without a title", async () => {

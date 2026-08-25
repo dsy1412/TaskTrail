@@ -1,6 +1,7 @@
 import { addDaysIso, todayIsoDate } from "@/lib/date";
 import { withCourseSchedule } from "@/lib/courseSchedule";
 import { withFall2026EventSchedule } from "@/lib/eventSchedule";
+import { withFall2026LabSemesterPlan } from "@/lib/semesterPlan";
 import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
@@ -238,7 +239,9 @@ export function timestamp() {
 }
 
 export function withDefaultSchedules(state: PlannerState) {
-  return normalizePlannerState(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state))));
+  return normalizePlannerState(
+    withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+  );
 }
 
 export function normalizePlannerState(state: PlannerState): PlannerState {

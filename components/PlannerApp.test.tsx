@@ -285,6 +285,26 @@ describe("PlannerApp", () => {
     expect(screen.getAllByText("DDL 2026-09-16").length).toBeGreaterThan(0);
   });
 
+  it("imports the Fall 2026 lab semester plan into the queue and calendar", async () => {
+    vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    expect((await screen.findAllByText("Semester lab plan: Gu + WAVES roadmap")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Jiatao Gu: paper map + pitch angle").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("WAVES Lab: RF/acoustic/vision paper map").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-08-30").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "Calendar" }));
+    await user.click(await screen.findByRole("button", { name: "Next month" }));
+    await user.click(await screen.findByRole("button", { name: "Open 2026-09-10 in Today Canvas" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getAllByText("Jiatao Gu: multimodal foundation mini result").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-09-20").length).toBeGreaterThan(0);
+  });
+
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();

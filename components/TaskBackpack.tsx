@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus, ChevronDown, ChevronUp, Clock3, ListPlus, Plus, Save, Sparkles, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock3, Plus, Save, Zap } from "lucide-react";
 import { type Dispatch, FormEvent, type RefObject, type SetStateAction, useMemo, useRef, useState } from "react";
 import { TaskCard } from "@/components/TaskCard";
 import { durationToMinutes, durationUnitMinutes, formatDuration, type DurationUnit } from "@/lib/duration";
@@ -40,41 +40,6 @@ const durationUnits: Array<{ value: DurationUnit; label: string }> = [
   { value: "months", label: "months" },
 ];
 
-const quickTaskPresets: Array<typeof defaultForm> = [
-  {
-    title: "Deep work block",
-    module: "Project",
-    priority: "High",
-    estimatedDurationMinutes: 90,
-    notes: "One focused output, no context switching.",
-    queued: true,
-  },
-  {
-    title: "Study review",
-    module: "Study",
-    priority: "Medium",
-    estimatedDurationMinutes: 60,
-    notes: "Review notes and extract next actions.",
-    queued: true,
-  },
-  {
-    title: "Workout",
-    module: "Health",
-    priority: "Medium",
-    estimatedDurationMinutes: 45,
-    notes: "Keep the habit alive.",
-    queued: true,
-  },
-  {
-    title: "Career outreach",
-    module: "Career",
-    priority: "High",
-    estimatedDurationMinutes: 40,
-    notes: "Send one clear message.",
-    queued: true,
-  },
-];
-
 export function TaskBackpack({
   state,
   onCreateTask,
@@ -95,7 +60,6 @@ export function TaskBackpack({
   canEdit: boolean;
 }) {
   const [open, setOpen] = useState(true);
-  const [mobileMode, setMobileMode] = useState<"quick" | "custom">("quick");
   const [moduleFilter, setModuleFilter] = useState<ModuleName | "All">("All");
   const [form, setForm] = useState(defaultForm);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -136,14 +100,12 @@ export function TaskBackpack({
   function focusCreateTask() {
     if (!canEdit) return;
     setOpen(true);
-    setMobileMode("custom");
     window.setTimeout(() => titleInputRef.current?.focus(), 0);
   }
 
   function editTask(task: Task) {
     if (!canEdit) return;
     setOpen(true);
-    setMobileMode("custom");
     setEditingTaskId(task.id);
     setForm({
       title: task.title,
@@ -153,13 +115,6 @@ export function TaskBackpack({
       notes: task.notes,
       queued: task.queued ?? true,
     });
-  }
-
-  function createAndSchedulePreset(preset: typeof defaultForm) {
-    if (!canEdit) return;
-    onCreateAndScheduleTask({ ...preset, queued: false });
-    setOpen(false);
-    setMobileMode("quick");
   }
 
   return (
@@ -207,110 +162,7 @@ export function TaskBackpack({
 
         {open ? (
           <div className="overflow-hidden">
-              <div className="fine-scrollbar grid max-h-[48dvh] gap-3 overflow-y-auto p-3 sm:hidden">
-                <div className="grid grid-cols-2 rounded-lg border border-slate-700 bg-slate-950 p-1 text-xs font-semibold text-slate-400 shadow-sm">
-                  <button
-                    type="button"
-                      className={`rounded-md px-3 py-2 transition ${
-                      mobileMode === "quick" ? "bg-cyan-300 text-slate-950 shadow-sm" : ""
-                    }`}
-                    onClick={() => setMobileMode("quick")}
-                  >
-                    Quick
-                  </button>
-                  <button
-                    type="button"
-                      className={`rounded-md px-3 py-2 transition ${
-                      mobileMode === "custom" ? "bg-cyan-300 text-slate-950 shadow-sm" : ""
-                    }`}
-                    onClick={() => setMobileMode("custom")}
-                  >
-                    Custom
-                  </button>
-                </div>
-
-                {mobileMode === "quick" ? (
-                  <div className="grid gap-3">
-                    <section className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-100">
-                        <Sparkles className="h-4 w-4 text-slate-400" />
-                        Presets
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {quickTaskPresets.map((preset) => (
-                          <button
-                            key={preset.title}
-                            type="button"
-                            aria-label={`Add preset ${preset.title}`}
-                            className="min-h-20 rounded-lg border border-slate-800 bg-slate-900 p-3 text-left shadow-sm transition active:scale-[0.98]"
-                            onClick={() => createAndSchedulePreset(preset)}
-                            disabled={!canEdit}
-                          >
-                            <span className="block text-sm font-semibold text-slate-50">{preset.title}</span>
-                            <span className="mt-1 block text-xs font-semibold text-slate-400">
-                              {preset.module} - {formatDuration(preset.estimatedDurationMinutes)}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-
-                    <section className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-100">
-                        <ListPlus className="h-4 w-4 text-slate-400" />
-                        Existing tasks
-                      </div>
-                      <div className="grid gap-2">
-                        {activeTasks.slice(0, 5).map((task) => (
-                          <button
-                            key={task.id}
-                            type="button"
-                            aria-label={`Plan ${task.title} today`}
-                            className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-left shadow-sm transition active:scale-[0.98]"
-                            onClick={() => {
-                              onScheduleTask(task.id);
-                              setOpen(false);
-                            }}
-                            disabled={!canEdit}
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold text-slate-50">{task.title}</span>
-                              <span className="block text-xs font-semibold text-slate-400">{task.module}</span>
-                            </span>
-                            <CalendarPlus className="h-4 w-4 shrink-0 text-slate-400" />
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  </div>
-                ) : (
-                  <div className="grid gap-3">
-                    <form className="rounded-lg border border-slate-800 bg-slate-950/60 p-3" onSubmit={submitTask}>
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-slate-50">{editingTaskId ? "Edit task" : "Create task"}</h3>
-                        <button
-                          type="submit"
-                          aria-label={editingTaskId ? "Save task" : "Add task"}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200"
-                          disabled={!canEdit}
-                        >
-                          <Save className="h-3.5 w-3.5" />
-                          {editingTaskId ? "Save" : form.queued ? "Add" : "Add once"}
-                        </button>
-                      </div>
-                      <MobileTaskFormFields
-                        form={form}
-                        setForm={setForm}
-                        titleInputRef={titleInputRef}
-                        disabled={!canEdit}
-                        submitLabel={editingTaskId ? "Save task" : form.queued ? "Add task" : "Add once today"}
-                      />
-                    </form>
-                  </div>
-                )}
-              </div>
-
-              <div className="fine-scrollbar hidden max-h-[62dvh] gap-3 overflow-y-auto p-3 sm:grid sm:max-h-[20rem] sm:gap-4 sm:p-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+              <div className="fine-scrollbar grid max-h-[70dvh] gap-3 overflow-y-auto p-3 sm:max-h-[20rem] sm:gap-4 sm:p-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
                 <div className="flex flex-col gap-3">
                   <form className="rounded-lg border border-slate-800 bg-slate-950/60 p-3" onSubmit={submitTask}>
                     <div className="mb-3 flex items-center justify-between">
@@ -325,7 +177,7 @@ export function TaskBackpack({
                         {editingTaskId ? "Save" : form.queued ? "Add" : "Add once"}
                       </button>
                     </div>
-                    <MobileTaskFormFields
+                    <TaskFormFields
                       form={form}
                       setForm={setForm}
                       titleInputRef={titleInputRef}
@@ -411,7 +263,7 @@ export function TaskBackpack({
   );
 }
 
-function MobileTaskFormFields({
+function TaskFormFields({
   form,
   setForm,
   titleInputRef,

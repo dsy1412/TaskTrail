@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Clock3, Plus, Save, Zap } from "lucide-react";
-import { type Dispatch, FormEvent, type RefObject, type SetStateAction, useMemo, useRef, useState } from "react";
+import { CalendarDays, ChevronDown, ChevronUp, Clock3, LocateFixed, Plus, Save, Zap } from "lucide-react";
+import { type Dispatch, FormEvent, type RefObject, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { TaskCard } from "@/components/TaskCard";
+import { addDaysIso, formatFriendlyDate, todayIsoDate } from "@/lib/date";
 import { durationToMinutes, durationUnitMinutes, formatDuration, type DurationUnit } from "@/lib/duration";
 import { moduleTheme } from "@/lib/moduleTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
@@ -48,6 +49,8 @@ export function TaskBackpack({
   onDeleteTask,
   onScheduleTask,
   onScheduleTaskOnce,
+  selectedDate,
+  onSelectDate,
   canEdit,
 }: {
   state: PlannerState;
@@ -55,14 +58,17 @@ export function TaskBackpack({
   onCreateAndScheduleTask: (input: typeof defaultForm) => void;
   onUpdateTask: (taskId: string, patch: Partial<Omit<Task, "id" | "createdAt">>) => void;
   onDeleteTask: (taskId: string) => void;
-  onScheduleTask: (taskId: string) => void;
-  onScheduleTaskOnce: (taskId: string) => void;
+  onScheduleTask: (taskId: string, date?: string) => void;
+  onScheduleTaskOnce: (taskId: string, date?: string) => void;
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
   canEdit: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const [moduleFilter, setModuleFilter] = useState<ModuleName | "All">("All");
   const [form, setForm] = useState(defaultForm);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [scheduleDate, setScheduleDate] = useState(selectedDate);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTasks = useMemo(
@@ -73,6 +79,18 @@ export function TaskBackpack({
     () => (moduleFilter === "All" ? activeTasks : activeTasks.filter((task) => task.module === moduleFilter)),
     [activeTasks, moduleFilter],
   );
+  const today = todayIsoDate();
+  const tomorrow = addDaysIso(today, 1);
+  const scheduleLabel = scheduleDate === today ? "Today" : formatFriendlyDate(scheduleDate);
+
+  useEffect(() => {
+    setScheduleDate(selectedDate);
+  }, [selectedDate]);
+
+  function chooseScheduleDate(date: string) {
+    setScheduleDate(date);
+    onSelectDate(date);
+  }
 
   function submitTask(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -188,12 +206,52 @@ export function TaskBackpack({
                 </div>
 
                 <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/45 p-3">
-                  <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(38rem,0.9fr)] xl:items-end">
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-50">Task queue</h3>
-                      <p className="text-xs font-medium text-slate-400">
-                        {visibleTasks.length} shown / {activeTasks.length} total
-                      </p>
+                  <div className="mb-3 grid gap-3">
+                    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-50">Task queue</h3>
+                        <p className="text-xs font-medium text-slate-400">
+                          {visibleTasks.length} shown / {activeTasks.length} total
+                        </p>
+                      </div>
+                      <div className="grid gap-2 rounded-xl border border-slate-800 bg-slate-950 p-2 sm:grid-cols-[auto_auto_auto] sm:items-center">
+                        <label className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-300 transition focus-within:border-cyan-300 focus-within:text-slate-50">
+                          <CalendarDays className="h-4 w-4 text-cyan-300" />
+                          <span className="hidden sm:inline">Plan date</span>
+                          <input
+                            type="date"
+                            aria-label="Backpack schedule date"
+                            value={scheduleDate}
+                            onChange={(event) => {
+                              if (event.target.value) chooseScheduleDate(event.target.value);
+                            }}
+                            className="min-w-0 bg-transparent text-slate-100 outline-none [color-scheme:dark]"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                            scheduleDate === today
+                              ? "bg-cyan-300 text-slate-950"
+                              : "border border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-50"
+                          }`}
+                          onClick={() => chooseScheduleDate(today)}
+                        >
+                          <LocateFixed className="h-3.5 w-3.5" />
+                          Today
+                        </button>
+                        <button
+                          type="button"
+                          className={`inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                            scheduleDate === tomorrow
+                              ? "bg-cyan-300 text-slate-950"
+                              : "border border-slate-700 bg-slate-900 text-slate-300 hover:text-slate-50"
+                          }`}
+                          onClick={() => chooseScheduleDate(tomorrow)}
+                        >
+                          Tomorrow
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-800 bg-slate-950 p-1.5 text-xs font-semibold sm:grid-cols-4 xl:grid-cols-7">
                       <button
@@ -249,8 +307,9 @@ export function TaskBackpack({
                         disabled={!canEdit}
                         onEdit={canEdit ? () => editTask(task) : undefined}
                         onDelete={canEdit ? () => onDeleteTask(task.id) : undefined}
-                        onSchedule={canEdit ? () => onScheduleTask(task.id) : undefined}
-                        onScheduleOnce={canEdit ? () => onScheduleTaskOnce(task.id) : undefined}
+                        onSchedule={canEdit ? () => onScheduleTask(task.id, scheduleDate) : undefined}
+                        onScheduleOnce={canEdit ? () => onScheduleTaskOnce(task.id, scheduleDate) : undefined}
+                        scheduleLabel={scheduleLabel}
                       />
                     ))}
                   </div>

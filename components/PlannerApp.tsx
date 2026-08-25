@@ -72,15 +72,17 @@ export function PlannerApp() {
     return null;
   }, [activeDragId, planner.state.scheduleBlocks, planner.tasksById]);
 
-  function quickScheduleTask(taskId: string) {
+  function quickScheduleTask(taskId: string, date = selectedDate) {
     if (!canEdit) return;
-    planner.scheduleTask(taskId, getNextOpenScheduleSlot());
+    planner.scheduleTask(taskId, getNextOpenScheduleSlot(date));
+    selectDate(date);
     setView("today");
   }
 
-  function quickScheduleTaskOnce(taskId: string) {
+  function quickScheduleTaskOnce(taskId: string, date = selectedDate) {
     if (!canEdit) return;
-    planner.scheduleTaskOnce(taskId, getNextOpenScheduleSlot());
+    planner.scheduleTaskOnce(taskId, getNextOpenScheduleSlot(date));
+    selectDate(date);
     setView("today");
   }
 
@@ -97,15 +99,15 @@ export function PlannerApp() {
     setView("today");
   }
 
-  function getNextOpenScheduleSlot() {
+  function getNextOpenScheduleSlot(date = selectedDate) {
     const occupied = new Set(
       planner.state.scheduleBlocks
-        .filter((block) => !block.deletedAt && block.date === selectedDate && block.columnIndex === 0)
+        .filter((block) => !block.deletedAt && block.date === date && block.columnIndex === 0)
         .map((block) => block.timeSlot),
     );
     const timeSlot = TIME_SLOTS.find((slot) => !occupied.has(slot)) ?? TIME_SLOTS[0];
     return {
-      date: selectedDate,
+      date,
       timeSlot,
       columnIndex: 0,
     };
@@ -277,6 +279,8 @@ export function PlannerApp() {
           onDeleteTask={planner.deleteTask}
           onScheduleTask={quickScheduleTask}
           onScheduleTaskOnce={quickScheduleTaskOnce}
+          selectedDate={selectedDate}
+          onSelectDate={selectDate}
           canEdit={canEdit}
         />
         <DragOverlay dropAnimation={null} zIndex={100}>

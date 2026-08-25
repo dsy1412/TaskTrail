@@ -235,6 +235,31 @@ describe("PlannerApp", () => {
     });
   });
 
+  it("schedules a backpack task onto a picked date without mobile drag and drop", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    fireEvent.change(await screen.findByLabelText("Backpack schedule date"), {
+      target: { value: "2026-05-03" },
+    });
+
+    expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-05-03");
+    expect(screen.queryAllByTestId("scheduled-task-card")).toHaveLength(0);
+
+    const scheduleButton = screen
+      .getAllByRole("button", { name: /Schedule Portfolio outreach/i })
+      .find((button) => !button.getAttribute("aria-label")?.includes("once"));
+
+    expect(scheduleButton).toBeDefined();
+    await user.click(scheduleButton!);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-05-03");
+      expect(screen.getAllByTestId("scheduled-task-card").length).toBe(1);
+    });
+  });
+
   it("removes a scheduled task with the enlarged schedule remove action", async () => {
     localStorage.clear();
     const user = userEvent.setup();

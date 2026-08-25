@@ -26,6 +26,7 @@ export function TaskCard({
   onEdit,
   onSchedule,
   onScheduleOnce,
+  scheduleLabel = "Today",
 }: {
   task: Task;
   block?: ScheduleBlock;
@@ -36,6 +37,7 @@ export function TaskCard({
   onEdit?: () => void;
   onSchedule?: () => void;
   onScheduleOnce?: () => void;
+  scheduleLabel?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block ? `block:${block.id}` : `task:${task.id}`,
@@ -69,7 +71,7 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute" : "relative"} ${onDelete ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
+      className={`group touch-pan-y sm:touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute" : "relative"} ${onDelete ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
     >
       <div className="flex items-start gap-2">
         {!disabled ? (
@@ -91,8 +93,8 @@ export function TaskCard({
               {onSchedule ? (
                 <button
                   type="button"
-                  aria-label={`Schedule ${task.title} today`}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition brightness-100 hover:brightness-110"
+                  aria-label={`Schedule ${task.title} ${scheduleLabel.toLowerCase()}`}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition brightness-100 hover:brightness-110 sm:min-h-0 sm:flex-none sm:py-1.5"
                   style={{ backgroundColor: accent.color, color: accent.foreground }}
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
@@ -101,14 +103,14 @@ export function TaskCard({
                   }}
                 >
                   <CalendarPlus className="h-3.5 w-3.5" />
-                  Today
+                  {scheduleLabel}
                 </button>
               ) : null}
               {onScheduleOnce ? (
                 <button
                   type="button"
-                  aria-label={`Schedule ${task.title} once today`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200"
+                  aria-label={`Schedule ${task.title} once ${scheduleLabel.toLowerCase()}`}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200 sm:min-h-0 sm:flex-none sm:py-1.5"
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
                     event.stopPropagation();

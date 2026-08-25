@@ -44,6 +44,10 @@ describe("PlannerApp", () => {
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();
     expect(screen.queryByText("Goal cards")).not.toBeInTheDocument();
+    screen.getAllByRole("group", { name: "Module" }).forEach((moduleGroup) => {
+      expect(within(moduleGroup).queryByRole("button", { name: "Weekly Plan" })).not.toBeInTheDocument();
+      expect(within(moduleGroup).queryByRole("button", { name: "Monthly Plan" })).not.toBeInTheDocument();
+    });
   });
 
   it("shows a private sign-in screen when signed out", async () => {

@@ -8,6 +8,9 @@ import { moduleTheme } from "@/lib/moduleTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
 const priorityOptions: Priority[] = ["High", "Medium", "Low"];
+const taskModuleOptions = MODULES.filter(
+  (module) => module !== "Weekly Plan" && module !== "Monthly Plan",
+);
 
 const defaultForm = {
   title: "",
@@ -68,22 +71,6 @@ const quickTaskPresets: Array<typeof defaultForm> = [
     priority: "High",
     estimatedDurationMinutes: 40,
     notes: "Send one clear message.",
-    queued: true,
-  },
-  {
-    title: "Weekly review",
-    module: "Weekly Plan",
-    priority: "Medium",
-    estimatedDurationMinutes: 30,
-    notes: "Compare plan with actual trail.",
-    queued: true,
-  },
-  {
-    title: "Monthly direction",
-    module: "Monthly Plan",
-    priority: "High",
-    estimatedDurationMinutes: 60,
-    notes: "Choose the next planning theme.",
     queued: true,
   },
 ];
@@ -464,7 +451,7 @@ function MobileTaskFormFields({
       <fieldset className="grid gap-1.5">
         <legend className="text-xs font-semibold text-slate-400">Module</legend>
         <div className="grid grid-cols-2 gap-1.5">
-          {MODULES.map((module) => {
+          {taskModuleOptions.map((module) => {
             const selected = form.module === module;
             return (
               <button

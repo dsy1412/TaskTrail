@@ -211,6 +211,33 @@ describe("PlannerApp", () => {
     expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
   });
 
+  it("imports Fall 2026 Penn events into the Today Canvas and Planning Calendar", async () => {
+    vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    fireEvent.change(await screen.findByLabelText("Jump to date"), { target: { value: "2026-09-11" } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Graduate Workshop: Meet and Greet with Penn Engineering Faculty").length).toBeGreaterThan(0);
+    });
+    expect(screen.getAllByText("16:00-17:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-09-11").length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText("Jump to date"), { target: { value: "2026-09-04" } });
+    await waitFor(() => {
+      expect(screen.getAllByText("DSGA Social & Elections Welcome Back Social").length).toBeGreaterThan(0);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Calendar" }));
+    await user.click(await screen.findByRole("button", { name: "Open 2026-09-16 in Today Canvas" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getAllByText("Engineering & Technology Career Fair: In Person").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-09-16").length).toBeGreaterThan(0);
+  });
+
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();

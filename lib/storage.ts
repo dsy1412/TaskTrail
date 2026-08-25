@@ -1,5 +1,6 @@
 import { addDaysIso, todayIsoDate } from "@/lib/date";
 import { withCourseSchedule } from "@/lib/courseSchedule";
+import { withFall2026EventSchedule } from "@/lib/eventSchedule";
 import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
@@ -125,7 +126,7 @@ export function createSeedState(): PlannerState {
     ),
   ];
 
-  return withCourseSchedule({ tasks, scheduleBlocks, events });
+  return withDefaultSchedules({ tasks, scheduleBlocks, events });
 }
 
 export function loadPlannerState(): PlannerState {
@@ -145,7 +146,7 @@ export function loadPlannerState(): PlannerState {
       parsed.tasks.some((task) => !task.deletedAt) &&
       Array.isArray(parsed.events)
     ) {
-      const migrated = withCourseSchedule(parsed);
+      const migrated = withDefaultSchedules(parsed);
       if (migrated !== parsed) savePlannerState(migrated);
       return migrated;
     }
@@ -207,4 +208,8 @@ export function makeScheduleBlock(
 
 export function timestamp() {
   return now();
+}
+
+export function withDefaultSchedules(state: PlannerState) {
+  return withFall2026EventSchedule(withCourseSchedule(state));
 }

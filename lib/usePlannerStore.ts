@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { todayIsoDate } from "@/lib/date";
-import { withCourseSchedule } from "@/lib/courseSchedule";
 import { isPlannerState } from "@/lib/plannerStateSchema";
 import {
   createEvent,
@@ -12,6 +11,7 @@ import {
   makeTask,
   savePlannerState,
   timestamp,
+  withDefaultSchedules,
 } from "@/lib/storage";
 import type { ModuleName, PlannerState, Priority, Task } from "@/lib/types";
 
@@ -57,7 +57,7 @@ export function usePlannerStore({
       })
       .then((body) => {
         if (loadGeneration.current !== generation) return;
-        setState(isPlannerState(body.state) ? withCourseSchedule(body.state) : createSeedState());
+        setState(isPlannerState(body.state) ? withDefaultSchedules(body.state) : createSeedState());
         setHydrated(true);
         setSyncStatus("synced");
       })

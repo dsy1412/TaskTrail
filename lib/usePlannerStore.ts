@@ -326,6 +326,7 @@ export function usePlannerStore({
       note?: string;
       pulse?: number;
       tags?: string[];
+      fontStyle?: JournalEntry["fontStyle"];
     }) => {
       const entry = makeJournalEntry(input);
       if (!canEdit) return entry;

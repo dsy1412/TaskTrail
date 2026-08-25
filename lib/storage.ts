@@ -215,6 +215,7 @@ export function makeJournalEntry(input: {
   note?: string;
   pulse?: number;
   tags?: string[];
+  fontStyle?: JournalEntry["fontStyle"];
 }): JournalEntry {
   const createdAt = now();
   return {
@@ -226,6 +227,7 @@ export function makeJournalEntry(input: {
     note: input.note?.trim() ?? "",
     pulse: Math.min(5, Math.max(1, Math.round(input.pulse ?? 3))),
     tags: (input.tags ?? []).map((tag) => tag.trim()).filter(Boolean).slice(0, 6),
+    fontStyle: input.fontStyle ?? "clean",
     createdAt,
     updatedAt: createdAt,
   };

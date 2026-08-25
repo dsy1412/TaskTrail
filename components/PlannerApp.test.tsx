@@ -104,6 +104,7 @@ describe("PlannerApp", () => {
     const user = userEvent.setup();
     render(<PlannerApp />);
 
+    await user.click(await screen.findByRole("button", { name: "Show journal details" }));
     await user.type(await screen.findByPlaceholderText("Song / artist"), "Holocene - Bon Iver");
     await user.type(screen.getByPlaceholderText("What you saw"), "Late sun on Locust Walk");
     await user.type(screen.getByPlaceholderText("A quiet ache, a tiny light"), "tender momentum");
@@ -123,6 +124,28 @@ describe("PlannerApp", () => {
 
     expect(screen.queryByText("The day slowed down for a second.")).not.toBeInTheDocument();
     expect(screen.getByText("No moments on this date.")).toBeVisible();
+  });
+
+  it("auto-formats a vibe journal draft and applies a font style", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Use Serif journal font" }));
+    await user.type(
+      screen.getByLabelText("Journal note"),
+      "song: Myth\nsight: rain on campus\nfelt: quietly brave\ntags: rain, courage\nline: keep walking",
+    );
+    await user.click(screen.getByRole("button", { name: "Auto format" }));
+    await user.click(screen.getByRole("button", { name: "Save journal entry" }));
+
+    expect(await screen.findByText("Keep walking.")).toBeVisible();
+    expect(screen.getByText("Song: Myth")).toBeVisible();
+    expect(screen.getByText("Sight: rain on campus")).toBeVisible();
+    expect(screen.getByText("Felt: quietly brave")).toBeVisible();
+    expect(screen.getByText("rain")).toBeVisible();
+    expect(screen.getByText("courage")).toBeVisible();
+    expect(screen.getAllByText("Serif").length).toBeGreaterThan(1);
   });
 
   it("creates a one-time task on today without leaving it in the task queue", async () => {

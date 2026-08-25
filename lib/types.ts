@@ -46,10 +46,13 @@ export interface JournalEntry {
   note: string;
   pulse: number;
   tags: string[];
+  fontStyle?: JournalFontStyle;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
 }
+
+export type JournalFontStyle = "clean" | "serif" | "mono";
 
 export type ActivityEventType =
   | "TASK_CREATED"

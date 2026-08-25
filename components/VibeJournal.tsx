@@ -1,8 +1,7 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Eye, HeartPulse, Music2, Save, SlidersHorizontal, Tags, Trash2, Type, Wand2 } from "lucide-react";
+import { HeartPulse, Save, Trash2, Type, Wand2 } from "lucide-react";
 import { FormEvent, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 import type { JournalEntry, JournalFontStyle, PlannerState } from "@/lib/types";
 
 const defaultForm = {
@@ -46,7 +45,6 @@ export function VibeJournal({
   canEdit: boolean;
 }) {
   const [form, setForm] = useState(defaultForm);
-  const [showDetails, setShowDetails] = useState(false);
   const noteRef = useRef<HTMLTextAreaElement | null>(null);
 
   const entries = useMemo(
@@ -83,7 +81,6 @@ export function VibeJournal({
       fontStyle: form.fontStyle,
     });
     setForm(defaultForm);
-    setShowDetails(false);
     noteRef.current?.focus();
   }
 
@@ -99,7 +96,6 @@ export function VibeJournal({
         tags: formatted.tags || current.tags,
       };
     });
-    setShowDetails(true);
   }
 
   return (
@@ -148,16 +144,6 @@ export function VibeJournal({
                 <Wand2 className="h-3.5 w-3.5" />
                 Auto format
               </button>
-              <button
-                type="button"
-                aria-label={showDetails ? "Hide journal details" : "Show journal details"}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-slate-50"
-                onClick={() => setShowDetails((value) => !value)}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                Details
-                {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
             </div>
           </div>
 
@@ -177,77 +163,6 @@ export function VibeJournal({
               disabled={!canEdit}
             />
           </label>
-
-          {showDetails ? (
-            <div className="grid gap-2 rounded-lg border border-slate-800 bg-slate-950/70 p-3">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <JournalField
-                  icon={<Music2 className="h-3.5 w-3.5 text-cyan-300" />}
-                  label="Song"
-                  value={form.song}
-                  placeholder="Song / artist"
-                  onChange={(song) => setForm((current) => ({ ...current, song }))}
-                  disabled={!canEdit}
-                />
-                <JournalField
-                  icon={<Eye className="h-3.5 w-3.5 text-emerald-300" />}
-                  label="Sight"
-                  value={form.sight}
-                  placeholder="What you saw"
-                  onChange={(sight) => setForm((current) => ({ ...current, sight }))}
-                  disabled={!canEdit}
-                />
-              </div>
-
-              <label className="grid gap-1.5 text-xs font-semibold text-slate-400">
-                Felt
-                <input
-                  value={form.feeling}
-                  onChange={(event) => setForm((current) => ({ ...current, feeling: event.target.value }))}
-                  placeholder="A quiet ache, a tiny light"
-                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-normal text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-rose-300"
-                  disabled={!canEdit}
-                />
-              </label>
-
-              <div className="grid gap-2 rounded-lg border border-slate-800 bg-slate-950/80 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <label htmlFor="journal-pulse" className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                    <HeartPulse className="h-3.5 w-3.5 text-rose-300" />
-                    Pulse
-                  </label>
-                  <span className="rounded-md bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-300">
-                    {pulseWords[form.pulse - 1]} / {form.pulse}
-                  </span>
-                </div>
-                <input
-                  id="journal-pulse"
-                  type="range"
-                  min={1}
-                  max={5}
-                  value={form.pulse}
-                  onChange={(event) => setForm((current) => ({ ...current, pulse: Number(event.target.value) }))}
-                  className="h-2 w-full accent-rose-300"
-                  disabled={!canEdit}
-                />
-              </div>
-
-              <label className="grid gap-1.5 text-xs font-semibold text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <Tags className="h-3.5 w-3.5 text-amber-300" />
-                  Tags
-                </span>
-                <input
-                  value={form.tags}
-                  onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))}
-                  placeholder="rain, campus, courage"
-                  aria-label="Journal tags"
-                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-normal text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-amber-300"
-                  disabled={!canEdit}
-                />
-              </label>
-            </div>
-          ) : null}
 
           <button
             type="submit"
@@ -272,38 +187,6 @@ export function VibeJournal({
         </div>
       </div>
     </aside>
-  );
-}
-
-function JournalField({
-  icon,
-  label,
-  value,
-  placeholder,
-  onChange,
-  disabled,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  placeholder: string;
-  onChange: (value: string) => void;
-  disabled: boolean;
-}) {
-  return (
-    <label className="grid gap-1.5 text-xs font-semibold text-slate-400">
-      <span className="flex items-center gap-1.5">
-        {icon}
-        {label}
-      </span>
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-normal text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-        disabled={disabled}
-      />
-    </label>
   );
 }
 

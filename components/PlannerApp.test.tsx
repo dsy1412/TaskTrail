@@ -104,13 +104,11 @@ describe("PlannerApp", () => {
     const user = userEvent.setup();
     render(<PlannerApp />);
 
-    await user.click(await screen.findByRole("button", { name: "Show journal details" }));
-    await user.type(await screen.findByPlaceholderText("Song / artist"), "Holocene - Bon Iver");
-    await user.type(screen.getByPlaceholderText("What you saw"), "Late sun on Locust Walk");
-    await user.type(screen.getByPlaceholderText("A quiet ache, a tiny light"), "tender momentum");
-    await user.type(screen.getByLabelText("Journal note"), "The day slowed down for a second.");
-    await user.type(screen.getByLabelText("Journal tags"), "campus, dusk");
-    fireEvent.change(screen.getByLabelText("Pulse"), { target: { value: "4" } });
+    await user.type(
+      await screen.findByLabelText("Journal note"),
+      "song: Holocene - Bon Iver\nsight: Late sun on Locust Walk\nfelt: tender momentum\ntags: campus, dusk\nline: The day slowed down for a second.",
+    );
+    await user.click(screen.getByRole("button", { name: "Auto format" }));
     await user.click(screen.getByRole("button", { name: "Save journal entry" }));
 
     expect(await screen.findByText("The day slowed down for a second.")).toBeVisible();

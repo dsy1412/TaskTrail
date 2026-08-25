@@ -2,7 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
-import { CalendarPlus, Clock, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarPlus, Clock, Eye, EyeOff, GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { formatTimeRange } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
@@ -25,6 +25,8 @@ export function TaskCard({
   disabled = false,
   onDelete,
   onEdit,
+  onHide,
+  onRestore,
   onSchedule,
   onScheduleOnce,
   scheduleLabel = "Today",
@@ -36,6 +38,8 @@ export function TaskCard({
   disabled?: boolean;
   onDelete?: () => void;
   onEdit?: () => void;
+  onHide?: () => void;
+  onRestore?: () => void;
   onSchedule?: () => void;
   onScheduleOnce?: () => void;
   scheduleLabel?: string;
@@ -72,7 +76,7 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-pan-y sm:touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute" : "relative"} ${onDelete ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
+      className={`group touch-pan-y sm:touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute" : "relative"} ${onDelete || onHide || onRestore ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
     >
       <div className="flex items-start gap-2">
         {!disabled ? (
@@ -156,6 +160,36 @@ export function TaskCard({
             }}
           >
             <Trash2 className="h-5 w-5" />
+          </button>
+        ) : null}
+        {onHide ? (
+          <button
+            type="button"
+            aria-label={`Hide ${task.title} from task queue`}
+            title="Hide from queue"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:border-cyan-300 hover:text-cyan-200"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onHide();
+            }}
+          >
+            <EyeOff className="h-5 w-5" />
+          </button>
+        ) : null}
+        {onRestore ? (
+          <button
+            type="button"
+            aria-label={`Restore ${task.title} to task queue`}
+            title="Restore to queue"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300/40 bg-cyan-300/15 text-cyan-200 shadow-sm transition hover:border-cyan-200 hover:bg-cyan-300/25 hover:text-white"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRestore();
+            }}
+          >
+            <Eye className="h-5 w-5" />
           </button>
         ) : null}
       </div>

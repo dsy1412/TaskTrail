@@ -46,7 +46,8 @@ export function TaskBackpack({
   onCreateTask,
   onCreateAndScheduleTask,
   onUpdateTask,
-  onDeleteTask,
+  onHideTask,
+  onRestoreTask,
   onScheduleTask,
   onScheduleTaskOnce,
   selectedDate,
@@ -57,7 +58,8 @@ export function TaskBackpack({
   onCreateTask: (input: typeof defaultForm) => Task;
   onCreateAndScheduleTask: (input: typeof defaultForm) => void;
   onUpdateTask: (taskId: string, patch: Partial<Omit<Task, "id" | "createdAt">>) => void;
-  onDeleteTask: (taskId: string) => void;
+  onHideTask: (taskId: string) => void;
+  onRestoreTask: (taskId: string) => void;
   onScheduleTask: (taskId: string, date?: string) => void;
   onScheduleTaskOnce: (taskId: string, date?: string) => void;
   selectedDate: string;
@@ -66,18 +68,24 @@ export function TaskBackpack({
 }) {
   const [open, setOpen] = useState(true);
   const [moduleFilter, setModuleFilter] = useState<ModuleName | "All">("All");
+  const [queueMode, setQueueMode] = useState<"active" | "hidden">("active");
   const [form, setForm] = useState(defaultForm);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState(selectedDate);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTasks = useMemo(
-    () => state.tasks.filter((task) => !task.deletedAt && task.queued !== false),
+    () => state.tasks.filter((task) => !task.deletedAt && task.queued !== false && !task.hiddenAt),
     [state.tasks],
   );
+  const hiddenTasks = useMemo(
+    () => state.tasks.filter((task) => !task.deletedAt && task.queued !== false && task.hiddenAt),
+    [state.tasks],
+  );
+  const queueTasks = queueMode === "active" ? activeTasks : hiddenTasks;
   const visibleTasks = useMemo(
-    () => (moduleFilter === "All" ? activeTasks : activeTasks.filter((task) => task.module === moduleFilter)),
-    [activeTasks, moduleFilter],
+    () => (moduleFilter === "All" ? queueTasks : queueTasks.filter((task) => task.module === moduleFilter)),
+    [moduleFilter, queueTasks],
   );
   const today = todayIsoDate();
   const tomorrow = addDaysIso(today, 1);
@@ -133,6 +141,14 @@ export function TaskBackpack({
       notes: task.notes,
       queued: task.queued ?? true,
     });
+  }
+
+  function hideTask(taskId: string) {
+    onHideTask(taskId);
+    if (editingTaskId === taskId) {
+      setEditingTaskId(null);
+      setForm(defaultForm);
+    }
   }
 
   return (
@@ -209,9 +225,35 @@ export function TaskBackpack({
                   <div className="mb-3 grid gap-3">
                     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-50">Task queue</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-semibold text-slate-50">
+                            {queueMode === "active" ? "Task queue" : "Hidden tasks"}
+                          </h3>
+                          <div className="inline-grid grid-cols-2 gap-1 rounded-lg border border-slate-800 bg-slate-950 p-1 text-[0.68rem] font-bold">
+                            <button
+                              type="button"
+                              aria-label="Show active tasks"
+                              className={`rounded-md px-2 py-1 transition ${
+                                queueMode === "active" ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+                              }`}
+                              onClick={() => setQueueMode("active")}
+                            >
+                              Active {activeTasks.length}
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Show hidden tasks"
+                              className={`rounded-md px-2 py-1 transition ${
+                                queueMode === "hidden" ? "bg-cyan-300 text-slate-950" : "text-slate-400 hover:text-slate-100"
+                              }`}
+                              onClick={() => setQueueMode("hidden")}
+                            >
+                              Hidden {hiddenTasks.length}
+                            </button>
+                          </div>
+                        </div>
                         <p className="text-xs font-medium text-slate-400">
-                          {visibleTasks.length} shown / {activeTasks.length} total
+                          {visibleTasks.length} shown / {queueTasks.length} total
                         </p>
                       </div>
                       <div className="grid gap-2 rounded-xl border border-slate-800 bg-slate-950 p-2 sm:grid-cols-[auto_auto_auto] sm:items-center">
@@ -269,11 +311,11 @@ export function TaskBackpack({
                             moduleFilter === "All" ? "bg-slate-950/10" : "bg-slate-800 text-slate-400"
                           }`}
                         >
-                          {activeTasks.length}
+                          {queueTasks.length}
                         </span>
                       </button>
                       {MODULES.map((module) => {
-                        const count = activeTasks.filter((task) => task.module === module).length;
+                        const count = queueTasks.filter((task) => task.module === module).length;
                         const selected = moduleFilter === module;
                         return (
                           <button
@@ -304,14 +346,20 @@ export function TaskBackpack({
                       <TaskCard
                         key={task.id}
                         task={task}
-                        disabled={!canEdit}
+                        disabled={!canEdit || queueMode === "hidden"}
                         onEdit={canEdit ? () => editTask(task) : undefined}
-                        onDelete={canEdit ? () => onDeleteTask(task.id) : undefined}
-                        onSchedule={canEdit ? () => onScheduleTask(task.id, scheduleDate) : undefined}
-                        onScheduleOnce={canEdit ? () => onScheduleTaskOnce(task.id, scheduleDate) : undefined}
+                        onHide={canEdit && queueMode === "active" ? () => hideTask(task.id) : undefined}
+                        onRestore={canEdit && queueMode === "hidden" ? () => onRestoreTask(task.id) : undefined}
+                        onSchedule={canEdit && queueMode === "active" ? () => onScheduleTask(task.id, scheduleDate) : undefined}
+                        onScheduleOnce={canEdit && queueMode === "active" ? () => onScheduleTaskOnce(task.id, scheduleDate) : undefined}
                         scheduleLabel={scheduleLabel}
                       />
                     ))}
+                    {!visibleTasks.length ? (
+                      <div className="rounded-lg border border-dashed border-slate-700 bg-slate-950/50 p-6 text-center text-sm font-semibold text-slate-400 md:col-span-2 2xl:col-span-3">
+                        {queueMode === "active" ? "No visible tasks in this filter." : "No hidden tasks in this filter."}
+                      </div>
+                    ) : null}
                   </div>
                 </section>
               </div>

@@ -126,6 +126,30 @@ describe("PlannerApp", () => {
     });
   });
 
+  it("hides and restores a backpack task without deleting scheduled blocks", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    const scheduledBefore = await screen.findAllByTestId("scheduled-task-card");
+    const backpack = screen.getByTestId("task-backpack");
+
+    await user.click(await within(backpack).findByRole("button", { name: "Hide Read paper notes from task queue" }));
+
+    await waitFor(() => {
+      expect(within(backpack).queryByText("Read paper notes")).not.toBeInTheDocument();
+    });
+    expect(screen.getAllByTestId("scheduled-task-card")).toHaveLength(scheduledBefore.length);
+
+    await user.click(within(backpack).getByRole("button", { name: "Show hidden tasks" }));
+    expect(await within(backpack).findByText("Read paper notes")).toBeVisible();
+
+    await user.click(within(backpack).getByRole("button", { name: "Restore Read paper notes to task queue" }));
+    await user.click(within(backpack).getByRole("button", { name: "Show active tasks" }));
+
+    expect(await within(backpack).findByText("Read paper notes")).toBeVisible();
+  });
+
   it("focuses the task title when Add is clicked without a title", async () => {
     localStorage.clear();
     const user = userEvent.setup();

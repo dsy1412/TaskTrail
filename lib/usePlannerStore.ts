@@ -193,6 +193,41 @@ export function usePlannerStore({
     }));
   }, [canEdit]);
 
+  const hideTask = useCallback((taskId: string) => {
+    if (!canEdit) return;
+    const hiddenAt = timestamp();
+    setState((current) => {
+      const previous = current.tasks.find((task) => task.id === taskId);
+      if (!previous) return current;
+      const updated = { ...previous, hiddenAt };
+      return {
+        ...current,
+        tasks: current.tasks.map((task) => (task.id === taskId ? updated : task)),
+        events: [
+          ...current.events,
+          createEvent("TASK_UPDATED", { before: previous, after: updated, scope: "backpack", hiddenAt }, taskId),
+        ],
+      };
+    });
+  }, [canEdit]);
+
+  const restoreTask = useCallback((taskId: string) => {
+    if (!canEdit) return;
+    setState((current) => {
+      const previous = current.tasks.find((task) => task.id === taskId);
+      if (!previous) return current;
+      const updated = { ...previous, hiddenAt: undefined };
+      return {
+        ...current,
+        tasks: current.tasks.map((task) => (task.id === taskId ? updated : task)),
+        events: [
+          ...current.events,
+          createEvent("TASK_UPDATED", { before: previous, after: updated, scope: "backpack", restored: true }, taskId),
+        ],
+      };
+    });
+  }, [canEdit]);
+
   const scheduleTask = useCallback(
     (taskId: string, input: { date?: string; timeSlot: string; columnIndex: number }) => {
       if (!canEdit) return;
@@ -290,6 +325,8 @@ export function usePlannerStore({
     createTaskAndSchedule,
     updateTask,
     deleteTask,
+    hideTask,
+    restoreTask,
     scheduleTask,
     scheduleTaskOnce,
     moveScheduleBlock,

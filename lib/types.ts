@@ -20,6 +20,7 @@ export interface Task {
   notes: string;
   createdAt: string;
   deadline?: string;
+  hiddenAt?: string;
   queued?: boolean;
   deletedAt?: string;
 }

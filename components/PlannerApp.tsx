@@ -276,7 +276,8 @@ export function PlannerApp() {
           onCreateTask={planner.createTask}
           onCreateAndScheduleTask={quickCreateAndScheduleTask}
           onUpdateTask={planner.updateTask}
-          onDeleteTask={planner.deleteTask}
+          onHideTask={planner.hideTask}
+          onRestoreTask={planner.restoreTask}
           onScheduleTask={quickScheduleTask}
           onScheduleTaskOnce={quickScheduleTaskOnce}
           selectedDate={selectedDate}

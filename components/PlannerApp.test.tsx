@@ -176,6 +176,7 @@ describe("PlannerApp", () => {
       expect(screen.getAllByText("CIS 6250 Theory of Machine Learning").length).toBeGreaterThan(0);
     });
     expect(screen.getAllByText("10:15-11:44").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "Calendar" }));
 
@@ -183,6 +184,7 @@ describe("PlannerApp", () => {
     expect(within(selectedDay).getByText("CIS 6250 Theory of Machine Learning")).toBeVisible();
     expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
     expect(screen.getAllByText("CIS 5450 Big Data Analytics").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
   });
 
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {

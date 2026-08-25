@@ -54,6 +54,7 @@ export function PlanningCalendar({
           title: task.title,
           module: task.module,
           priority: task.priority,
+          deadline: task.deadline,
           accentColor: accent.color,
           accentSoftColor: accent.softColor,
         };
@@ -214,6 +215,9 @@ export function PlanningCalendar({
                   <Clock3 className="h-3.5 w-3.5" />
                   {formatTimeRange(block.timeSlot, block.durationMinutes)} / {formatDuration(block.durationMinutes)}
                 </p>
+                {block.deadline ? (
+                  <p className="mt-1 text-xs font-semibold text-slate-400">DDL {block.deadline}</p>
+                ) : null}
               </div>
             ))
           ) : (
@@ -375,6 +379,7 @@ interface PlannedBlock {
   title: string;
   module: ModuleName;
   priority: Priority;
+  deadline?: string;
   accentColor: string;
   accentSoftColor: string;
 }

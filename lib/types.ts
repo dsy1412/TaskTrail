@@ -19,6 +19,7 @@ export interface Task {
   estimatedDurationMinutes: number;
   notes: string;
   createdAt: string;
+  deadline?: string;
   queued?: boolean;
   deletedAt?: string;
 }

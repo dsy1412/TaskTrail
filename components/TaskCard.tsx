@@ -180,6 +180,7 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.72rem] font-medium text-slate-400">
         {block ? <span className="rounded-md bg-slate-800 px-2 py-0.5">{formatTimeRange(block.timeSlot, block.durationMinutes)}</span> : null}
         <span className="rounded-md bg-slate-800 px-2 py-0.5">{task.priority}</span>
+        {task.deadline ? <span className="rounded-md bg-slate-800 px-2 py-0.5">DDL {task.deadline}</span> : null}
         <span className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-0.5">
           <Clock className="h-3 w-3" />
           {formatDuration(block?.durationMinutes ?? task.estimatedDurationMinutes)}

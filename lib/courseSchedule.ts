@@ -1,7 +1,8 @@
 import { addDaysIso, timeToMinutes } from "@/lib/date";
 import type { ActivityEvent, ModuleName, PlannerState, Priority, ScheduleBlock, Task } from "@/lib/types";
 
-const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v1";
+const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v2";
+const COURSE_SOURCE = "course_import_fall_2026";
 const TERM_START = "2026-08-25";
 const TERM_END = "2026-12-07";
 const COURSE_CREATED_AT = "2026-08-25T04:00:00.000Z";
@@ -61,6 +62,36 @@ export function withCourseSchedule(state: PlannerState) {
     eventsToAdd.push(event);
   }
 
+  function addPendingTaskUpdate(before: Task, after: Task) {
+    addEvent({
+      id: `course_event_updated_${after.id}_fall_2026_ddl`,
+      type: "TASK_UPDATED",
+      taskId: after.id,
+      payload: { before, after, source: COURSE_SOURCE, term: "Fall 2026", deadline: TERM_END },
+      createdAt: COURSE_CREATED_AT,
+    });
+  }
+
+  const desiredTasks = new Map(courseMeetings.map((meeting) => [makeCourseTask(meeting).id, makeCourseTask(meeting)]));
+  const updatedTasks = state.tasks.map((task) => {
+    const desired = desiredTasks.get(task.id);
+    if (!desired) return task;
+    const updated: Task = {
+      ...task,
+      module: desired.module,
+      priority: desired.priority,
+      estimatedDurationMinutes: desired.estimatedDurationMinutes,
+      notes: desired.notes,
+      deadline: desired.deadline,
+      queued: false,
+    };
+
+    if (isSameTask(task, updated)) return task;
+
+    addPendingTaskUpdate(task, updated);
+    return updated;
+  });
+
   courseMeetings.forEach((meeting) => {
     const task = makeCourseTask(meeting);
     if (!existingTaskIds.has(task.id)) {
@@ -69,7 +100,7 @@ export function withCourseSchedule(state: PlannerState) {
         id: `course_event_created_${meeting.id}`,
         type: "TASK_CREATED",
         taskId: task.id,
-        payload: { task, source: "course_import_fall_2026" },
+        payload: { task, source: COURSE_SOURCE, term: "Fall 2026", deadline: TERM_END },
         createdAt: COURSE_CREATED_AT,
       });
     }
@@ -83,7 +114,7 @@ export function withCourseSchedule(state: PlannerState) {
         type: "TASK_SCHEDULED",
         taskId: task.id,
         scheduleBlockId: block.id,
-        payload: { block, source: "course_import_fall_2026" },
+        payload: { block, source: COURSE_SOURCE, term: "Fall 2026", deadline: TERM_END },
         createdAt: block.createdAt,
       });
     });
@@ -93,9 +124,11 @@ export function withCourseSchedule(state: PlannerState) {
     id: COURSE_IMPORT_EVENT_ID,
     type: "TASK_UPDATED",
     payload: {
-      source: "course_import_fall_2026",
+      source: COURSE_SOURCE,
+      term: "Fall 2026",
       termStart: TERM_START,
       termEnd: TERM_END,
+      deadline: TERM_END,
       meetingCount: blocksToAdd.length,
     },
     createdAt: COURSE_CREATED_AT,
@@ -103,7 +136,7 @@ export function withCourseSchedule(state: PlannerState) {
 
   return {
     ...state,
-    tasks: [...state.tasks, ...tasksToAdd],
+    tasks: [...updatedTasks, ...tasksToAdd],
     scheduleBlocks: [...state.scheduleBlocks, ...blocksToAdd],
     events: [...state.events, ...eventsToAdd],
   };
@@ -126,8 +159,9 @@ function makeCourseTask(meeting: CourseMeeting): Task {
     module: "Study" satisfies ModuleName,
     priority: "High" satisfies Priority,
     estimatedDurationMinutes: getDurationMinutes(meeting),
-    notes: `${meeting.startTime}-${meeting.endTime} in ${meeting.location}. Instructor: ${meeting.instructor}. ${TERM_START} to ${TERM_END}.`,
+    notes: `Fall 2026. ${meeting.startTime}-${meeting.endTime} in ${meeting.location}. Instructor: ${meeting.instructor}. Course dates: ${TERM_START} to ${TERM_END}. DDL: ${TERM_END}.`,
     createdAt: COURSE_CREATED_AT,
+    deadline: TERM_END,
     queued: false,
   };
 }
@@ -159,4 +193,15 @@ function getMeetingDates(meeting: CourseMeeting) {
 
 function getDurationMinutes(meeting: CourseMeeting) {
   return timeToMinutes(meeting.endTime) - timeToMinutes(meeting.startTime);
+}
+
+function isSameTask(left: Task, right: Task) {
+  return (
+    left.module === right.module &&
+    left.priority === right.priority &&
+    left.estimatedDurationMinutes === right.estimatedDurationMinutes &&
+    left.notes === right.notes &&
+    left.deadline === right.deadline &&
+    left.queued === right.queued
+  );
 }

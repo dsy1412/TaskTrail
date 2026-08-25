@@ -5,6 +5,7 @@ import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
   ActivityEventType,
+  JournalEntry,
   ModuleName,
   PlannerState,
   Priority,
@@ -126,7 +127,7 @@ export function createSeedState(): PlannerState {
     ),
   ];
 
-  return withDefaultSchedules({ tasks, scheduleBlocks, events });
+  return withDefaultSchedules({ tasks, scheduleBlocks, events, journalEntries: [] });
 }
 
 export function loadPlannerState(): PlannerState {
@@ -146,7 +147,7 @@ export function loadPlannerState(): PlannerState {
       parsed.tasks.some((task) => !task.deletedAt) &&
       Array.isArray(parsed.events)
     ) {
-      const migrated = withDefaultSchedules(parsed);
+      const migrated = withDefaultSchedules(normalizePlannerState(parsed));
       if (migrated !== parsed) savePlannerState(migrated);
       return migrated;
     }
@@ -206,10 +207,41 @@ export function makeScheduleBlock(
   };
 }
 
+export function makeJournalEntry(input: {
+  date: string;
+  song?: string;
+  sight?: string;
+  feeling?: string;
+  note?: string;
+  pulse?: number;
+  tags?: string[];
+}): JournalEntry {
+  const createdAt = now();
+  return {
+    id: id("journal"),
+    date: input.date,
+    song: input.song?.trim() ?? "",
+    sight: input.sight?.trim() ?? "",
+    feeling: input.feeling?.trim() ?? "",
+    note: input.note?.trim() ?? "",
+    pulse: Math.min(5, Math.max(1, Math.round(input.pulse ?? 3))),
+    tags: (input.tags ?? []).map((tag) => tag.trim()).filter(Boolean).slice(0, 6),
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
 export function timestamp() {
   return now();
 }
 
 export function withDefaultSchedules(state: PlannerState) {
-  return withFall2026EventSchedule(withCourseSchedule(state));
+  return normalizePlannerState(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state))));
+}
+
+export function normalizePlannerState(state: PlannerState): PlannerState {
+  return {
+    ...state,
+    journalEntries: Array.isArray(state.journalEntries) ? state.journalEntries : [],
+  };
 }

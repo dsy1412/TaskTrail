@@ -99,6 +99,32 @@ describe("PlannerApp", () => {
     expect(screen.getByText("Cover the drag and schedule flows.")).toBeVisible();
   });
 
+  it("captures a dated vibe journal entry and keeps it off other days", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.type(await screen.findByPlaceholderText("Song / artist"), "Holocene - Bon Iver");
+    await user.type(screen.getByPlaceholderText("What you saw"), "Late sun on Locust Walk");
+    await user.type(screen.getByPlaceholderText("A quiet ache, a tiny light"), "tender momentum");
+    await user.type(screen.getByLabelText("Journal note"), "The day slowed down for a second.");
+    await user.type(screen.getByLabelText("Journal tags"), "campus, dusk");
+    fireEvent.change(screen.getByLabelText("Pulse"), { target: { value: "4" } });
+    await user.click(screen.getByRole("button", { name: "Save journal entry" }));
+
+    expect(await screen.findByText("The day slowed down for a second.")).toBeVisible();
+    expect(screen.getByText("Song: Holocene - Bon Iver")).toBeVisible();
+    expect(screen.getByText("Sight: Late sun on Locust Walk")).toBeVisible();
+    expect(screen.getByText("Felt: tender momentum")).toBeVisible();
+    expect(screen.getByText("campus")).toBeVisible();
+    expect(screen.getByText("dusk")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Next day" }));
+
+    expect(screen.queryByText("The day slowed down for a second.")).not.toBeInTheDocument();
+    expect(screen.getByText("No moments on this date.")).toBeVisible();
+  });
+
   it("creates a one-time task on today without leaving it in the task queue", async () => {
     localStorage.clear();
     const user = userEvent.setup();

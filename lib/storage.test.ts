@@ -12,10 +12,11 @@ describe("planner storage", () => {
     expect(state.tasks.length).toBeGreaterThan(0);
     expect(state.scheduleBlocks.length).toBeGreaterThan(0);
     expect(state.events.some((event) => event.type === "TASK_CREATED")).toBe(true);
+    expect(state.journalEntries).toEqual([]);
   });
 
   it("recovers from an accidentally persisted empty state", () => {
-    savePlannerState({ tasks: [], scheduleBlocks: [], events: [] });
+    savePlannerState({ tasks: [], scheduleBlocks: [], events: [], journalEntries: [] });
 
     const state = loadPlannerState();
 
@@ -35,6 +36,7 @@ describe("planner storage", () => {
           createdAt: "2026-04-26T00:00:00.000Z",
         },
       ],
+      journalEntries: [],
     });
 
     const state = loadPlannerState();
@@ -67,6 +69,7 @@ describe("planner storage", () => {
           createdAt: "2026-04-26T01:00:00.000Z",
         },
       ],
+      journalEntries: [],
     });
 
     const state = loadPlannerState();
@@ -79,5 +82,30 @@ describe("planner storage", () => {
     const maxColumn = state.scheduleBlocks.reduce((max, block) => Math.max(max, block.columnIndex), 0);
 
     expect(maxColumn).toBe(0);
+  });
+
+  it("migrates older persisted states with no journal entries", () => {
+    window.localStorage.setItem(
+      "tasktrail.mvp.state.v1",
+      JSON.stringify({
+        tasks: [
+          {
+            id: "task_old",
+            title: "Old task",
+            module: "Project",
+            priority: "Medium",
+            estimatedDurationMinutes: 60,
+            notes: "",
+            createdAt: "2026-04-26T00:00:00.000Z",
+          },
+        ],
+        scheduleBlocks: [],
+        events: [],
+      }),
+    );
+
+    const state = loadPlannerState();
+
+    expect(state.journalEntries).toEqual([]);
   });
 });

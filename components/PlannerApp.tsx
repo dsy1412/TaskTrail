@@ -19,6 +19,7 @@ import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { PlanningCalendar } from "@/components/PlanningCalendar";
+import { VibeJournal } from "@/components/VibeJournal";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
 import { addDaysIso, TIME_SLOTS, todayIsoDate } from "@/lib/date";
 import { getScheduledColumnCount, getVisibleColumnCount } from "@/lib/columns";
@@ -255,7 +256,16 @@ export function PlannerApp() {
                   onDeleteBlock={planner.deleteScheduleBlock}
                   canEdit={canEdit}
                 />
-                <WeeklyMonthlySummary state={planner.state} />
+                <div className="grid gap-4">
+                  <VibeJournal
+                    state={planner.state}
+                    date={selectedDate}
+                    onCreateEntry={planner.createJournalEntry}
+                    onDeleteEntry={planner.deleteJournalEntry}
+                    canEdit={canEdit}
+                  />
+                  <WeeklyMonthlySummary state={planner.state} />
+                </div>
             </section>
           ) : null}
 

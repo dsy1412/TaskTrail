@@ -37,12 +37,28 @@ export interface ScheduleBlock {
   deletedAt?: string;
 }
 
+export interface JournalEntry {
+  id: string;
+  date: string;
+  song: string;
+  sight: string;
+  feeling: string;
+  note: string;
+  pulse: number;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
 export type ActivityEventType =
   | "TASK_CREATED"
   | "TASK_SCHEDULED"
   | "TASK_MOVED"
   | "TASK_DELETED"
-  | "TASK_UPDATED";
+  | "TASK_UPDATED"
+  | "JOURNAL_CREATED"
+  | "JOURNAL_DELETED";
 
 export interface ActivityEvent {
   id: string;
@@ -67,6 +83,7 @@ export interface PlannerState {
   tasks: Task[];
   scheduleBlocks: ScheduleBlock[];
   events: ActivityEvent[];
+  journalEntries: JournalEntry[];
 }
 
 export interface ParsedTaskInput {

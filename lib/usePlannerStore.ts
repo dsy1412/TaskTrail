@@ -7,13 +7,14 @@ import {
   createEvent,
   createSeedState,
   loadPlannerState,
+  makeJournalEntry,
   makeScheduleBlock,
   makeTask,
   savePlannerState,
   timestamp,
   withDefaultSchedules,
 } from "@/lib/storage";
-import type { ModuleName, PlannerState, Priority, Task } from "@/lib/types";
+import type { JournalEntry, ModuleName, PlannerState, Priority, Task } from "@/lib/types";
 
 export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "error";
 
@@ -316,6 +317,45 @@ export function usePlannerStore({
     });
   }, [canEdit]);
 
+  const createJournalEntry = useCallback(
+    (input: {
+      date: string;
+      song?: string;
+      sight?: string;
+      feeling?: string;
+      note?: string;
+      pulse?: number;
+      tags?: string[];
+    }) => {
+      const entry = makeJournalEntry(input);
+      if (!canEdit) return entry;
+      setState((current) => ({
+        ...current,
+        journalEntries: [...current.journalEntries, entry],
+        events: [...current.events, createEvent("JOURNAL_CREATED", { entry })],
+      }));
+      return entry;
+    },
+    [canEdit],
+  );
+
+  const deleteJournalEntry = useCallback((entryId: string) => {
+    if (!canEdit) return;
+    const deletedAt = timestamp();
+    setState((current) => {
+      const entry = current.journalEntries.find((candidate) => candidate.id === entryId);
+      if (!entry) return current;
+      const deletedEntry: JournalEntry = { ...entry, deletedAt, updatedAt: deletedAt };
+      return {
+        ...current,
+        journalEntries: current.journalEntries.map((candidate) =>
+          candidate.id === entryId ? deletedEntry : candidate,
+        ),
+        events: [...current.events, createEvent("JOURNAL_DELETED", { entry: deletedEntry })],
+      };
+    });
+  }, [canEdit]);
+
   return {
     state,
     hydrated,
@@ -331,5 +371,7 @@ export function usePlannerStore({
     scheduleTaskOnce,
     moveScheduleBlock,
     deleteScheduleBlock,
+    createJournalEntry,
+    deleteJournalEntry,
   };
 }

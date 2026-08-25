@@ -87,6 +87,7 @@ const state: PlannerState = {
     },
   ],
   events: [],
+  journalEntries: [],
 };
 
 describe("Month activity derivation", () => {

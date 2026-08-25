@@ -2,7 +2,7 @@
 
 import { CalendarRange, ChevronLeft, ChevronRight, Clock3, Layers3, LocateFixed, Maximize2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { todayIsoDate } from "@/lib/date";
+import { formatTimeRange, todayIsoDate } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
 import { moduleTheme } from "@/lib/moduleTheme";
 import { taskAccent } from "@/lib/taskTheme";
@@ -212,7 +212,7 @@ export function PlanningCalendar({
                 </div>
                 <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                   <Clock3 className="h-3.5 w-3.5" />
-                  {block.timeSlot} / {formatDuration(block.durationMinutes)}
+                  {formatTimeRange(block.timeSlot, block.durationMinutes)} / {formatDuration(block.durationMinutes)}
                 </p>
               </div>
             ))
@@ -337,7 +337,9 @@ function CalendarDay({
             style={{ borderLeftColor: block.accentColor, backgroundColor: block.accentSoftColor }}
           >
             <p className="truncate text-[0.72rem] font-semibold text-slate-100">{block.title}</p>
-            <p className="mt-0.5 text-[0.62rem] font-semibold text-slate-500">{block.timeSlot}</p>
+            <p className="mt-0.5 text-[0.62rem] font-semibold text-slate-500">
+              {formatTimeRange(block.timeSlot, block.durationMinutes)}
+            </p>
           </div>
         ))}
       </div>

@@ -4,7 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import type { RefObject } from "react";
 import { PriorityColumn } from "@/components/PriorityColumn";
 import { TaskCard } from "@/components/TaskCard";
-import { TIME_SLOTS } from "@/lib/date";
+import { TIME_SLOTS, timeToMinutes } from "@/lib/date";
 import type { PlannerState, ScheduleBlock, Task } from "@/lib/types";
 
 const SLOT_HEIGHT = 76;
@@ -104,9 +104,10 @@ function ScheduledBlockCard({
   onDelete: () => void;
   canEdit: boolean;
 }) {
-  const rowIndex = Math.max(0, TIME_SLOTS.indexOf(block.timeSlot));
+  const dayStartMinutes = timeToMinutes(TIME_SLOTS[0]);
+  const blockStartMinutes = timeToMinutes(block.timeSlot);
   const columnWidth = 100 / columnCount;
-  const top = rowIndex * SLOT_HEIGHT + 8;
+  const top = Math.max(0, ((blockStartMinutes - dayStartMinutes) / 60) * SLOT_HEIGHT + 8);
   const height = Math.min(220, Math.max(58, (block.durationMinutes / 60) * SLOT_HEIGHT - 10));
 
   return (

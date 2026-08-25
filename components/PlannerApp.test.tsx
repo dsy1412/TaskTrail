@@ -164,6 +164,27 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-27");
   });
 
+  it("imports CIS course meetings into the Today Canvas and Planning Calendar", async () => {
+    vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    fireEvent.change(await screen.findByLabelText("Jump to date"), { target: { value: "2026-08-26" } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("CIS 6250 Theory of Machine Learning").length).toBeGreaterThan(0);
+    });
+    expect(screen.getAllByText("10:15-11:44").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "Calendar" }));
+
+    const selectedDay = await screen.findByTestId("planning-day-2026-08-26");
+    expect(within(selectedDay).getByText("CIS 6250 Theory of Machine Learning")).toBeVisible();
+    expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CIS 5450 Big Data Analytics").length).toBeGreaterThan(0);
+  });
+
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();

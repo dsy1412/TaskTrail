@@ -3,6 +3,21 @@ export const TIME_SLOTS = Array.from({ length: 16 }, (_, index) => {
   return `${String(hour).padStart(2, "0")}:00`;
 });
 
+export function timeToMinutes(time: string) {
+  const [hour = "0", minute = "0"] = time.split(":");
+  return Number(hour) * 60 + Number(minute);
+}
+
+export function minutesToTimeLabel(totalMinutes: number) {
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+export function formatTimeRange(startTime: string, durationMinutes: number) {
+  return `${startTime}-${minutesToTimeLabel(timeToMinutes(startTime) + durationMinutes)}`;
+}
+
 export function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }

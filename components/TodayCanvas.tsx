@@ -3,7 +3,7 @@
 import { Calendar, ChevronLeft, ChevronRight, Clock3, Columns3, LocateFixed, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
 import { TimeGrid } from "@/components/TimeGrid";
-import { formatFriendlyDate, TIME_SLOTS } from "@/lib/date";
+import { formatFriendlyDate, formatTimeRange } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
 import type { PlannerState, Task } from "@/lib/types";
 
@@ -142,59 +142,49 @@ function MobileDayAgenda({
     .filter((item): item is { block: NonNullable<typeof item.block>; task: Task } => Boolean(item.task && !item.task.deletedAt))
     .sort((left, right) => left.block.timeSlot.localeCompare(right.block.timeSlot));
 
-  const blocksBySlot = new Map<string, typeof blocks>();
-  blocks.forEach((item) => {
-    blocksBySlot.set(item.block.timeSlot, [...(blocksBySlot.get(item.block.timeSlot) ?? []), item]);
-  });
-
   return (
     <div data-testid="mobile-day-agenda" className="grid gap-2">
-      {TIME_SLOTS.map((slot) => {
-        const slotBlocks = blocksBySlot.get(slot) ?? [];
-        return (
-          <div key={slot} className="grid grid-cols-[3.75rem_minmax(0,1fr)] gap-2">
-            <div className="pt-3 text-right text-xs font-semibold text-slate-400">{slot}</div>
-            <div className="min-h-14 border-l border-slate-700 pl-3">
-              {slotBlocks.length ? (
-                <div className="grid gap-2">
-                  {slotBlocks.map(({ block, task }) => (
-                    <article
-                      key={block.id}
-                      data-testid="mobile-agenda-task"
-                      className="rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-soft"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-50">
-                            {task.title}
-                          </h3>
-                          <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                            <Clock3 className="h-3.5 w-3.5" />
-                            {formatDuration(task.estimatedDurationMinutes)} - {task.module}
-                          </p>
-                        </div>
-                        {canEdit ? (
-                          <button
-                            type="button"
-                            aria-label={`Delete ${task.title} from schedule`}
-                            title="Delete from schedule"
-                            className="rounded-md border border-slate-700 bg-slate-950 p-2 text-slate-300 shadow-sm transition hover:text-rose-300"
-                            onClick={() => onDeleteBlock(block.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        ) : null}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="h-full rounded-lg border border-dashed border-slate-700 bg-slate-950/40" />
-              )}
+      {blocks.length ? (
+        blocks.map(({ block, task }) => (
+          <div key={block.id} className="grid grid-cols-[5.25rem_minmax(0,1fr)] gap-2">
+            <div className="pt-3 text-right text-xs font-semibold leading-5 text-slate-400">
+              {formatTimeRange(block.timeSlot, block.durationMinutes)}
             </div>
+            <article
+              data-testid="mobile-agenda-task"
+              className="rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-soft"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-50">
+                    {task.title}
+                  </h3>
+                  <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                    <Clock3 className="h-3.5 w-3.5" />
+                    {formatDuration(task.estimatedDurationMinutes)} - {task.module}
+                  </p>
+                  {task.notes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{task.notes}</p> : null}
+                </div>
+                {canEdit ? (
+                  <button
+                    type="button"
+                    aria-label={`Delete ${task.title} from schedule`}
+                    title="Delete from schedule"
+                    className="rounded-md border border-slate-700 bg-slate-950 p-2 text-slate-300 shadow-sm transition hover:text-rose-300"
+                    onClick={() => onDeleteBlock(block.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+            </article>
           </div>
-        );
-      })}
+        ))
+      ) : (
+        <div className="rounded-lg border border-dashed border-slate-700 bg-slate-950/40 p-6 text-center text-sm font-semibold text-slate-400">
+          No planned blocks on this day yet.
+        </div>
+      )}
     </div>
   );
 }

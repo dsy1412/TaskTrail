@@ -1,4 +1,5 @@
 import { addDaysIso, todayIsoDate } from "@/lib/date";
+import { withCourseSchedule } from "@/lib/courseSchedule";
 import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
@@ -124,7 +125,7 @@ export function createSeedState(): PlannerState {
     ),
   ];
 
-  return { tasks, scheduleBlocks, events };
+  return withCourseSchedule({ tasks, scheduleBlocks, events });
 }
 
 export function loadPlannerState(): PlannerState {
@@ -144,7 +145,9 @@ export function loadPlannerState(): PlannerState {
       parsed.tasks.some((task) => !task.deletedAt) &&
       Array.isArray(parsed.events)
     ) {
-      return parsed;
+      const migrated = withCourseSchedule(parsed);
+      if (migrated !== parsed) savePlannerState(migrated);
+      return migrated;
     }
 
     const seed = createSeedState();

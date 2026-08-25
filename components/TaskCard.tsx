@@ -4,6 +4,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { CalendarPlus, Clock, GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
+import { formatTimeRange } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
 import { taskAccent } from "@/lib/taskTheme";
 import type { ScheduleBlock, Task } from "@/lib/types";
@@ -177,6 +178,7 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
         </span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.72rem] font-medium text-slate-400">
+        {block ? <span className="rounded-md bg-slate-800 px-2 py-0.5">{formatTimeRange(block.timeSlot, block.durationMinutes)}</span> : null}
         <span className="rounded-md bg-slate-800 px-2 py-0.5">{task.priority}</span>
         <span className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-0.5">
           <Clock className="h-3 w-3" />

@@ -6,7 +6,7 @@ type RedisResponse<T> = {
   error?: string;
 };
 
-type DurableProvider = "vercel-kv" | "upstash-redis" | "upstash-redis-kv";
+type DurableProvider = "vercel-kv" | "upstash-redis" | "upstash-redis-kv" | "upstash-redis-prefixed-kv";
 
 type RedisConfig = {
   provider: DurableProvider;
@@ -66,6 +66,11 @@ function redisConfig() {
       provider: "upstash-redis-kv" as const,
       url: process.env.UPSTASH_REDIS_KV_REST_API_URL,
       token: process.env.UPSTASH_REDIS_KV_REST_API_TOKEN,
+    },
+    {
+      provider: "upstash-redis-prefixed-kv" as const,
+      url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL,
+      token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
     },
   ];
 

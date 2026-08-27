@@ -1,7 +1,7 @@
 import { addDaysIso, timeToMinutes } from "@/lib/date";
 import type { ActivityEvent, ModuleName, PlannerState, Priority, ScheduleBlock, Task } from "@/lib/types";
 
-const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v3";
+const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v4";
 const COURSE_SOURCE = "course_import_fall_2026";
 const TERM_START = "2026-08-25";
 const TERM_END = "2026-12-07";
@@ -76,7 +76,7 @@ export function withCourseSchedule(state: PlannerState) {
     if (removedTaskIds.has(task.id) && !task.deletedAt) {
       const updated = { ...task, deletedAt: COURSE_MIGRATED_AT, queued: false };
       addEvent({
-        id: `course_event_removed_${task.id}_fall_2026_v3`,
+        id: `course_event_removed_${task.id}_fall_2026_v4`,
         type: "TASK_DELETED",
         taskId: task.id,
         payload: { before: task, after: updated, source: COURSE_SOURCE, replacement: "CIS 5810" },
@@ -107,7 +107,7 @@ export function withCourseSchedule(state: PlannerState) {
     if (!removedBlockIds.has(block.id) || block.deletedAt) return block;
     const updated = { ...block, deletedAt: COURSE_MIGRATED_AT, updatedAt: COURSE_MIGRATED_AT };
     addEvent({
-      id: `course_event_removed_${block.id}_fall_2026_v3`,
+      id: `course_event_removed_${block.id}_fall_2026_v4`,
       type: "TASK_DELETED",
       taskId: block.taskId,
       scheduleBlockId: block.id,

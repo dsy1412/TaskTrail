@@ -23,8 +23,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DegreePlanContent } from "@/components/DegreePlanPage";
 import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
@@ -43,7 +43,7 @@ export function PlannerApp() {
   const canEdit = authStatus === "authenticated";
   const planner = usePlannerStore({ canEdit, syncToCloud: canEdit });
   const [hasMounted, setHasMounted] = useState(false);
-  const [view, setView] = useState<"today" | "calendar">("today");
+  const [view, setView] = useState<"today" | "calendar" | "degree">("today");
   const [draftColumnCount, setDraftColumnCount] = useState(1);
   const [selectedDate, setSelectedDate] = useState(todayIsoDate());
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -202,7 +202,11 @@ export function PlannerApp() {
   }
 
   return (
-    <main className="min-h-screen px-3 pb-[calc(48dvh+2rem)] pt-3 text-ink sm:px-5 sm:pb-[24rem] lg:px-6 xl:px-8">
+    <main
+      className={`min-h-screen px-3 pt-3 text-ink sm:px-5 lg:px-6 xl:px-8 ${
+        view === "degree" ? "pb-6" : "pb-[calc(48dvh+2rem)] sm:pb-[24rem]"
+      }`}
+    >
       <DndContext
         id="tasktrail-planner-dnd"
         sensors={sensors}
@@ -222,19 +226,10 @@ export function PlannerApp() {
             </div>
 
             <div className="flex flex-wrap justify-end gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
-              <Link
-                href="/degree-plan"
-                aria-label="Open DSAI degree plan"
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-cyan-300 hover:text-cyan-200 sm:px-4"
-              >
-                <GraduationCap className="h-4 w-4" />
-                <span className="hidden sm:inline">DSAI Plan</span>
-                <span className="sm:hidden">Plan</span>
-              </Link>
               <InstallAppButton />
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
-            <div className="glass-panel grid w-full grid-cols-2 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
+            <div className="glass-panel grid w-full grid-cols-3 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
               <button
                 type="button"
                 className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
@@ -254,6 +249,16 @@ export function PlannerApp() {
               >
                 <CalendarRange className="h-4 w-4" />
                 Calendar
+              </button>
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "degree" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
+                }`}
+                onClick={() => setView("degree")}
+              >
+                <GraduationCap className="h-4 w-4" />
+                Degree
               </button>
             </div>
           </header>
@@ -301,21 +306,25 @@ export function PlannerApp() {
             />
           ) : null}
 
+          {view === "degree" ? <DegreePlanContent /> : null}
+
         </div>
 
-        <TaskBackpack
-          state={planner.state}
-          onCreateTask={planner.createTask}
-          onCreateAndScheduleTask={quickCreateAndScheduleTask}
-          onUpdateTask={planner.updateTask}
-          onHideTask={planner.hideTask}
-          onRestoreTask={planner.restoreTask}
-          onScheduleTask={quickScheduleTask}
-          onScheduleTaskOnce={quickScheduleTaskOnce}
-          selectedDate={selectedDate}
-          onSelectDate={selectDate}
-          canEdit={canEdit}
-        />
+        {view === "degree" ? null : (
+          <TaskBackpack
+            state={planner.state}
+            onCreateTask={planner.createTask}
+            onCreateAndScheduleTask={quickCreateAndScheduleTask}
+            onUpdateTask={planner.updateTask}
+            onHideTask={planner.hideTask}
+            onRestoreTask={planner.restoreTask}
+            onScheduleTask={quickScheduleTask}
+            onScheduleTaskOnce={quickScheduleTaskOnce}
+            selectedDate={selectedDate}
+            onSelectDate={selectDate}
+            canEdit={canEdit}
+          />
+        )}
         <DragOverlay dropAnimation={null} zIndex={100}>
           {activeDragPreview ? <div className="w-80 max-w-[80vw]">{activeDragPreview}</div> : null}
         </DragOverlay>

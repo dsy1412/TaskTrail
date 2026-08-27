@@ -22,6 +22,18 @@ const sections: Array<{ id: DegreePlanSectionId; label: string }> = [
 
 export function DegreePlanPage() {
   const { status } = useSession();
+
+  if (status === "loading") return <DegreePlanAccess mode="checking" />;
+  if (status !== "authenticated") return <DegreePlanAccess mode="sign-in" />;
+
+  return (
+    <main className="min-h-screen px-3 py-3 text-ink sm:px-5 lg:px-6 xl:px-8">
+      <DegreePlanContent showBackLink />
+    </main>
+  );
+}
+
+export function DegreePlanContent({ showBackLink = false }: { showBackLink?: boolean }) {
   const [section, setSection] = useState<DegreePlanSectionId>("core");
   const [query, setQuery] = useState("");
 
@@ -42,13 +54,10 @@ export function DegreePlanPage() {
     );
   }, [query]);
 
-  if (status === "loading") return <DegreePlanAccess mode="checking" />;
-  if (status !== "authenticated") return <DegreePlanAccess mode="sign-in" />;
-
   return (
-    <main className="min-h-screen px-3 py-3 text-ink sm:px-5 lg:px-6 xl:px-8">
-      <div className="mx-auto grid w-full max-w-[112rem] gap-4">
-        <header className="grid gap-3 px-1 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
+    <div className="mx-auto grid w-full max-w-[112rem] gap-4" data-testid="degree-plan-view">
+      <header className="grid gap-3 px-1 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
+        {showBackLink ? (
           <Link
             href="/"
             aria-label="Back to planner"
@@ -57,88 +66,86 @@ export function DegreePlanPage() {
             <ArrowLeft className="h-4 w-4" />
             Planner
           </Link>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-400">
-              <GraduationCap className="h-4 w-4 text-cyan-300" />
-              {degreePlanSummary.school}
-            </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-slate-50 sm:text-4xl">
-              {degreePlanSummary.program}
-            </h1>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
-              {degreePlanSummary.concentration} - {degreePlanSummary.totalCu} CU total
-            </p>
+        ) : null}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-400">
+            <GraduationCap className="h-4 w-4 text-cyan-300" />
+            {degreePlanSummary.school}
           </div>
-        </header>
+          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-slate-50 sm:text-4xl">
+            {degreePlanSummary.program}
+          </h1>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+            {degreePlanSummary.concentration} - {degreePlanSummary.totalCu} CU total
+          </p>
+        </div>
+      </header>
 
-        <section className="grid gap-3 lg:grid-cols-[20rem_minmax(0,1fr)]">
-          <aside className="grid gap-3 lg:sticky lg:top-3 lg:self-start">
-            <div className="glass-panel rounded-xl p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                <Layers3 className="h-4 w-4 text-cyan-300" />
-                Degree Structure
+      <section className="grid gap-3 lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <aside className="grid gap-3 lg:sticky lg:top-3 lg:self-start">
+          <div className="glass-panel rounded-xl p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <Layers3 className="h-4 w-4 text-cyan-300" />
+              Degree Structure
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <CuBlock label="Core" value={degreePlanSummary.commonCoreCu} />
+              <CuBlock label="AI" value={degreePlanSummary.concentrationCu} />
+              <CuBlock label="Elective" value={degreePlanSummary.electiveCu} />
+            </div>
+            <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+              <div className="flex items-center justify-between gap-3 text-xs font-bold text-slate-400">
+                <span>Total requirement</span>
+                <span className="text-slate-100">{degreePlanSummary.totalCu} CU</span>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <CuBlock label="Core" value={degreePlanSummary.commonCoreCu} />
-                <CuBlock label="AI" value={degreePlanSummary.concentrationCu} />
-                <CuBlock label="Elective" value={degreePlanSummary.electiveCu} />
-              </div>
-              <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950/70 p-3">
-                <div className="flex items-center justify-between gap-3 text-xs font-bold text-slate-400">
-                  <span>Total requirement</span>
-                  <span className="text-slate-100">{degreePlanSummary.totalCu} CU</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
-                  <div className="h-full rounded-full bg-cyan-300" style={{ width: "100%" }} />
-                </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                <div className="h-full rounded-full bg-cyan-300" style={{ width: "100%" }} />
               </div>
             </div>
-
-            <div className="glass-panel rounded-xl p-3">
-              <div className="grid grid-cols-4 gap-1 text-xs font-bold lg:grid-cols-2">
-                {sections.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`min-h-10 rounded-lg px-2 py-2 transition ${
-                      section === item.id ? "bg-cyan-300 text-slate-950" : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
-                    }`}
-                    onClick={() => setSection(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <label className="glass-panel flex min-h-12 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-400 focus-within:border-cyan-300">
-              <Search className="h-4 w-4 text-slate-500" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search courses"
-                aria-label="Search degree courses"
-                className="min-w-0 flex-1 bg-transparent py-3 text-slate-100 outline-none placeholder:text-slate-500"
-              />
-            </label>
-          </aside>
-
-          <div className="grid gap-4">
-            {query.trim() ? (
-              <SearchResults results={searchableCourses} />
-            ) : (
-              <>
-                {section === "core" || section === "ai" ? (
-                  <RequirementGrid requirements={visibleRequirements} />
-                ) : null}
-                {section === "electives" ? <ElectiveExplorer /> : null}
-                {section === "thesis" ? <ThesisPanel /> : null}
-              </>
-            )}
           </div>
-        </section>
-      </div>
-    </main>
+
+          <div className="glass-panel rounded-xl p-3">
+            <div className="grid grid-cols-4 gap-1 text-xs font-bold lg:grid-cols-2">
+              {sections.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`min-h-10 rounded-lg px-2 py-2 transition ${
+                    section === item.id ? "bg-cyan-300 text-slate-950" : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
+                  }`}
+                  onClick={() => setSection(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="glass-panel flex min-h-12 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-400 focus-within:border-cyan-300">
+            <Search className="h-4 w-4 text-slate-500" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search courses"
+              aria-label="Search degree courses"
+              className="min-w-0 flex-1 bg-transparent py-3 text-slate-100 outline-none placeholder:text-slate-500"
+            />
+          </label>
+        </aside>
+
+        <div className="grid gap-4">
+          {query.trim() ? (
+            <SearchResults results={searchableCourses} />
+          ) : (
+            <>
+              {section === "core" || section === "ai" ? <RequirementGrid requirements={visibleRequirements} /> : null}
+              {section === "electives" ? <ElectiveExplorer /> : null}
+              {section === "thesis" ? <ThesisPanel /> : null}
+            </>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 

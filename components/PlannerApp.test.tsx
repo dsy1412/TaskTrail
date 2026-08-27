@@ -41,7 +41,7 @@ describe("PlannerApp", () => {
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("mobile-day-agenda")).toBeInTheDocument();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Open DSAI degree plan" })).toHaveAttribute("href", "/degree-plan");
+    expect(screen.getByRole("button", { name: "Degree" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();
     expect(screen.queryByText("Goal cards")).not.toBeInTheDocument();
@@ -235,6 +235,23 @@ describe("PlannerApp", () => {
 
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-26");
+  });
+
+  it("opens the DSAI degree plan as an in-app main view", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Degree" }));
+
+    expect(await screen.findByTestId("degree-plan-view")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "MSE in Data Science and AI (DSAI)" })).toBeVisible();
+    expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Today" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getByTestId("task-backpack")).toBeVisible();
   });
 
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {

@@ -106,25 +106,47 @@ function cleanEnvValue(value?: string) {
 }
 
 async function redisCommand<T = unknown>(
-  redis: { url: string; token: string },
+  redis: RedisConfig,
   command: Array<string | number>,
 ) {
-  const response = await fetch(redis.url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${redis.token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(command),
-    cache: "no-store",
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(redis.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${redis.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(command),
+      cache: "no-store",
+    });
+  } catch (error) {
+    throw new Error(
+      `Redis request failed before response (${redis.provider}, ${safeUrlHost(redis.url)}): ${safeErrorMessage(error)}`,
+    );
+  }
+
   const json = (await response.json()) as RedisResponse<T>;
 
   if (!response.ok || json.error) {
-    throw new Error(json.error ?? `Redis request failed with ${response.status}`);
+    throw new Error(json.error ?? `Redis request failed with ${response.status} (${redis.provider}, ${safeUrlHost(redis.url)})`);
   }
 
   return json.result as T;
+}
+
+function safeUrlHost(url: string) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "invalid Redis REST URL";
+  }
+}
+
+function safeErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) return "unknown fetch error";
+  return error.message;
 }
 
 function getMemoryStore() {

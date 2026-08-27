@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlannerApp } from "@/components/PlannerApp";
-import { createSeedState, savePlannerState } from "@/lib/storage";
+import { createSeedState, makeTask, savePlannerState } from "@/lib/storage";
 import { todayIsoDate } from "@/lib/date";
 
 const authMock = vi.hoisted(() => ({
@@ -78,6 +78,53 @@ describe("PlannerApp", () => {
 
     expect(await screen.findByText("No cloud sync")).toBeVisible();
     expect(screen.getByTestId("sync-notice")).toHaveTextContent("Cross-device sync is off");
+  });
+
+  it("refreshes cloud planner state on demand", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    const initialState = createSeedState();
+    const refreshedState = {
+      ...initialState,
+      tasks: [
+        ...initialState.tasks,
+        makeTask({
+          title: "Remote desktop update",
+          module: "Project",
+          priority: "High",
+          estimatedDurationMinutes: 60,
+        }),
+      ],
+    };
+    let getCount = 0;
+
+    vi.mocked(fetch).mockImplementation((_input, init) => {
+      if (init?.method === "PUT") {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, storage: { durable: true } }),
+        } as Response);
+      }
+
+      getCount += 1;
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            state: getCount === 1 ? initialState : refreshedState,
+            storage: { durable: true },
+          }),
+      } as Response);
+    });
+
+    render(<PlannerApp />);
+
+    expect(await screen.findByText("Synced")).toBeVisible();
+    expect(screen.queryByText("Remote desktop update")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Refresh sync" }));
+
+    expect(await screen.findByText("Remote desktop update")).toBeVisible();
   });
 
   it("shows an install action when the browser exposes a PWA install prompt", async () => {

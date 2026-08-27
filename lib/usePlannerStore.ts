@@ -37,10 +37,7 @@ export function usePlannerStore({
   const [syncStatus, setSyncStatus] = useState<PlannerSyncStatus>(canEdit ? "loading" : "readonly");
   const loadGeneration = useRef(0);
 
-  useEffect(() => {
-    const generation = loadGeneration.current + 1;
-    loadGeneration.current = generation;
-
+  const loadPlannerStateFromSource = useCallback(async (generation?: number) => {
     if (!canEdit) {
       setState(createSeedState());
       setHydrated(true);
@@ -58,30 +55,39 @@ export function usePlannerStore({
     setHydrated(false);
     setSyncStatus("loading");
 
-    fetch("/api/planner-state", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`Planner state request failed with ${response.status}`);
-        return (await response.json()) as PlannerStateResponse;
-      })
-      .then((body) => {
-        if (loadGeneration.current !== generation) return;
-        if (body.storage?.durable === false) {
-          setState(loadPlannerState());
-          setHydrated(true);
-          setSyncStatus("temporary");
-          return;
-        }
-        setState(isPlannerState(body.state) ? withDefaultSchedules(body.state) : createSeedState());
-        setHydrated(true);
-        setSyncStatus("synced");
-      })
-      .catch(() => {
-        if (loadGeneration.current !== generation) return;
+    try {
+      const response = await fetch(`/api/planner-state?refresh=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Planner state request failed with ${response.status}`);
+      const body = (await response.json()) as PlannerStateResponse;
+
+      if (generation && loadGeneration.current !== generation) return;
+      if (body.storage?.durable === false) {
         setState(loadPlannerState());
         setHydrated(true);
-        setSyncStatus("error");
-      });
+        setSyncStatus("temporary");
+        return;
+      }
+
+      setState(isPlannerState(body.state) ? withDefaultSchedules(body.state) : createSeedState());
+      setHydrated(true);
+      setSyncStatus("synced");
+    } catch {
+      if (generation && loadGeneration.current !== generation) return;
+      setState(loadPlannerState());
+      setHydrated(true);
+      setSyncStatus("error");
+    }
   }, [canEdit, syncToCloud]);
+
+  useEffect(() => {
+    const generation = loadGeneration.current + 1;
+    loadGeneration.current = generation;
+    void loadPlannerStateFromSource(generation);
+  }, [loadPlannerStateFromSource]);
+
+  const refreshPlannerState = useCallback(async () => {
+    await loadPlannerStateFromSource();
+  }, [loadPlannerStateFromSource]);
 
   useEffect(() => {
     if (!hydrated || !canEdit) return;
@@ -380,6 +386,7 @@ export function usePlannerStore({
     state,
     hydrated,
     syncStatus,
+    refreshPlannerState,
     tasksById,
     createTask,
     createTaskAndSchedule,

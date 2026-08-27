@@ -20,6 +20,7 @@ import {
   LockKeyhole,
   LogIn,
   LogOut,
+  RefreshCcw,
   Sparkles,
 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -227,7 +228,12 @@ export function PlannerApp() {
 
             <div className="flex flex-wrap justify-end gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
               <InstallAppButton />
-              <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
+              <AuthControls
+                authStatus={authStatus}
+                email={session?.user?.email}
+                syncStatus={planner.syncStatus}
+                onRefreshSync={planner.refreshPlannerState}
+              />
             </div>
             <div className="glass-panel grid w-full grid-cols-3 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
               <button
@@ -371,10 +377,12 @@ function AuthControls({
   authStatus,
   email,
   syncStatus,
+  onRefreshSync,
 }: {
   authStatus: "authenticated" | "loading" | "unauthenticated";
   email?: string | null;
   syncStatus: PlannerSyncStatus;
+  onRefreshSync?: () => void | Promise<void>;
 }) {
   if (authStatus === "loading") {
     return (
@@ -406,6 +414,16 @@ function AuthControls({
       {syncStatus === "error" ? <AlertTriangle className="h-4 w-4 text-amber-300" /> : <Cloud className="h-4 w-4" />}
       <span className="hidden max-w-[11rem] truncate sm:inline">{email}</span>
       <span>{syncLabel(syncStatus)}</span>
+      <button
+        type="button"
+        aria-label="Refresh sync"
+        title="Refresh sync"
+        className="rounded-md border border-slate-700 bg-slate-950 p-1.5 text-slate-300 shadow-sm transition hover:text-slate-50 disabled:cursor-wait disabled:opacity-60"
+        onClick={() => void onRefreshSync?.()}
+        disabled={syncStatus === "loading" || syncStatus === "saving"}
+      >
+        <RefreshCcw className="h-3.5 w-3.5" />
+      </button>
       <button
         type="button"
         aria-label="Sign out"

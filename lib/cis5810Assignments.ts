@@ -88,8 +88,6 @@ const cis5810Assignments = [
 ] satisfies Cis5810Assignment[];
 
 export function withCis5810Assignments(state: PlannerState) {
-  if (state.events.some((event) => event.id === CIS5810_ASSIGNMENT_IMPORT_EVENT_ID)) return state;
-
   const existingTaskIds = new Set(state.tasks.map((task) => task.id));
   const existingBlockIds = new Set(state.scheduleBlocks.map((block) => block.id));
   const existingEventIds = new Set(state.events.map((event) => event.id));

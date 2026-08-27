@@ -76,7 +76,7 @@ export function TaskCard({
       transition={{ duration: 0.18 }}
       data-testid={block ? "scheduled-task-card" : "backpack-task-card"}
       suppressHydrationWarning
-      className={`group touch-pan-y sm:touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute" : "relative"} ${onDelete || onHide || onRestore ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
+      className={`group touch-pan-y sm:touch-none ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${isScheduled ? "absolute overflow-hidden" : "relative"} ${onDelete || onHide || onRestore ? "pr-14" : ""} rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm`}
     >
       <div className="flex items-start gap-2">
         {!disabled ? (
@@ -199,6 +199,7 @@ export function TaskCard({
 
 function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
   const accent = taskAccent(task);
+  const showNotes = !block || block.durationMinutes >= 90;
 
   return (
     <>
@@ -220,7 +221,7 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
           {formatDuration(block?.durationMinutes ?? task.estimatedDurationMinutes)}
         </span>
       </div>
-      {task.notes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{task.notes}</p> : null}
+      {task.notes && showNotes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{task.notes}</p> : null}
     </>
   );
 }

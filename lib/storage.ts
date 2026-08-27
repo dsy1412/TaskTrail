@@ -1,4 +1,5 @@
 import { addDaysIso, todayIsoDate } from "@/lib/date";
+import { withCis5810Assignments } from "@/lib/cis5810Assignments";
 import { withCourseSchedule } from "@/lib/courseSchedule";
 import { withFall2026EventSchedule } from "@/lib/eventSchedule";
 import { withFall2026LabSemesterPlan } from "@/lib/semesterPlan";
@@ -240,7 +241,9 @@ export function timestamp() {
 
 export function withDefaultSchedules(state: PlannerState) {
   return normalizePlannerState(
-    withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+    withCis5810Assignments(
+      withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+    ),
   );
 }
 

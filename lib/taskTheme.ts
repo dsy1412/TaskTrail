@@ -7,6 +7,14 @@ export interface TaskAccent {
 }
 
 export function taskAccent(task: Pick<Task, "id" | "title">): TaskAccent {
+  if (task.id.startsWith("cis5810_assignment_task_")) {
+    return {
+      color: "#ef4444",
+      softColor: "rgba(239, 68, 68, 0.18)",
+      foreground: "#020617",
+    };
+  }
+
   const hash = hashString(`${task.id}:${task.title}`);
   const hue = (hash * 137) % 360;
 

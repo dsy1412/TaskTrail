@@ -84,6 +84,17 @@ describe("planner storage", () => {
     expect(maxColumn).toBe(0);
   });
 
+  it("imports CIS 5810 Fall 2026 assignment deadlines", () => {
+    const state = createSeedState();
+    const assignments = state.tasks.filter((task) => task.id.startsWith("cis5810_assignment_task_"));
+
+    expect(assignments).toHaveLength(10);
+    expect(assignments.map((task) => task.title)).toContain("CIS 5810 Project 1: Dolly Zoom");
+    expect(assignments.map((task) => task.title)).toContain("CIS 5810 Project 7: Hand Pose Estimation");
+    expect(state.scheduleBlocks.some((block) => block.id === "cis5810_assignment_block_project_1_dolly_zoom")).toBe(true);
+    expect(state.scheduleBlocks.some((block) => block.id === "cis5810_assignment_block_project_7_hand_pose_estimation")).toBe(true);
+  });
+
   it("migrates older persisted states with no journal entries", () => {
     window.localStorage.setItem(
       "tasktrail.mvp.state.v1",

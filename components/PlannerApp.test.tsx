@@ -297,6 +297,35 @@ describe("PlannerApp", () => {
     expect(screen.getAllByText("15:30-16:59").length).toBeGreaterThan(0);
   });
 
+  it("imports CIS 5810 assignment due dates into Today and Calendar", async () => {
+    vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    fireEvent.change(await screen.findByLabelText("Jump to date"), { target: { value: "2026-08-31" } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("CIS 5810 Project 1: Dolly Zoom").length).toBeGreaterThan(0);
+    });
+    expect(screen.getAllByText("23:00-23:59").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-08-31").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "Calendar" }));
+
+    const selectedDay = await screen.findByTestId("planning-day-2026-08-31");
+    expect(within(selectedDay).getByTitle("CIS 5810 Project 1: Dolly Zoom")).toBeVisible();
+
+    await user.click(await screen.findByRole("button", { name: "Next month" }));
+    await user.click(await screen.findByRole("button", { name: "Next month" }));
+    await user.click(await screen.findByRole("button", { name: "Next month" }));
+    await user.click(await screen.findByRole("button", { name: "Open 2026-11-09 in Today Canvas" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getAllByText("CIS 5810 Project 7: Hand Pose Estimation").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DDL 2026-11-09").length).toBeGreaterThan(0);
+  });
+
   it("imports Fall 2026 Penn events into the Today Canvas and Planning Calendar", async () => {
     vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));
     localStorage.clear();

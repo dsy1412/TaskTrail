@@ -80,6 +80,24 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("sync-notice")).toHaveTextContent("Cross-device sync is off");
   });
 
+  it("shows a safe storage failure detail when cloud sync fails", async () => {
+    localStorage.clear();
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      json: () =>
+        Promise.resolve({
+          error: "Planner storage is unavailable",
+          detail: "Redis request failed with 401",
+          storage: { durable: true, provider: "upstash-redis-prefixed-kv" },
+        }),
+    } as Response);
+
+    render(<PlannerApp />);
+
+    expect(await screen.findByText("Local backup")).toBeVisible();
+    expect(screen.getByTestId("sync-notice")).toHaveTextContent("Redis request failed with 401");
+  });
+
   it("refreshes cloud planner state on demand", async () => {
     localStorage.clear();
     const user = userEvent.setup();

@@ -269,7 +269,9 @@ export function PlannerApp() {
             </div>
           </header>
 
-          {isCloudSyncUnavailable(planner.syncStatus) ? <SyncNotice status={planner.syncStatus} /> : null}
+          {isCloudSyncUnavailable(planner.syncStatus) ? (
+            <SyncNotice status={planner.syncStatus} detail={planner.syncError} />
+          ) : null}
 
           {view === "today" ? (
             <section
@@ -446,7 +448,7 @@ function syncLabel(status: PlannerSyncStatus) {
   return "Editable";
 }
 
-function SyncNotice({ status }: { status: PlannerSyncStatus }) {
+function SyncNotice({ status, detail }: { status: PlannerSyncStatus; detail?: string | null }) {
   const copy =
     status === "temporary"
       ? "Cross-device sync is off because production storage is using temporary server memory. Set KV or Upstash Redis in Vercel before relying on phone sync."
@@ -458,6 +460,7 @@ function SyncNotice({ status }: { status: PlannerSyncStatus }) {
       className="rounded-xl border border-amber-400/35 bg-amber-400/10 px-4 py-3 text-sm font-semibold leading-6 text-amber-100"
     >
       {copy}
+      {detail ? <div className="mt-2 text-xs text-amber-200/85">Storage detail: {detail}</div> : null}
     </div>
   );
 }

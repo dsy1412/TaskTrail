@@ -19,6 +19,8 @@ import type { JournalEntry, ModuleName, PlannerState, Priority, Task } from "@/l
 export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "temporary" | "error";
 
 type PlannerStateResponse = {
+  detail?: string;
+  error?: string;
   state?: unknown;
   persisted?: boolean;
   storage?: {
@@ -36,6 +38,7 @@ export function usePlannerStore({
   const [state, setState] = useState<PlannerState>(() => createSeedState());
   const [hydrated, setHydrated] = useState(false);
   const [syncStatus, setSyncStatus] = useState<PlannerSyncStatus>(canEdit ? "loading" : "readonly");
+  const [syncError, setSyncError] = useState<string | null>(null);
   const loadGeneration = useRef(0);
 
   const loadPlannerStateFromSource = useCallback(async (generation?: number) => {
@@ -43,6 +46,7 @@ export function usePlannerStore({
       setState(createSeedState());
       setHydrated(true);
       setSyncStatus("readonly");
+      setSyncError(null);
       return;
     }
 
@@ -50,6 +54,7 @@ export function usePlannerStore({
       setState(loadPlannerState());
       setHydrated(true);
       setSyncStatus("local");
+      setSyncError(null);
       return;
     }
 
@@ -58,14 +63,15 @@ export function usePlannerStore({
 
     try {
       const response = await fetch(`/api/planner-state?refresh=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Planner state request failed with ${response.status}`);
       const body = (await response.json()) as PlannerStateResponse;
+      if (!response.ok) throw new Error(body.detail ?? body.error ?? `Planner state request failed with ${response.status}`);
 
       if (generation && loadGeneration.current !== generation) return;
       if (body.storage?.durable === false) {
         setState(loadPlannerState());
         setHydrated(true);
         setSyncStatus("temporary");
+        setSyncError(null);
         return;
       }
 
@@ -73,11 +79,13 @@ export function usePlannerStore({
       setState(isPlannerState(sourceState) ? withDefaultSchedules(sourceState) : createSeedState());
       setHydrated(true);
       setSyncStatus("synced");
-    } catch {
+      setSyncError(null);
+    } catch (error) {
       if (generation && loadGeneration.current !== generation) return;
       setState(loadPlannerState());
       setHydrated(true);
       setSyncStatus("error");
+      setSyncError(error instanceof Error ? error.message : "Planner storage request failed");
     }
   }, [canEdit, syncToCloud]);
 
@@ -109,19 +117,22 @@ export function usePlannerStore({
         signal: controller.signal,
       })
         .then(async (response) => {
-          if (!response.ok) throw new Error(`Planner state save failed with ${response.status}`);
           const body = (await response.json()) as PlannerStateResponse;
+          if (!response.ok) throw new Error(body.detail ?? body.error ?? `Planner state save failed with ${response.status}`);
           if (body.storage?.durable === false) {
             savePlannerState(state);
             setSyncStatus("temporary");
+            setSyncError(null);
             return;
           }
           setSyncStatus("synced");
+          setSyncError(null);
         })
         .catch((error) => {
           if (error?.name === "AbortError") return;
           savePlannerState(state);
           setSyncStatus("error");
+          setSyncError(error instanceof Error ? error.message : "Planner storage save failed");
         });
     }, 450);
 
@@ -388,6 +399,7 @@ export function usePlannerStore({
     state,
     hydrated,
     syncStatus,
+    syncError,
     refreshPlannerState,
     tasksById,
     createTask,

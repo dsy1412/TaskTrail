@@ -54,23 +54,23 @@ function redisConfig() {
   const candidates: Array<{ provider: DurableProvider; url?: string; token?: string }> = [
     {
       provider: "vercel-kv" as const,
-      url: process.env.KV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
+      url: cleanEnvValue(process.env.KV_REST_API_URL),
+      token: cleanEnvValue(process.env.KV_REST_API_TOKEN),
     },
     {
       provider: "upstash-redis" as const,
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: cleanEnvValue(process.env.UPSTASH_REDIS_REST_URL),
+      token: cleanEnvValue(process.env.UPSTASH_REDIS_REST_TOKEN),
     },
     {
       provider: "upstash-redis-kv" as const,
-      url: process.env.UPSTASH_REDIS_KV_REST_API_URL,
-      token: process.env.UPSTASH_REDIS_KV_REST_API_TOKEN,
+      url: cleanEnvValue(process.env.UPSTASH_REDIS_KV_REST_API_URL),
+      token: cleanEnvValue(process.env.UPSTASH_REDIS_KV_REST_API_TOKEN),
     },
     {
       provider: "upstash-redis-prefixed-kv" as const,
-      url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL,
-      token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
+      url: cleanEnvValue(process.env.UPSTASH_REDIS_REST_KV_REST_API_URL),
+      token: cleanEnvValue(process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN),
     },
   ];
 
@@ -83,6 +83,26 @@ export function getPlannerStorageDiagnostics(): PlannerStorageDiagnostics {
   const redis = redisConfig();
   if (!redis) return { mode: "memory", provider: "server-memory", durable: false };
   return { mode: "durable", provider: redis.provider, durable: true };
+}
+
+function cleanEnvValue(value?: string) {
+  if (!value) return undefined;
+
+  let cleaned = value.trim();
+  if (
+    (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+    (cleaned.startsWith("'") && cleaned.endsWith("'"))
+  ) {
+    cleaned = cleaned.slice(1, -1);
+  }
+
+  const markdownUrl = cleaned.match(/^\[(https?:\/\/[^\]]+)\]\(https?:\/\/[^)]+\)$/);
+  if (markdownUrl) {
+    cleaned = markdownUrl[1];
+  }
+
+  cleaned = cleaned.replace(/\\_/g, "_").replace(/\\:/g, ":").replace(/\\\//g, "/").replace(/\\@/g, "@");
+  return cleaned;
 }
 
 async function redisCommand<T = unknown>(

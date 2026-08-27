@@ -25,9 +25,13 @@ export async function GET() {
       persisted: Boolean(state),
       storage: getPlannerStorageDiagnostics(),
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: "Planner storage is unavailable", storage: getPlannerStorageDiagnostics() },
+      {
+        error: "Planner storage is unavailable",
+        detail: safeStorageError(error),
+        storage: getPlannerStorageDiagnostics(),
+      },
       { status: 503 },
     );
   }
@@ -49,12 +53,21 @@ export async function PUT(request: Request) {
   try {
     await writeUserPlannerState(auth.email, body.state);
     return NextResponse.json({ ok: true, storage: getPlannerStorageDiagnostics() });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: "Planner storage is unavailable", storage: getPlannerStorageDiagnostics() },
+      {
+        error: "Planner storage is unavailable",
+        detail: safeStorageError(error),
+        storage: getPlannerStorageDiagnostics(),
+      },
       { status: 503 },
     );
   }
+}
+
+function safeStorageError(error: unknown) {
+  if (!(error instanceof Error)) return "Unknown storage error";
+  return error.message.replace(/Bearer\s+[A-Za-z0-9._-]+/g, "Bearer [redacted]");
 }
 
 async function authorizedEmail(): Promise<

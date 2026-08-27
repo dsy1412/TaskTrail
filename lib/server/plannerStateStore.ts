@@ -6,6 +6,18 @@ type RedisResponse<T> = {
   error?: string;
 };
 
+type DurableProvider = "vercel-kv" | "upstash-redis" | "upstash-redis-kv";
+
+type RedisConfig = {
+  provider: DurableProvider;
+  url: string;
+  token: string;
+};
+
+export type PlannerStorageDiagnostics =
+  | { mode: "durable"; provider: DurableProvider; durable: true }
+  | { mode: "memory"; provider: "server-memory"; durable: false };
+
 const memoryStore = getMemoryStore();
 
 export async function readUserPlannerState(email: string) {
@@ -39,17 +51,33 @@ function plannerKey(email: string) {
 }
 
 function redisConfig() {
-  const url =
-    process.env.KV_REST_API_URL ??
-    process.env.UPSTASH_REDIS_REST_URL ??
-    process.env.UPSTASH_REDIS_KV_REST_API_URL;
-  const token =
-    process.env.KV_REST_API_TOKEN ??
-    process.env.UPSTASH_REDIS_REST_TOKEN ??
-    process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
+  const candidates: Array<{ provider: DurableProvider; url?: string; token?: string }> = [
+    {
+      provider: "vercel-kv" as const,
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    },
+    {
+      provider: "upstash-redis" as const,
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    },
+    {
+      provider: "upstash-redis-kv" as const,
+      url: process.env.UPSTASH_REDIS_KV_REST_API_URL,
+      token: process.env.UPSTASH_REDIS_KV_REST_API_TOKEN,
+    },
+  ];
 
-  if (!url || !token) return null;
-  return { url, token };
+  const configured = candidates.find((candidate): candidate is RedisConfig => Boolean(candidate.url && candidate.token));
+  if (!configured) return null;
+  return configured;
+}
+
+export function getPlannerStorageDiagnostics(): PlannerStorageDiagnostics {
+  const redis = redisConfig();
+  if (!redis) return { mode: "memory", provider: "server-memory", durable: false };
+  return { mode: "durable", provider: redis.provider, durable: true };
 }
 
 async function redisCommand<T = unknown>(

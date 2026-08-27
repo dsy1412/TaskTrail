@@ -11,8 +11,19 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, CalendarDays, CalendarRange, Cloud, LockKeyhole, LogIn, LogOut, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CalendarRange,
+  Cloud,
+  GraduationCap,
+  LockKeyhole,
+  LogIn,
+  LogOut,
+  Sparkles,
+} from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
@@ -23,7 +34,7 @@ import { VibeJournal } from "@/components/VibeJournal";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
 import { addDaysIso, TIME_SLOTS, todayIsoDate } from "@/lib/date";
 import { getScheduledColumnCount, getVisibleColumnCount } from "@/lib/columns";
-import { type PlannerSyncStatus, usePlannerStore } from "@/lib/usePlannerStore";
+import { isCloudSyncUnavailable, type PlannerSyncStatus, usePlannerStore } from "@/lib/usePlannerStore";
 
 const MAX_COLUMNS = 4;
 
@@ -211,6 +222,15 @@ export function PlannerApp() {
             </div>
 
             <div className="flex flex-wrap justify-end gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
+              <Link
+                href="/degree-plan"
+                aria-label="Open DSAI degree plan"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-cyan-300 hover:text-cyan-200 sm:px-4"
+              >
+                <GraduationCap className="h-4 w-4" />
+                <span className="hidden sm:inline">DSAI Plan</span>
+                <span className="sm:hidden">Plan</span>
+              </Link>
               <InstallAppButton />
               <AuthControls authStatus={authStatus} email={session?.user?.email} syncStatus={planner.syncStatus} />
             </div>
@@ -237,6 +257,8 @@ export function PlannerApp() {
               </button>
             </div>
           </header>
+
+          {isCloudSyncUnavailable(planner.syncStatus) ? <SyncNotice status={planner.syncStatus} /> : null}
 
           {view === "today" ? (
             <section
@@ -392,8 +414,25 @@ function syncLabel(status: PlannerSyncStatus) {
   if (status === "saving") return "Saving";
   if (status === "synced") return "Synced";
   if (status === "loading") return "Loading";
+  if (status === "temporary") return "No cloud sync";
   if (status === "error") return "Local backup";
   return "Editable";
+}
+
+function SyncNotice({ status }: { status: PlannerSyncStatus }) {
+  const copy =
+    status === "temporary"
+      ? "Cross-device sync is off because production storage is using temporary server memory. Set KV or Upstash Redis in Vercel before relying on phone sync."
+      : "Cloud sync failed, so this browser is using a local backup. Changes made here will not appear on your phone until the cloud storage/API error is fixed.";
+
+  return (
+    <div
+      data-testid="sync-notice"
+      className="rounded-xl border border-amber-400/35 bg-amber-400/10 px-4 py-3 text-sm font-semibold leading-6 text-amber-100"
+    >
+      {copy}
+    </div>
+  );
 }
 
 function snapToGrid(clientX: number, clientY: number, rect: DOMRect, columnCount: number) {

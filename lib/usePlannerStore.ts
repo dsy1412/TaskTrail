@@ -16,7 +16,14 @@ import {
 } from "@/lib/storage";
 import type { JournalEntry, ModuleName, PlannerState, Priority, Task } from "@/lib/types";
 
-export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "error";
+export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "temporary" | "error";
+
+type PlannerStateResponse = {
+  state?: unknown;
+  storage?: {
+    durable?: boolean;
+  };
+};
 
 export function usePlannerStore({
   canEdit = true,
@@ -54,10 +61,16 @@ export function usePlannerStore({
     fetch("/api/planner-state", { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error(`Planner state request failed with ${response.status}`);
-        return (await response.json()) as { state?: unknown };
+        return (await response.json()) as PlannerStateResponse;
       })
       .then((body) => {
         if (loadGeneration.current !== generation) return;
+        if (body.storage?.durable === false) {
+          setState(loadPlannerState());
+          setHydrated(true);
+          setSyncStatus("temporary");
+          return;
+        }
         setState(isPlannerState(body.state) ? withDefaultSchedules(body.state) : createSeedState());
         setHydrated(true);
         setSyncStatus("synced");
@@ -87,8 +100,14 @@ export function usePlannerStore({
         body: JSON.stringify({ state }),
         signal: controller.signal,
       })
-        .then((response) => {
+        .then(async (response) => {
           if (!response.ok) throw new Error(`Planner state save failed with ${response.status}`);
+          const body = (await response.json()) as PlannerStateResponse;
+          if (body.storage?.durable === false) {
+            savePlannerState(state);
+            setSyncStatus("temporary");
+            return;
+          }
           setSyncStatus("synced");
         })
         .catch((error) => {
@@ -375,4 +394,8 @@ export function usePlannerStore({
     createJournalEntry,
     deleteJournalEntry,
   };
+}
+
+export function isCloudSyncUnavailable(status: PlannerSyncStatus) {
+  return status === "temporary" || status === "error";
 }

@@ -41,6 +41,7 @@ describe("PlannerApp", () => {
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("mobile-day-agenda")).toBeInTheDocument();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open DSAI degree plan" })).toHaveAttribute("href", "/degree-plan");
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();
     expect(screen.queryByText("Goal cards")).not.toBeInTheDocument();
@@ -64,6 +65,19 @@ describe("PlannerApp", () => {
     expect(authMock.signIn).toHaveBeenCalledWith("google");
     expect(screen.getByText("Private planner")).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Today Canvas" })).not.toBeInTheDocument();
+  });
+
+  it("warns when production storage is temporary and cannot sync across devices", async () => {
+    localStorage.clear();
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ state: createSeedState(), storage: { durable: false } }),
+    } as Response);
+
+    render(<PlannerApp />);
+
+    expect(await screen.findByText("No cloud sync")).toBeVisible();
+    expect(screen.getByTestId("sync-notice")).toHaveTextContent("Cross-device sync is off");
   });
 
   it("shows an install action when the browser exposes a PWA install prompt", async () => {

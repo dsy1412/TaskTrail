@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { authOptions, isAllowedPlannerEmail } from "@/lib/auth";
 import { isPlannerState } from "@/lib/plannerStateSchema";
 import { createSeedState } from "@/lib/storage";
-import { readUserPlannerState, writeUserPlannerState } from "@/lib/server/plannerStateStore";
+import {
+  getPlannerStorageDiagnostics,
+  readUserPlannerState,
+  writeUserPlannerState,
+} from "@/lib/server/plannerStateStore";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +18,19 @@ export async function GET() {
     return auth.response;
   }
 
-  const state = await readUserPlannerState(auth.email);
-  return NextResponse.json({ state: state ?? createSeedState(), persisted: Boolean(state) });
+  try {
+    const state = await readUserPlannerState(auth.email);
+    return NextResponse.json({
+      state: state ?? createSeedState(),
+      persisted: Boolean(state),
+      storage: getPlannerStorageDiagnostics(),
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Planner storage is unavailable", storage: getPlannerStorageDiagnostics() },
+      { status: 503 },
+    );
+  }
 }
 
 export async function PUT(request: Request) {
@@ -31,8 +46,15 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid planner state" }, { status: 400 });
   }
 
-  await writeUserPlannerState(auth.email, body.state);
-  return NextResponse.json({ ok: true });
+  try {
+    await writeUserPlannerState(auth.email, body.state);
+    return NextResponse.json({ ok: true, storage: getPlannerStorageDiagnostics() });
+  } catch {
+    return NextResponse.json(
+      { error: "Planner storage is unavailable", storage: getPlannerStorageDiagnostics() },
+      { status: 503 },
+    );
+  }
 }
 
 async function authorizedEmail(): Promise<

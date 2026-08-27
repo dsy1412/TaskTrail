@@ -127,6 +127,45 @@ describe("PlannerApp", () => {
     expect(await screen.findByText("Remote desktop update")).toBeVisible();
   });
 
+  it("uses the browser backup to seed a newly configured cloud store", async () => {
+    localStorage.clear();
+    const localState = createSeedState();
+    const localOnlyTask = makeTask({
+      title: "Local plan ready for cloud",
+      module: "Project",
+      priority: "High",
+      estimatedDurationMinutes: 60,
+    });
+    savePlannerState({
+      ...localState,
+      tasks: [...localState.tasks, localOnlyTask],
+    });
+
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          state: createSeedState(),
+          persisted: false,
+          storage: { durable: true },
+        }),
+    } as Response);
+
+    render(<PlannerApp />);
+
+    expect(await screen.findByText("Local plan ready for cloud")).toBeVisible();
+
+    await waitFor(() => {
+      expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+        "/api/planner-state",
+        expect.objectContaining({
+          method: "PUT",
+          body: expect.stringContaining("Local plan ready for cloud"),
+        }),
+      );
+    });
+  });
+
   it("shows an install action when the browser exposes a PWA install prompt", async () => {
     localStorage.clear();
     const user = userEvent.setup();

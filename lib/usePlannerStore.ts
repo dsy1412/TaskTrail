@@ -20,6 +20,7 @@ export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "s
 
 type PlannerStateResponse = {
   state?: unknown;
+  persisted?: boolean;
   storage?: {
     durable?: boolean;
   };
@@ -68,7 +69,8 @@ export function usePlannerStore({
         return;
       }
 
-      setState(isPlannerState(body.state) ? withDefaultSchedules(body.state) : createSeedState());
+      const sourceState = body.persisted === false ? loadPlannerState() : body.state;
+      setState(isPlannerState(sourceState) ? withDefaultSchedules(sourceState) : createSeedState());
       setHydrated(true);
       setSyncStatus("synced");
     } catch {

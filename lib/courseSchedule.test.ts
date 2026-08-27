@@ -48,6 +48,14 @@ describe("Fall 2026 course schedule import", () => {
     expect(migrated.tasks.find((task) => task.id === "course_task_cis5810_tr")?.title).toBe(
       "CIS 5810 Computer Vision & Computational Photography",
     );
+    expect(migrated.tasks.find((task) => task.id === "course_task_cis5810_tr")?.notes).toContain("TOWN 100");
+    expect(migrated.scheduleBlocks).toContainEqual(
+      expect.objectContaining({
+        id: "course_block_cis5810_tr_2026-08-25",
+        timeSlot: "15:30",
+        durationMinutes: 89,
+      }),
+    );
     expect(migrated.scheduleBlocks).toContainEqual(
       expect.objectContaining({
         id: "course_block_cis5810_tr_2026-08-27",

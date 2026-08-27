@@ -34,7 +34,7 @@ const courseMeetings = [
     days: [2, 4],
     startTime: "15:30",
     endTime: "16:59",
-    location: "Room not shown",
+    location: "TOWN 100",
     instructor: "J. Shi",
   },
 ] satisfies CourseMeeting[];

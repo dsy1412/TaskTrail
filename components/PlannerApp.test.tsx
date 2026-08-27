@@ -266,7 +266,7 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("selected-date-label")).toHaveAttribute("data-date", "2026-04-27");
   });
 
-  it("imports CIS course meetings into the Today Canvas and Planning Calendar", async () => {
+  it("imports updated CIS course meetings into the Today Canvas and Planning Calendar", async () => {
     vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));
     localStorage.clear();
     const user = userEvent.setup();
@@ -279,14 +279,22 @@ describe("PlannerApp", () => {
     });
     expect(screen.getAllByText("10:15-11:44").length).toBeGreaterThan(0);
     expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
+    expect(screen.queryByText("CIS 5450 Big Data Analytics")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Calendar" }));
 
     const selectedDay = await screen.findByTestId("planning-day-2026-08-26");
     expect(within(selectedDay).getByText("CIS 6250 Theory of Machine Learning")).toBeVisible();
-    expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CIS 5450 Big Data Analytics").length).toBeGreaterThan(0);
+    expect(within(selectedDay).getByText("CIS 5800 Machine Perception")).toBeVisible();
+    expect(screen.queryByText("CIS 5450 Big Data Analytics")).not.toBeInTheDocument();
     expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
+
+    await user.click(await screen.findByRole("button", { name: "Open 2026-08-27 in Today Canvas" }));
+
+    expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
+    expect(screen.getAllByText("CIS 5810 Computer Vision & Computational Photography").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("15:30-16:59").length).toBeGreaterThan(0);
   });
 
   it("imports Fall 2026 Penn events into the Today Canvas and Planning Calendar", async () => {

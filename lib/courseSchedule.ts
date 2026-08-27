@@ -1,11 +1,13 @@
 import { addDaysIso, timeToMinutes } from "@/lib/date";
 import type { ActivityEvent, ModuleName, PlannerState, Priority, ScheduleBlock, Task } from "@/lib/types";
 
-const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v2";
+const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v3";
 const COURSE_SOURCE = "course_import_fall_2026";
 const TERM_START = "2026-08-25";
 const TERM_END = "2026-12-07";
 const COURSE_CREATED_AT = "2026-08-25T04:00:00.000Z";
+const COURSE_MIGRATED_AT = "2026-08-26T04:00:00.000Z";
+const removedCourseMeetingIds = ["cis5450_mw", "cis5450_f"];
 
 const courseMeetings = [
   {
@@ -27,22 +29,13 @@ const courseMeetings = [
     instructor: "C. Taylor",
   },
   {
-    id: "cis5450_mw",
-    title: "CIS 5450 Big Data Analytics",
-    days: [1, 3],
-    startTime: "13:45",
-    endTime: "15:14",
-    location: "MEYH B1",
-    instructor: "R. Marcus",
-  },
-  {
-    id: "cis5450_f",
-    title: "CIS 5450 Big Data Analytics Recitation",
-    days: [5],
-    startTime: "13:45",
-    endTime: "15:14",
+    id: "cis5810_tr",
+    title: "CIS 5810 Computer Vision & Computational Photography",
+    days: [2, 4],
+    startTime: "15:30",
+    endTime: "16:59",
     location: "Room not shown",
-    instructor: "R. Marcus",
+    instructor: "J. Shi",
   },
 ] satisfies CourseMeeting[];
 
@@ -72,8 +65,26 @@ export function withCourseSchedule(state: PlannerState) {
     });
   }
 
+  const removedTaskIds = new Set(removedCourseMeetingIds.map((meetingId) => `course_task_${meetingId}`));
+  const removedBlockIds = new Set(
+    removedCourseMeetingIds.flatMap((meetingId) =>
+      getMeetingDatesForId(meetingId).map((date) => `course_block_${meetingId}_${date}`),
+    ),
+  );
   const desiredTasks = new Map(courseMeetings.map((meeting) => [makeCourseTask(meeting).id, makeCourseTask(meeting)]));
   const updatedTasks = state.tasks.map((task) => {
+    if (removedTaskIds.has(task.id) && !task.deletedAt) {
+      const updated = { ...task, deletedAt: COURSE_MIGRATED_AT, queued: false };
+      addEvent({
+        id: `course_event_removed_${task.id}_fall_2026_v3`,
+        type: "TASK_DELETED",
+        taskId: task.id,
+        payload: { before: task, after: updated, source: COURSE_SOURCE, replacement: "CIS 5810" },
+        createdAt: COURSE_MIGRATED_AT,
+      });
+      return updated;
+    }
+
     const desired = desiredTasks.get(task.id);
     if (!desired) return task;
     const updated: Task = {
@@ -89,6 +100,20 @@ export function withCourseSchedule(state: PlannerState) {
     if (isSameTask(task, updated)) return task;
 
     addPendingTaskUpdate(task, updated);
+    return updated;
+  });
+
+  const updatedBlocks = state.scheduleBlocks.map((block) => {
+    if (!removedBlockIds.has(block.id) || block.deletedAt) return block;
+    const updated = { ...block, deletedAt: COURSE_MIGRATED_AT, updatedAt: COURSE_MIGRATED_AT };
+    addEvent({
+      id: `course_event_removed_${block.id}_fall_2026_v3`,
+      type: "TASK_DELETED",
+      taskId: block.taskId,
+      scheduleBlockId: block.id,
+      payload: { before: block, after: updated, source: COURSE_SOURCE, replacement: "CIS 5810" },
+      createdAt: COURSE_MIGRATED_AT,
+    });
     return updated;
   });
 
@@ -137,7 +162,7 @@ export function withCourseSchedule(state: PlannerState) {
   return {
     ...state,
     tasks: [...updatedTasks, ...tasksToAdd],
-    scheduleBlocks: [...state.scheduleBlocks, ...blocksToAdd],
+    scheduleBlocks: [...updatedBlocks, ...blocksToAdd],
     events: [...state.events, ...eventsToAdd],
   };
 }
@@ -181,11 +206,21 @@ function makeCourseBlock(meeting: CourseMeeting, task: Task, date: string): Sche
 }
 
 function getMeetingDates(meeting: CourseMeeting) {
+  return getMeetingDatesForDays(meeting.days);
+}
+
+function getMeetingDatesForId(meetingId: string) {
+  if (meetingId === "cis5450_mw") return getMeetingDatesForDays([1, 3]);
+  if (meetingId === "cis5450_f") return getMeetingDatesForDays([5]);
+  return [];
+}
+
+function getMeetingDatesForDays(days: number[]) {
   const dates: string[] = [];
   let cursor = TERM_START;
   while (cursor <= TERM_END) {
     const day = new Date(`${cursor}T00:00:00`).getDay();
-    if (meeting.days.includes(day)) dates.push(cursor);
+    if (days.includes(day)) dates.push(cursor);
     cursor = addDaysIso(cursor, 1);
   }
   return dates;

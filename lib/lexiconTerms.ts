@@ -1,6 +1,7 @@
 import type { ActivityEvent, LexiconEntry, PlannerState } from "@/lib/types";
 
 const LEXICON_TERMS_IMPORT_EVENT_ID = "lexicon_terms_cis5800_fall_2026_v1";
+const LEXICON_TERMS_TRANSLATION_EVENT_ID = "lexicon_terms_example_translations_v2";
 const LEXICON_TERMS_SOURCE = "cis5800_image_formation_lecture";
 const LEXICON_TERMS_CREATED_AT = "2026-08-28T08:00:00.000Z";
 
@@ -13,6 +14,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 radiometry",
     association: "ray + direction + light field",
     example: "Radiance describes directional light traveling through space.",
+    exampleTranslation: "Radiance 描述的是沿特定方向在空间中传播的光。",
     related: ["irradiance", "light field", "outgoing radiance"],
   },
   {
@@ -23,6 +25,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 radiometry",
     association: "in + surface + received light",
     example: "Irradiance drops when the surface turns away from the light.",
+    exampleTranslation: "当表面背离光源时，它接收到的 irradiance 会下降。",
     related: ["radiance", "surface normal", "cosine factor"],
   },
   {
@@ -33,6 +36,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 image formation",
     association: "reflection + material response",
     example: "Reflectance is mixed with illumination in an image.",
+    exampleTranslation: "在图像里，reflectance 会和 illumination 混在一起。",
     related: ["BRDF", "albedo", "material"],
   },
   {
@@ -44,6 +48,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 course framing",
     association: "frame = put boundaries around an idea; framing = how an idea is positioned",
     example: "Canvas course home page confirms the course framing as geometrical, analytical, and computational machine perception.",
+    exampleTranslation: "Canvas 课程主页确认了这门课的定位：它从几何、分析和计算三个角度来理解 machine perception。",
     related: ["course framing", "perspective", "positioning"],
   },
   {
@@ -54,6 +59,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 reflectance model",
     association: "incoming direction -> material -> outgoing direction",
     example: "A BRDF measures how incoming radiance is redirected.",
+    exampleTranslation: "BRDF 衡量入射 radiance 会如何被材质重新导向出射方向。",
     related: ["radiance", "reflectance", "Lambertian"],
   },
   {
@@ -64,6 +70,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 shading",
     association: "matte surface + same outgoing directions",
     example: "A Lambertian object can still show shading.",
+    exampleTranslation: "Lambertian 物体仍然可以呈现明暗变化。",
     related: ["diffuse", "albedo", "surface normal"],
   },
   {
@@ -74,6 +81,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 reflectance",
     association: "mirror-like highlight",
     example: "Specular reflection concentrates light near the mirror direction.",
+    exampleTranslation: "Specular reflection 会把光集中在接近镜面反射的方向。",
     related: ["Phong", "reflection", "highlight"],
   },
   {
@@ -84,6 +92,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 shading",
     association: "spread out light",
     example: "Diffuse reflection is often modeled as Lambertian.",
+    exampleTranslation: "Diffuse reflection 经常被建模为 Lambertian 反射。",
     related: ["Lambertian", "shading", "albedo"],
   },
   {
@@ -94,6 +103,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 material",
     association: "material color without lighting",
     example: "Albedo and illumination are hard to separate from one image.",
+    exampleTranslation: "只看一张图时，albedo 和 illumination 很难分开。",
     related: ["reflectance", "Lambertian", "brightness constancy"],
   },
   {
@@ -104,6 +114,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 image formation",
     association: "surface normal faces light -> bright",
     example: "Shading helps humans infer 3D shape.",
+    exampleTranslation: "Shading 帮助人类推断三维形状。",
     related: ["surface normal", "illumination", "shape from shading"],
   },
   {
@@ -114,6 +125,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 image formation",
     association: "light source + direction + intensity",
     example: "Image intensity mixes illumination, material, and shape.",
+    exampleTranslation: "图像亮度混合了 illumination、材质和形状信息。",
     related: ["radiance", "irradiance", "shadow"],
   },
   {
@@ -124,6 +136,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5800 geometry",
     association: "normal vector decides brightness",
     example: "The dot product between surface normal and light direction controls diffuse brightness.",
+    exampleTranslation: "surface normal 与光照方向的点积控制 diffuse brightness。",
     related: ["dot product", "shading", "Lambertian"],
   },
   {
@@ -134,6 +147,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5810 geometry",
     association: "3D world -> 2D image",
     example: "Perspective projection maps camera coordinates to pixels.",
+    exampleTranslation: "Perspective projection 会把相机坐标映射到像素位置。",
     related: ["camera", "homogeneous coordinates", "focal length"],
   },
   {
@@ -144,6 +158,7 @@ const lexiconTerms = [
     fieldContext: "CIS 5810 geometry",
     association: "add one coordinate to handle projection",
     example: "Homogeneous coordinates make projective transforms easier to write.",
+    exampleTranslation: "Homogeneous coordinates 让投影变换更容易表达。",
     related: ["projection", "homography", "matrix"],
   },
   {
@@ -154,14 +169,31 @@ const lexiconTerms = [
     fieldContext: "CIS 5810 computational photography",
     association: "plane-to-plane transform",
     example: "A homography can align two images of the same planar surface.",
+    exampleTranslation: "Homography 可以对齐同一个平面表面的两张图像。",
     related: ["projection", "matrix", "image alignment"],
   },
 ] satisfies LexiconSeed[];
 
 export function withDefaultLexiconTerms(state: PlannerState): PlannerState {
-  const existingIds = new Set(state.lexiconEntries.map((entry) => entry.id));
-  const existingWords = new Set(state.lexiconEntries.map((entry) => entry.word.trim().toLowerCase()));
+  const termsByEntryId = new Map(lexiconTerms.map((term) => [`lexicon_seed_${term.id}`, term]));
   const existingEventIds = new Set(state.events.map((event) => event.id));
+  let repairedCount = 0;
+  const repairedEntries = state.lexiconEntries.map((entry) => {
+    const term = termsByEntryId.get(entry.id);
+    if (!term) return entry;
+    const repairedEntry: LexiconEntry = {
+      ...entry,
+      phonics: entry.phonics || term.phonics || "",
+      meaning: entry.meaning || term.meaning,
+      example: entry.example || term.example,
+      exampleTranslation: entry.exampleTranslation || term.exampleTranslation,
+    };
+    if (repairedEntry === entry || isSameLexiconEntry(repairedEntry, entry)) return entry;
+    repairedCount += 1;
+    return repairedEntry;
+  });
+  const existingIds = new Set(repairedEntries.map((entry) => entry.id));
+  const existingWords = new Set(repairedEntries.map((entry) => entry.word.trim().toLowerCase()));
   const entriesToAdd: LexiconEntry[] = [];
   const eventsToAdd: ActivityEvent[] = [];
 
@@ -190,13 +222,35 @@ export function withDefaultLexiconTerms(state: PlannerState): PlannerState {
     });
   }
 
-  if (!entriesToAdd.length && !eventsToAdd.length) return state;
+  if (repairedCount && !existingEventIds.has(LEXICON_TERMS_TRANSLATION_EVENT_ID)) {
+    eventsToAdd.push({
+      id: LEXICON_TERMS_TRANSLATION_EVENT_ID,
+      type: "LEXICON_UPDATED",
+      payload: {
+        source: LEXICON_TERMS_SOURCE,
+        repairedCount,
+        note: "Filled missing example translations for default lexicon terms.",
+      },
+      createdAt: LEXICON_TERMS_CREATED_AT,
+    });
+  }
+
+  if (!entriesToAdd.length && !eventsToAdd.length && !repairedCount) return state;
 
   return {
     ...state,
-    lexiconEntries: [...state.lexiconEntries, ...entriesToAdd],
+    lexiconEntries: [...repairedEntries, ...entriesToAdd],
     events: [...state.events, ...eventsToAdd.filter((event) => !existingEventIds.has(event.id))],
   };
+}
+
+function isSameLexiconEntry(left: LexiconEntry, right: LexiconEntry) {
+  return (
+    left.phonics === right.phonics &&
+    left.meaning === right.meaning &&
+    left.example === right.example &&
+    left.exampleTranslation === right.exampleTranslation
+  );
 }
 
 function makeSeedLexiconEntry(term: LexiconSeed): LexiconEntry {
@@ -209,6 +263,7 @@ function makeSeedLexiconEntry(term: LexiconSeed): LexiconEntry {
     meaning: term.meaning,
     association: term.association,
     example: term.example,
+    exampleTranslation: term.exampleTranslation,
     related: term.related,
     reviewCount: 0,
     createdAt: LEXICON_TERMS_CREATED_AT,
@@ -225,5 +280,6 @@ type LexiconSeed = {
   meaning: string;
   association: string;
   example: string;
+  exampleTranslation: string;
   related: string[];
 };

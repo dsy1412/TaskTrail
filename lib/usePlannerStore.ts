@@ -388,6 +388,7 @@ export function usePlannerStore({
       meaning?: string;
       association?: string;
       example?: string;
+      exampleTranslation?: string;
       related?: string[];
     }) => {
       const entry = makeLexiconEntry(input);

@@ -451,6 +451,7 @@ describe("PlannerApp", () => {
     expect(screen.getByText(/定位和理解框架/)).toBeVisible();
     expect(screen.getByText(/frame \/freɪm\/ \+ -ing/)).toBeVisible();
     expect(screen.getByText(/course home page confirms the course framing/)).toBeVisible();
+    expect(screen.getByText(/Canvas 课程主页确认了这门课的定位/)).toBeVisible();
   });
 
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {

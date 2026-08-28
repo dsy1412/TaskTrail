@@ -63,6 +63,7 @@ export interface LexiconEntry {
   meaning: string;
   association: string;
   example: string;
+  exampleTranslation: string;
   related: string[];
   reviewCount: number;
   createdAt: string;

@@ -245,6 +245,7 @@ export function makeLexiconEntry(input: {
   meaning?: string;
   association?: string;
   example?: string;
+  exampleTranslation?: string;
   related?: string[];
 }): LexiconEntry {
   const createdAt = now();
@@ -257,6 +258,7 @@ export function makeLexiconEntry(input: {
     meaning: input.meaning?.trim() ?? "",
     association: input.association?.trim() ?? "",
     example: input.example?.trim() ?? "",
+    exampleTranslation: input.exampleTranslation?.trim() ?? "",
     related: (input.related ?? []).map((item) => item.trim()).filter(Boolean).slice(0, 12),
     reviewCount: 0,
     createdAt,
@@ -287,6 +289,7 @@ export function normalizePlannerState(state: PlannerState): PlannerState {
           ...entry,
           ipa: typeof entry.ipa === "string" ? entry.ipa : "",
           phonics: typeof entry.phonics === "string" ? entry.phonics : "",
+          exampleTranslation: typeof entry.exampleTranslation === "string" ? entry.exampleTranslation : "",
         }))
       : [],
   };

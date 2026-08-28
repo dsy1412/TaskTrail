@@ -89,6 +89,7 @@ export function LexiconPage({
     meaning?: string;
     association?: string;
     example?: string;
+    exampleTranslation?: string;
     related?: string[];
   }) => LexiconEntry | undefined;
   onDeleteEntry: (entryId: string) => void;
@@ -300,7 +301,8 @@ function WordNotes({ entry }: { entry: LexiconEntry }) {
   const notes = [
     entry.meaning ? { label: "Meaning", text: entry.meaning } : null,
     entry.phonics ? { label: "Read", text: entry.phonics } : null,
-    entry.example ? { label: "Context", text: entry.example } : null,
+    entry.example ? { label: "Example", text: entry.example } : null,
+    entry.exampleTranslation ? { label: "Translate", text: entry.exampleTranslation } : null,
   ].filter((note): note is { label: string; text: string } => Boolean(note));
 
   if (!notes.length) return null;

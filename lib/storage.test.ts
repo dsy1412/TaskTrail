@@ -165,4 +165,56 @@ describe("planner storage", () => {
 
     expect(state.lexiconEntries[0]).toEqual(expect.objectContaining({ ipa: "", phonics: "" }));
   });
+
+  it("repairs seeded lexicon cards with missing example translations", () => {
+    window.localStorage.setItem(
+      "tasktrail.mvp.state.v1",
+      JSON.stringify({
+        tasks: [
+          {
+            id: "task_old",
+            title: "Old task",
+            module: "Project",
+            priority: "Medium",
+            estimatedDurationMinutes: 60,
+            notes: "",
+            createdAt: "2026-04-26T00:00:00.000Z",
+          },
+        ],
+        scheduleBlocks: [],
+        events: [
+          {
+            id: "lexicon_terms_cis5800_fall_2026_v1",
+            type: "LEXICON_CREATED",
+            payload: {},
+            createdAt: "2026-08-28T08:00:00.000Z",
+          },
+        ],
+        journalEntries: [],
+        lexiconEntries: [
+          {
+            id: "lexicon_seed_framing",
+            word: "framing",
+            ipa: "/ˈfreɪmɪŋ/",
+            phonics: "",
+            fieldContext: "CIS 5800 course framing",
+            meaning: "这里指课程的定位和理解框架。",
+            association: "",
+            example: "Canvas course home page confirms the course framing as geometrical, analytical, and computational machine perception.",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z",
+          },
+        ],
+      }),
+    );
+
+    const state = loadPlannerState();
+    const framing = state.lexiconEntries.find((entry) => entry.id === "lexicon_seed_framing");
+
+    expect(framing).toEqual(expect.objectContaining({
+      exampleTranslation: expect.stringContaining("Canvas 课程主页确认了这门课的定位"),
+    }));
+  });
 });

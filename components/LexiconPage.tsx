@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenText, Plus, Trash2, Volume2 } from "lucide-react";
+import { BookOpenText, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { LexiconEntry, PlannerState } from "@/lib/types";
 
@@ -19,6 +19,8 @@ const localIpa: Record<string, string> = {
   analytics: "/ˌænəˈlɪtɪks/",
   artificial: "/ˌɑːrtɪˈfɪʃəl/",
   attention: "/əˈtɛnʃən/",
+  albedo: "/ælˈbiːdoʊ/",
+  brdf: "/ˌbiː ɑːr diː ˈɛf/",
   cache: "/kæʃ/",
   classification: "/ˌklæsɪfɪˈkeɪʃən/",
   convolution: "/ˌkɑːnvəˈluːʃən/",
@@ -26,6 +28,7 @@ const localIpa: Record<string, string> = {
   data: "/ˈdeɪtə/",
   database: "/ˈdeɪtəbeɪs/",
   diffusion: "/dɪˈfjuːʒən/",
+  diffuse: "/dɪˈfjuːs/",
   distribution: "/ˌdɪstrɪˈbjuːʃən/",
   embedding: "/ɪmˈbɛdɪŋ/",
   estimation: "/ˌɛstɪˈmeɪʃən/",
@@ -33,9 +36,13 @@ const localIpa: Record<string, string> = {
   generative: "/ˈdʒɛnərətɪv/",
   gradient: "/ˈɡreɪdiənt/",
   homography: "/hoʊˈmɑːɡrəfi/",
+  "homogeneous coordinates": "/ˌhoʊməˈdʒiːniəs koʊˈɔːrdənəts/",
+  illumination: "/ɪˌluːmɪˈneɪʃən/",
   inference: "/ˈɪnfərəns/",
   intelligence: "/ɪnˈtɛlɪdʒəns/",
+  irradiance: "/ɪˈreɪdiəns/",
   language: "/ˈlæŋɡwɪdʒ/",
+  lambertian: "/læmˈbɜːrtiən/",
   latent: "/ˈleɪtənt/",
   likelihood: "/ˈlaɪklihʊd/",
   matrix: "/ˈmeɪtrɪks/",
@@ -50,9 +57,15 @@ const localIpa: Record<string, string> = {
   posterior: "/pɑːˈstɪriər/",
   prior: "/ˈpraɪər/",
   probability: "/ˌprɑːbəˈbɪləti/",
+  projection: "/prəˈdʒɛkʃən/",
   query: "/ˈkwɪri/",
+  radiance: "/ˈreɪdiəns/",
+  reflectance: "/rɪˈflɛktəns/",
   regression: "/rɪˈɡrɛʃən/",
   sampling: "/ˈsæmplɪŋ/",
+  shading: "/ˈʃeɪdɪŋ/",
+  specular: "/ˈspɛkjələr/",
+  "surface normal": "/ˈsɜːrfɪs ˈnɔːrməl/",
   transformer: "/trænsˈfɔːrmər/",
   variable: "/ˈvɛriəbəl/",
   vector: "/ˈvɛktər/",
@@ -63,6 +76,7 @@ export function LexiconPage({
   state,
   onCreateEntry,
   onDeleteEntry,
+  onRestoreEntry,
   canEdit,
 }: {
   state: PlannerState;
@@ -77,11 +91,13 @@ export function LexiconPage({
     related?: string[];
   }) => LexiconEntry | undefined;
   onDeleteEntry: (entryId: string) => void;
+  onRestoreEntry: (entryId: string) => void;
   canEdit: boolean;
 }) {
   const [draft, setDraft] = useState<LexiconInput>(emptyInput);
   const [voiceName, setVoiceName] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const { voices, speak, supported } = useSpeech();
 
   useEffect(() => {
@@ -89,11 +105,19 @@ export function LexiconPage({
     if (preferred && !voiceName) setVoiceName(preferred.name);
   }, [voiceName, voices]);
 
-  const entries = useMemo(() => {
+  const activeEntries = useMemo(() => {
     return state.lexiconEntries
       .filter((entry) => !entry.deletedAt)
       .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   }, [state.lexiconEntries]);
+
+  const deletedEntries = useMemo(() => {
+    return state.lexiconEntries
+      .filter((entry) => entry.deletedAt)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }, [state.lexiconEntries]);
+
+  const visibleEntries = showTrash ? deletedEntries : activeEntries;
 
   function updateDraft(field: keyof LexiconInput, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -163,24 +187,47 @@ export function LexiconPage({
               <option value="">System English</option>
             )}
           </select>
-          <span className="text-sm font-semibold text-slate-400">{entries.length} words</span>
+          <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 p-1">
+            <button
+              type="button"
+              aria-label="Active words"
+              className={`rounded-md px-3 py-1.5 text-sm font-bold transition ${
+                !showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+              }`}
+              onClick={() => setShowTrash(false)}
+            >
+              Active {activeEntries.length}
+            </button>
+            <button
+              type="button"
+              aria-label="Trash words"
+              className={`rounded-md px-3 py-1.5 text-sm font-bold transition ${
+                showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+              }`}
+              onClick={() => setShowTrash(true)}
+            >
+              Trash {deletedEntries.length}
+            </button>
+          </div>
         </div>
       </form>
 
       <div className="grid gap-3">
-        {entries.length ? (
-          entries.map((entry) => (
+        {visibleEntries.length ? (
+          visibleEntries.map((entry) => (
             <WordCard
               key={entry.id}
               entry={entry}
+              mode={showTrash ? "trash" : "active"}
               canEdit={canEdit}
               onSpeak={speakText}
               onDelete={() => onDeleteEntry(entry.id)}
+              onRestore={() => onRestoreEntry(entry.id)}
             />
           ))
         ) : (
           <div className="glass-panel rounded-xl border-dashed p-8 text-center text-sm font-semibold text-slate-400">
-            No words yet.
+            {showTrash ? "Trash is empty." : "No words yet."}
           </div>
         )}
       </div>
@@ -190,14 +237,18 @@ export function LexiconPage({
 
 function WordCard({
   entry,
+  mode,
   canEdit,
   onSpeak,
   onDelete,
+  onRestore,
 }: {
   entry: LexiconEntry;
+  mode: "active" | "trash";
   canEdit: boolean;
   onSpeak: (text: string, rate: number) => void;
   onDelete: () => void;
+  onRestore: () => void;
 }) {
   return (
     <article data-testid="lexicon-word-card" className="glass-panel rounded-xl p-4">
@@ -212,16 +263,30 @@ function WordCard({
         <div className="flex flex-wrap gap-2">
           <SpeakButton label="Speak word" onClick={() => onSpeak(entry.word, 0.95)} />
           <SpeakButton label="Slow word" onClick={() => onSpeak(entry.word, 0.68)} />
-          <button
-            type="button"
-            aria-label={`Delete ${entry.word}`}
-            title="Delete"
-            className="rounded-lg border border-slate-700 bg-slate-950 p-2 text-slate-400 transition hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
-            onClick={onDelete}
-            disabled={!canEdit}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {mode === "trash" ? (
+            <button
+              type="button"
+              aria-label={`Restore ${entry.word}`}
+              title="Restore"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/60 bg-slate-950 px-3 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-300 hover:text-emerald-100 disabled:opacity-60"
+              onClick={onRestore}
+              disabled={!canEdit}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Restore
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label={`Move ${entry.word} to trash`}
+              title="Move to trash"
+              className="rounded-lg border border-slate-700 bg-slate-950 p-2 text-slate-400 transition hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
+              onClick={onDelete}
+              disabled={!canEdit}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 

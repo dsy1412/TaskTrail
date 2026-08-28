@@ -332,6 +332,7 @@ export function PlannerApp() {
               state={planner.state}
               onCreateEntry={planner.createLexiconEntry}
               onDeleteEntry={planner.deleteLexiconEntry}
+              onRestoreEntry={planner.restoreLexiconEntry}
               canEdit={canEdit}
             />
           ) : null}

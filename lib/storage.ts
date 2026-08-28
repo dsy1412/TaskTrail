@@ -3,6 +3,7 @@ import { withCis5810Assignments } from "@/lib/cis5810Assignments";
 import { withCourseSchedule } from "@/lib/courseSchedule";
 import { withFall2026EventSchedule } from "@/lib/eventSchedule";
 import { withFall2026LabSemesterPlan } from "@/lib/semesterPlan";
+import { withDefaultLexiconTerms } from "@/lib/lexiconTerms";
 import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
@@ -269,8 +270,10 @@ export function timestamp() {
 
 export function withDefaultSchedules(state: PlannerState) {
   return normalizePlannerState(
-    withCis5810Assignments(
-      withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+    withDefaultLexiconTerms(
+      withCis5810Assignments(
+        withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+      ),
     ),
   );
 }

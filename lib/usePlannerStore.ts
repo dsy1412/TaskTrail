@@ -433,6 +433,23 @@ export function usePlannerStore({
     });
   }, [canEdit]);
 
+  const restoreLexiconEntry = useCallback((entryId: string) => {
+    if (!canEdit) return;
+    const restoredAt = timestamp();
+    setState((current) => {
+      const entry = current.lexiconEntries.find((candidate) => candidate.id === entryId);
+      if (!entry) return current;
+      const restoredEntry: LexiconEntry = { ...entry, deletedAt: undefined, updatedAt: restoredAt };
+      return {
+        ...current,
+        lexiconEntries: current.lexiconEntries.map((candidate) =>
+          candidate.id === entryId ? restoredEntry : candidate,
+        ),
+        events: [...current.events, createEvent("LEXICON_UPDATED", { before: entry, after: restoredEntry })],
+      };
+    });
+  }, [canEdit]);
+
   const deleteJournalEntry = useCallback((entryId: string) => {
     if (!canEdit) return;
     const deletedAt = timestamp();
@@ -472,6 +489,7 @@ export function usePlannerStore({
     createLexiconEntry,
     updateLexiconEntry,
     deleteLexiconEntry,
+    restoreLexiconEntry,
   };
 }
 

@@ -13,7 +13,8 @@ describe("planner storage", () => {
     expect(state.scheduleBlocks.length).toBeGreaterThan(0);
     expect(state.events.some((event) => event.type === "TASK_CREATED")).toBe(true);
     expect(state.journalEntries).toEqual([]);
-    expect(state.lexiconEntries).toEqual([]);
+    expect(state.lexiconEntries.some((entry) => entry.word === "radiance")).toBe(true);
+    expect(state.lexiconEntries.some((entry) => entry.word === "BRDF")).toBe(true);
   });
 
   it("recovers from an accidentally persisted empty state", () => {
@@ -121,7 +122,7 @@ describe("planner storage", () => {
     const state = loadPlannerState();
 
     expect(state.journalEntries).toEqual([]);
-    expect(state.lexiconEntries).toEqual([]);
+    expect(state.lexiconEntries.some((entry) => entry.word === "radiance")).toBe(true);
   });
 
   it("migrates older lexicon cards with no pronunciation fields", () => {

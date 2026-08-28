@@ -393,16 +393,51 @@ describe("PlannerApp", () => {
     await user.type(screen.getByLabelText("Word"), "posterior");
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
-    expect(await screen.findByText("posterior")).toBeVisible();
+    const posteriorTitle = await screen.findByText("posterior");
+    expect(posteriorTitle).toBeVisible();
     expect(screen.getByText("/pɑːˈstɪriər/")).toBeVisible();
     expect(screen.queryByText("Chinese meaning")).not.toBeInTheDocument();
 
     expect(cancel).toHaveBeenCalled();
     expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: "posterior", rate: 0.9 }));
 
-    await user.click(screen.getByRole("button", { name: "Speak word" }));
+    const posteriorCard = posteriorTitle.closest("[data-testid='lexicon-word-card']");
+    expect(posteriorCard).not.toBeNull();
+    await user.click(within(posteriorCard as HTMLElement).getByRole("button", { name: "Speak word" }));
 
     expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: "posterior", rate: 0.95 }));
+  });
+
+  it("moves lexicon words to trash and restores them", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word"), "posterior");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    expect(await screen.findByText("posterior")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Move posterior to trash" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("posterior")).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Trash words" }));
+
+    expect(await screen.findByText("posterior")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Restore posterior" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("posterior")).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Active words" }));
+
+    expect(await screen.findByText("posterior")).toBeVisible();
   });
 
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {

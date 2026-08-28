@@ -8,6 +8,7 @@ import type {
   ActivityEvent,
   ActivityEventType,
   JournalEntry,
+  LexiconEntry,
   ModuleName,
   PlannerState,
   Priority,
@@ -129,7 +130,7 @@ export function createSeedState(): PlannerState {
     ),
   ];
 
-  return withDefaultSchedules({ tasks, scheduleBlocks, events, journalEntries: [] });
+  return withDefaultSchedules({ tasks, scheduleBlocks, events, journalEntries: [], lexiconEntries: [] });
 }
 
 export function loadPlannerState(): PlannerState {
@@ -235,6 +236,29 @@ export function makeJournalEntry(input: {
   };
 }
 
+export function makeLexiconEntry(input: {
+  word: string;
+  fieldContext?: string;
+  meaning?: string;
+  association?: string;
+  example?: string;
+  related?: string[];
+}): LexiconEntry {
+  const createdAt = now();
+  return {
+    id: id("lexicon"),
+    word: input.word.trim() || "untitled word",
+    fieldContext: input.fieldContext?.trim() ?? "",
+    meaning: input.meaning?.trim() ?? "",
+    association: input.association?.trim() ?? "",
+    example: input.example?.trim() ?? "",
+    related: (input.related ?? []).map((item) => item.trim()).filter(Boolean).slice(0, 12),
+    reviewCount: 0,
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
 export function timestamp() {
   return now();
 }
@@ -251,5 +275,6 @@ export function normalizePlannerState(state: PlannerState): PlannerState {
   return {
     ...state,
     journalEntries: Array.isArray(state.journalEntries) ? state.journalEntries : [],
+    lexiconEntries: Array.isArray(state.lexiconEntries) ? state.lexiconEntries : [],
   };
 }

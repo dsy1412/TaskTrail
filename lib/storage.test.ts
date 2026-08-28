@@ -13,10 +13,11 @@ describe("planner storage", () => {
     expect(state.scheduleBlocks.length).toBeGreaterThan(0);
     expect(state.events.some((event) => event.type === "TASK_CREATED")).toBe(true);
     expect(state.journalEntries).toEqual([]);
+    expect(state.lexiconEntries).toEqual([]);
   });
 
   it("recovers from an accidentally persisted empty state", () => {
-    savePlannerState({ tasks: [], scheduleBlocks: [], events: [], journalEntries: [] });
+    savePlannerState({ tasks: [], scheduleBlocks: [], events: [], journalEntries: [], lexiconEntries: [] });
 
     const state = loadPlannerState();
 
@@ -37,6 +38,7 @@ describe("planner storage", () => {
         },
       ],
       journalEntries: [],
+      lexiconEntries: [],
     });
 
     const state = loadPlannerState();
@@ -70,6 +72,7 @@ describe("planner storage", () => {
         },
       ],
       journalEntries: [],
+      lexiconEntries: [],
     });
 
     const state = loadPlannerState();
@@ -95,7 +98,7 @@ describe("planner storage", () => {
     expect(state.scheduleBlocks.some((block) => block.id === "cis5810_assignment_block_project_7_hand_pose_estimation")).toBe(true);
   });
 
-  it("migrates older persisted states with no journal entries", () => {
+  it("migrates older persisted states with no journal or lexicon entries", () => {
     window.localStorage.setItem(
       "tasktrail.mvp.state.v1",
       JSON.stringify({
@@ -118,5 +121,6 @@ describe("planner storage", () => {
     const state = loadPlannerState();
 
     expect(state.journalEntries).toEqual([]);
+    expect(state.lexiconEntries).toEqual([]);
   });
 });

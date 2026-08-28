@@ -81,6 +81,7 @@ describe("Fall 2026 course schedule import", () => {
         },
       ],
       journalEntries: [],
+      lexiconEntries: [],
     };
 
     const migrated = withCourseSchedule(state);

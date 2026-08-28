@@ -41,6 +41,7 @@ describe("PlannerApp", () => {
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("mobile-day-agenda")).toBeInTheDocument();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Lexicon" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Degree" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
     expect(screen.getByPlaceholderText("Task title")).toBeVisible();
@@ -356,6 +357,55 @@ describe("PlannerApp", () => {
 
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
+  });
+
+  it("creates a professional word card and speaks it with the local browser voice", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    const speak = vi.fn();
+    const cancel = vi.fn();
+    vi.stubGlobal(
+      "SpeechSynthesisUtterance",
+      class {
+        lang = "";
+        pitch = 1;
+        rate = 1;
+        voice: SpeechSynthesisVoice | null = null;
+
+        constructor(public text: string) {}
+      },
+    );
+    vi.stubGlobal("speechSynthesis", {
+      cancel,
+      speak,
+      getVoices: () => [{ name: "Test English", lang: "en-US" }],
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+
+    expect(await screen.findByTestId("lexicon-view")).toBeVisible();
+    expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Word"), "posterior");
+    await user.type(screen.getByLabelText("Field context"), "Machine learning");
+    await user.type(screen.getByLabelText("Chinese meaning"), "观察数据之后更新出来的分布");
+    await user.type(screen.getByLabelText("Association"), "prior plus evidence becomes posterior");
+    await user.type(screen.getByLabelText("Example"), "The posterior changes after observing data.");
+    await user.type(screen.getByLabelText("Related words"), "prior, likelihood, inference");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    expect(await screen.findByText("posterior")).toBeVisible();
+    expect(screen.getByText("Machine learning")).toBeVisible();
+    expect(screen.getByText("prior")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Speak word" }));
+
+    expect(cancel).toHaveBeenCalled();
+    expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: "posterior", rate: 0.95 }));
   });
 
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {

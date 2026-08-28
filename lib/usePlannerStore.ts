@@ -8,13 +8,14 @@ import {
   createSeedState,
   loadPlannerState,
   makeJournalEntry,
+  makeLexiconEntry,
   makeScheduleBlock,
   makeTask,
   savePlannerState,
   timestamp,
   withDefaultSchedules,
 } from "@/lib/storage";
-import type { JournalEntry, ModuleName, PlannerState, Priority, Task } from "@/lib/types";
+import type { JournalEntry, LexiconEntry, ModuleName, PlannerState, Priority, Task } from "@/lib/types";
 
 export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "temporary" | "error";
 
@@ -378,6 +379,58 @@ export function usePlannerStore({
     [canEdit],
   );
 
+  const createLexiconEntry = useCallback(
+    (input: {
+      word: string;
+      fieldContext?: string;
+      meaning?: string;
+      association?: string;
+      example?: string;
+      related?: string[];
+    }) => {
+      const entry = makeLexiconEntry(input);
+      if (!canEdit) return entry;
+      setState((current) => ({
+        ...current,
+        lexiconEntries: [...current.lexiconEntries, entry],
+        events: [...current.events, createEvent("LEXICON_CREATED", { entry })],
+      }));
+      return entry;
+    },
+    [canEdit],
+  );
+
+  const updateLexiconEntry = useCallback((entryId: string, patch: Partial<Omit<LexiconEntry, "id" | "createdAt">>) => {
+    if (!canEdit) return;
+    setState((current) => {
+      const previous = current.lexiconEntries.find((entry) => entry.id === entryId);
+      if (!previous) return current;
+      const updated: LexiconEntry = { ...previous, ...patch, updatedAt: timestamp() };
+      return {
+        ...current,
+        lexiconEntries: current.lexiconEntries.map((entry) => (entry.id === entryId ? updated : entry)),
+        events: [...current.events, createEvent("LEXICON_UPDATED", { before: previous, after: updated })],
+      };
+    });
+  }, [canEdit]);
+
+  const deleteLexiconEntry = useCallback((entryId: string) => {
+    if (!canEdit) return;
+    const deletedAt = timestamp();
+    setState((current) => {
+      const entry = current.lexiconEntries.find((candidate) => candidate.id === entryId);
+      if (!entry) return current;
+      const deletedEntry: LexiconEntry = { ...entry, deletedAt, updatedAt: deletedAt };
+      return {
+        ...current,
+        lexiconEntries: current.lexiconEntries.map((candidate) =>
+          candidate.id === entryId ? deletedEntry : candidate,
+        ),
+        events: [...current.events, createEvent("LEXICON_DELETED", { entry: deletedEntry })],
+      };
+    });
+  }, [canEdit]);
+
   const deleteJournalEntry = useCallback((entryId: string) => {
     if (!canEdit) return;
     const deletedAt = timestamp();
@@ -414,6 +467,9 @@ export function usePlannerStore({
     deleteScheduleBlock,
     createJournalEntry,
     deleteJournalEntry,
+    createLexiconEntry,
+    updateLexiconEntry,
+    deleteLexiconEntry,
   };
 }
 

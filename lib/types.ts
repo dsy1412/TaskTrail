@@ -54,6 +54,20 @@ export interface JournalEntry {
 
 export type JournalFontStyle = "clean" | "serif" | "mono";
 
+export interface LexiconEntry {
+  id: string;
+  word: string;
+  fieldContext: string;
+  meaning: string;
+  association: string;
+  example: string;
+  related: string[];
+  reviewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
 export type ActivityEventType =
   | "TASK_CREATED"
   | "TASK_SCHEDULED"
@@ -61,7 +75,10 @@ export type ActivityEventType =
   | "TASK_DELETED"
   | "TASK_UPDATED"
   | "JOURNAL_CREATED"
-  | "JOURNAL_DELETED";
+  | "JOURNAL_DELETED"
+  | "LEXICON_CREATED"
+  | "LEXICON_UPDATED"
+  | "LEXICON_DELETED";
 
 export interface ActivityEvent {
   id: string;
@@ -87,6 +104,7 @@ export interface PlannerState {
   scheduleBlocks: ScheduleBlock[];
   events: ActivityEvent[];
   journalEntries: JournalEntry[];
+  lexiconEntries: LexiconEntry[];
 }
 
 export interface ParsedTaskInput {

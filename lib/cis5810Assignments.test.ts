@@ -16,6 +16,7 @@ describe("CIS 5810 assignment import", () => {
         },
       ],
       journalEntries: [],
+      lexiconEntries: [],
     };
 
     const repaired = withCis5810Assignments(state);

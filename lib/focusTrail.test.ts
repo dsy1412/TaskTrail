@@ -68,6 +68,7 @@ const state: PlannerState = {
   ],
   events: [],
   journalEntries: [],
+  lexiconEntries: [],
 };
 
 describe("Focus Trail derivation", () => {

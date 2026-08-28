@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import {
   AlertTriangle,
+  BookOpenText,
   CalendarDays,
   CalendarRange,
   Cloud,
@@ -30,6 +31,7 @@ import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { LexiconPage } from "@/components/LexiconPage";
 import { PlanningCalendar } from "@/components/PlanningCalendar";
 import { VibeJournal } from "@/components/VibeJournal";
 import { WeeklyMonthlySummary } from "@/components/WeeklyMonthlySummary";
@@ -44,7 +46,7 @@ export function PlannerApp() {
   const canEdit = authStatus === "authenticated";
   const planner = usePlannerStore({ canEdit, syncToCloud: canEdit });
   const [hasMounted, setHasMounted] = useState(false);
-  const [view, setView] = useState<"today" | "calendar" | "degree">("today");
+  const [view, setView] = useState<"today" | "calendar" | "lexicon" | "degree">("today");
   const [draftColumnCount, setDraftColumnCount] = useState(1);
   const [selectedDate, setSelectedDate] = useState(todayIsoDate());
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -205,7 +207,7 @@ export function PlannerApp() {
   return (
     <main
       className={`min-h-screen px-3 pt-3 text-ink sm:px-5 lg:px-6 xl:px-8 ${
-        view === "degree" ? "pb-6" : "pb-[calc(48dvh+2rem)] sm:pb-[24rem]"
+        view === "today" || view === "calendar" ? "pb-[calc(48dvh+2rem)] sm:pb-[24rem]" : "pb-6"
       }`}
     >
       <DndContext
@@ -235,7 +237,7 @@ export function PlannerApp() {
                 onRefreshSync={planner.refreshPlannerState}
               />
             </div>
-            <div className="glass-panel grid w-full grid-cols-3 rounded-xl p-1 sm:w-auto lg:col-start-2 lg:row-start-1 lg:justify-self-center">
+            <div className="glass-panel grid w-full grid-cols-2 rounded-xl p-1 sm:w-auto sm:grid-cols-4 lg:col-start-2 lg:row-start-1 lg:justify-self-center">
               <button
                 type="button"
                 className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
@@ -255,6 +257,16 @@ export function PlannerApp() {
               >
                 <CalendarRange className="h-4 w-4" />
                 Calendar
+              </button>
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "lexicon" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
+                }`}
+                onClick={() => setView("lexicon")}
+              >
+                <BookOpenText className="h-4 w-4" />
+                Lexicon
               </button>
               <button
                 type="button"
@@ -315,10 +327,19 @@ export function PlannerApp() {
           ) : null}
 
           {view === "degree" ? <DegreePlanContent /> : null}
+          {view === "lexicon" ? (
+            <LexiconPage
+              state={planner.state}
+              onCreateEntry={planner.createLexiconEntry}
+              onUpdateEntry={planner.updateLexiconEntry}
+              onDeleteEntry={planner.deleteLexiconEntry}
+              canEdit={canEdit}
+            />
+          ) : null}
 
         </div>
 
-        {view === "degree" ? null : (
+        {view === "today" || view === "calendar" ? (
           <TaskBackpack
             state={planner.state}
             onCreateTask={planner.createTask}
@@ -332,7 +353,7 @@ export function PlannerApp() {
             onSelectDate={selectDate}
             canEdit={canEdit}
           />
-        )}
+        ) : null}
         <DragOverlay dropAnimation={null} zIndex={100}>
           {activeDragPreview ? <div className="w-80 max-w-[80vw]">{activeDragPreview}</div> : null}
         </DragOverlay>

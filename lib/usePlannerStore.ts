@@ -382,6 +382,8 @@ export function usePlannerStore({
   const createLexiconEntry = useCallback(
     (input: {
       word: string;
+      ipa?: string;
+      phonics?: string;
       fieldContext?: string;
       meaning?: string;
       association?: string;

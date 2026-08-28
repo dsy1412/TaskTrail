@@ -6,6 +6,8 @@ import type { LexiconEntry, PlannerState } from "@/lib/types";
 
 type LexiconInput = {
   word: string;
+  ipa: string;
+  phonics: string;
   fieldContext: string;
   meaning: string;
   association: string;
@@ -15,6 +17,8 @@ type LexiconInput = {
 
 const emptyInput: LexiconInput = {
   word: "",
+  ipa: "",
+  phonics: "",
   fieldContext: "",
   meaning: "",
   association: "",
@@ -32,6 +36,8 @@ export function LexiconPage({
   state: PlannerState;
   onCreateEntry: (input: {
     word: string;
+    ipa?: string;
+    phonics?: string;
     fieldContext?: string;
     meaning?: string;
     association?: string;
@@ -59,7 +65,7 @@ export function LexiconPage({
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return visible;
     return visible.filter((entry) =>
-      [entry.word, entry.fieldContext, entry.meaning, entry.association, entry.example, ...entry.related]
+      [entry.word, entry.ipa, entry.phonics, entry.fieldContext, entry.meaning, entry.association, entry.example, ...entry.related]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery),
@@ -78,6 +84,8 @@ export function LexiconPage({
     if (!draft.word.trim() || !canEdit) return;
     onCreateEntry({
       word: draft.word,
+      ipa: draft.ipa,
+      phonics: draft.phonics,
       fieldContext: draft.fieldContext,
       meaning: draft.meaning,
       association: draft.association,
@@ -123,6 +131,26 @@ export function LexiconPage({
               className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
             />
           </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm font-semibold text-slate-300">
+              IPA / 音标
+              <input
+                value={draft.ipa}
+                onChange={(event) => updateDraft("ipa", event.target.value)}
+                placeholder="/pɑːˈstɪriər/"
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold text-slate-300">
+              Phonics pattern / 拼读规律
+              <input
+                value={draft.phonics}
+                onChange={(event) => updateDraft("phonics", event.target.value)}
+                placeholder="post + erior, stress on -te-"
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
+              />
+            </label>
+          </div>
           <label className="grid gap-1.5 text-sm font-semibold text-slate-300">
             Field context
             <input
@@ -263,6 +291,14 @@ function WordCard({
             ) : null}
           </div>
           <p className="mt-1 text-xs font-semibold text-slate-500">Reviewed {entry.reviewCount}</p>
+          {entry.ipa || entry.phonics ? (
+            <div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold">
+              {entry.ipa ? <span className="rounded-md bg-slate-800 px-2 py-1 text-slate-200">{entry.ipa}</span> : null}
+              {entry.phonics ? (
+                <span className="rounded-md bg-emerald-400/12 px-2 py-1 text-emerald-200">{entry.phonics}</span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-2">

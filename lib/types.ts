@@ -57,6 +57,8 @@ export type JournalFontStyle = "clean" | "serif" | "mono";
 export interface LexiconEntry {
   id: string;
   word: string;
+  ipa: string;
+  phonics: string;
   fieldContext: string;
   meaning: string;
   association: string;

@@ -391,6 +391,8 @@ describe("PlannerApp", () => {
     expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Word"), "posterior");
+    await user.type(screen.getByLabelText("IPA / 音标"), "/pɑːˈstɪriər/");
+    await user.type(screen.getByLabelText("Phonics pattern / 拼读规律"), "post + erior, stress on -te-");
     await user.type(screen.getByLabelText("Field context"), "Machine learning");
     await user.type(screen.getByLabelText("Chinese meaning"), "观察数据之后更新出来的分布");
     await user.type(screen.getByLabelText("Association"), "prior plus evidence becomes posterior");
@@ -399,6 +401,8 @@ describe("PlannerApp", () => {
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
     expect(await screen.findByText("posterior")).toBeVisible();
+    expect(screen.getByText("/pɑːˈstɪriər/")).toBeVisible();
+    expect(screen.getByText("post + erior, stress on -te-")).toBeVisible();
     expect(screen.getByText("Machine learning")).toBeVisible();
     expect(screen.getByText("prior")).toBeVisible();
 

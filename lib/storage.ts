@@ -238,6 +238,8 @@ export function makeJournalEntry(input: {
 
 export function makeLexiconEntry(input: {
   word: string;
+  ipa?: string;
+  phonics?: string;
   fieldContext?: string;
   meaning?: string;
   association?: string;
@@ -248,6 +250,8 @@ export function makeLexiconEntry(input: {
   return {
     id: id("lexicon"),
     word: input.word.trim() || "untitled word",
+    ipa: input.ipa?.trim() ?? "",
+    phonics: input.phonics?.trim() ?? "",
     fieldContext: input.fieldContext?.trim() ?? "",
     meaning: input.meaning?.trim() ?? "",
     association: input.association?.trim() ?? "",
@@ -275,6 +279,12 @@ export function normalizePlannerState(state: PlannerState): PlannerState {
   return {
     ...state,
     journalEntries: Array.isArray(state.journalEntries) ? state.journalEntries : [],
-    lexiconEntries: Array.isArray(state.lexiconEntries) ? state.lexiconEntries : [],
+    lexiconEntries: Array.isArray(state.lexiconEntries)
+      ? state.lexiconEntries.map((entry) => ({
+          ...entry,
+          ipa: typeof entry.ipa === "string" ? entry.ipa : "",
+          phonics: typeof entry.phonics === "string" ? entry.phonics : "",
+        }))
+      : [],
   };
 }

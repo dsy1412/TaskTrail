@@ -123,4 +123,44 @@ describe("planner storage", () => {
     expect(state.journalEntries).toEqual([]);
     expect(state.lexiconEntries).toEqual([]);
   });
+
+  it("migrates older lexicon cards with no pronunciation fields", () => {
+    window.localStorage.setItem(
+      "tasktrail.mvp.state.v1",
+      JSON.stringify({
+        tasks: [
+          {
+            id: "task_old",
+            title: "Old task",
+            module: "Project",
+            priority: "Medium",
+            estimatedDurationMinutes: 60,
+            notes: "",
+            createdAt: "2026-04-26T00:00:00.000Z",
+          },
+        ],
+        scheduleBlocks: [],
+        events: [],
+        journalEntries: [],
+        lexiconEntries: [
+          {
+            id: "lexicon_old",
+            word: "posterior",
+            fieldContext: "ML",
+            meaning: "after observing data",
+            association: "",
+            example: "",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-04-26T00:00:00.000Z",
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+        ],
+      }),
+    );
+
+    const state = loadPlannerState();
+
+    expect(state.lexiconEntries[0]).toEqual(expect.objectContaining({ ipa: "", phonics: "" }));
+  });
 });

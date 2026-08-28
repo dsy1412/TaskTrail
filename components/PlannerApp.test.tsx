@@ -359,7 +359,7 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("task-backpack")).toBeVisible();
   });
 
-  it("creates a professional word card and speaks it with the local browser voice", async () => {
+  it("creates a simple word card with automatic IPA and local speech", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     const speak = vi.fn();
@@ -391,24 +391,17 @@ describe("PlannerApp", () => {
     expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Word"), "posterior");
-    await user.type(screen.getByLabelText("IPA / 音标"), "/pɑːˈstɪriər/");
-    await user.type(screen.getByLabelText("Phonics pattern / 拼读规律"), "post + erior, stress on -te-");
-    await user.type(screen.getByLabelText("Field context"), "Machine learning");
-    await user.type(screen.getByLabelText("Chinese meaning"), "观察数据之后更新出来的分布");
-    await user.type(screen.getByLabelText("Association"), "prior plus evidence becomes posterior");
-    await user.type(screen.getByLabelText("Example"), "The posterior changes after observing data.");
-    await user.type(screen.getByLabelText("Related words"), "prior, likelihood, inference");
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
     expect(await screen.findByText("posterior")).toBeVisible();
     expect(screen.getByText("/pɑːˈstɪriər/")).toBeVisible();
-    expect(screen.getByText("post + erior, stress on -te-")).toBeVisible();
-    expect(screen.getByText("Machine learning")).toBeVisible();
-    expect(screen.getByText("prior")).toBeVisible();
+    expect(screen.queryByText("Chinese meaning")).not.toBeInTheDocument();
+
+    expect(cancel).toHaveBeenCalled();
+    expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: "posterior", rate: 0.9 }));
 
     await user.click(screen.getByRole("button", { name: "Speak word" }));
 
-    expect(cancel).toHaveBeenCalled();
     expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: "posterior", rate: 0.95 }));
   });
 

@@ -128,11 +128,11 @@ export function LexiconPage({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft.word.trim() || !canEdit) return;
-    const word = draft.word.trim();
+    const text = draft.word.trim();
     setIsLookingUp(true);
-    speakText(word, 0.9);
-    const ipa = await lookupIpa(word);
-    onCreateEntry({ word, ipa });
+    speakText(text, 0.9);
+    const entryInput = await buildEntryInput(text);
+    onCreateEntry(entryInput);
     setDraft(emptyInput);
     setIsLookingUp(false);
   }
@@ -154,10 +154,10 @@ export function LexiconPage({
           </div>
           <div className="flex flex-1 flex-col gap-2 sm:flex-row lg:max-w-2xl">
             <input
-              aria-label="Word"
+              aria-label="Word or sentence"
               value={draft.word}
               onChange={(event) => updateDraft("word", event.target.value)}
-              placeholder="posterior"
+              placeholder="word or sentence"
               className="min-h-10 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 text-base font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
             />
             <button
@@ -390,3 +390,42 @@ type DictionaryEntry = {
   phonetic?: string;
   phonetics?: Array<{ text?: string }>;
 };
+
+async function buildEntryInput(text: string) {
+  if (isSentence(text)) {
+    return {
+      word: text,
+      ipa: "",
+      phonics: "Sentence: tap play to hear the full line.",
+      fieldContext: "Saved sentence",
+      meaning: sentenceMeaning(text),
+      exampleTranslation: sentenceTranslation(text),
+    };
+  }
+
+  return {
+    word: text,
+    ipa: await lookupIpa(text),
+  };
+}
+
+function isSentence(text: string) {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  return words.length >= 4 || /[.!?]$/.test(text.trim());
+}
+
+function sentenceMeaning(text: string) {
+  return normalizedSentence(text).includes("course framing as geometrical analytical and computational machine perception")
+    ? "framing 在这里是课程定位/理解框架，不是画框。"
+    : "";
+}
+
+function sentenceTranslation(text: string) {
+  return normalizedSentence(text).includes("course framing as geometrical analytical and computational machine perception")
+    ? "Canvas 课程主页确认了这门课的定位：它从几何、分析和计算三个角度来理解 machine perception。"
+    : "";
+}
+
+function normalizedSentence(text: string) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}

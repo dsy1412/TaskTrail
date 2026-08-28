@@ -390,7 +390,7 @@ describe("PlannerApp", () => {
     expect(await screen.findByTestId("lexicon-view")).toBeVisible();
     expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Word"), "posterior");
+    await user.type(screen.getByLabelText("Word or sentence"), "posterior");
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
     const posteriorTitle = await screen.findByText("posterior");
@@ -415,7 +415,7 @@ describe("PlannerApp", () => {
     render(<PlannerApp />);
 
     await user.click(await screen.findByRole("button", { name: "Lexicon" }));
-    await user.type(screen.getByLabelText("Word"), "posterior");
+    await user.type(screen.getByLabelText("Word or sentence"), "posterior");
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
     expect(await screen.findByText("posterior")).toBeVisible();
@@ -453,6 +453,49 @@ describe("PlannerApp", () => {
     expect(screen.getByText(/frame \/freɪm\/ \+ -ing/)).toBeVisible();
     expect(screen.getByText(/course home page confirms the course framing/)).toBeVisible();
     expect(screen.getByText(/Canvas 课程主页确认了这门课的定位/)).toBeVisible();
+  });
+
+  it("saves and speaks full sentence cards", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    const speak = vi.fn();
+    const cancel = vi.fn();
+    vi.stubGlobal(
+      "SpeechSynthesisUtterance",
+      class {
+        lang = "";
+        pitch = 1;
+        rate = 1;
+        voice: SpeechSynthesisVoice | null = null;
+
+        constructor(public text: string) {}
+      },
+    );
+    vi.stubGlobal("speechSynthesis", {
+      cancel,
+      speak,
+      getVoices: () => [{ name: "Test English", lang: "en-US" }],
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    render(<PlannerApp />);
+
+    const sentence = "Canvas course home page confirms the course framing as geometrical, analytical, and computational machine perception.";
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word or sentence"), sentence);
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const sentenceTitle = await screen.findByRole("heading", { name: sentence });
+    expect(sentenceTitle).toBeVisible();
+    expect(screen.getAllByText(/framing 在这里是课程定位/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Canvas 课程主页确认了这门课的定位/).length).toBeGreaterThan(0);
+    expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: sentence, rate: 0.9 }));
+
+    const sentenceCard = sentenceTitle.closest("[data-testid='lexicon-word-card']");
+    expect(sentenceCard).not.toBeNull();
+    await user.click(within(sentenceCard as HTMLElement).getByRole("button", { name: "Speak word" }));
+
+    expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: sentence, rate: 0.95 }));
   });
 
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {

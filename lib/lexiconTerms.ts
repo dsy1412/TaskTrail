@@ -36,6 +36,17 @@ const lexiconTerms = [
     related: ["BRDF", "albedo", "material"],
   },
   {
+    id: "framing",
+    word: "framing",
+    ipa: "/ˈfreɪmɪŋ/",
+    phonics: "frame /freɪm/ + -ing; stress on frame",
+    meaning: "这里指课程的定位和理解框架：这门课被定义为 geometric, analytical, computational 的 machine perception。",
+    fieldContext: "CIS 5800 course framing",
+    association: "frame = put boundaries around an idea; framing = how an idea is positioned",
+    example: "Canvas course home page confirms the course framing as geometrical, analytical, and computational machine perception.",
+    related: ["course framing", "perspective", "positioning"],
+  },
+  {
     id: "brdf",
     word: "BRDF",
     ipa: "/ˌbiː ɑːr diː ˈɛf/",
@@ -193,7 +204,7 @@ function makeSeedLexiconEntry(term: LexiconSeed): LexiconEntry {
     id: `lexicon_seed_${term.id}`,
     word: term.word,
     ipa: term.ipa,
-    phonics: "",
+    phonics: term.phonics ?? "",
     fieldContext: term.fieldContext,
     meaning: term.meaning,
     association: term.association,
@@ -209,6 +220,7 @@ type LexiconSeed = {
   id: string;
   word: string;
   ipa: string;
+  phonics?: string;
   fieldContext: string;
   meaning: string;
   association: string;

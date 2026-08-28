@@ -440,6 +440,19 @@ describe("PlannerApp", () => {
     expect(await screen.findByText("posterior")).toBeVisible();
   });
 
+  it("shows professional word notes with reading cues and source context", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+
+    expect(await screen.findByText("framing")).toBeVisible();
+    expect(screen.getByText(/定位和理解框架/)).toBeVisible();
+    expect(screen.getByText(/frame \/freɪm\/ \+ -ing/)).toBeVisible();
+    expect(screen.getByText(/course home page confirms the course framing/)).toBeVisible();
+  });
+
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {
     localStorage.clear();
     const user = userEvent.setup();

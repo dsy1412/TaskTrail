@@ -33,6 +33,7 @@ const localIpa: Record<string, string> = {
   embedding: "/ɪmˈbɛdɪŋ/",
   estimation: "/ˌɛstɪˈmeɪʃən/",
   foundation: "/faʊnˈdeɪʃən/",
+  framing: "/ˈfreɪmɪŋ/",
   generative: "/ˈdʒɛnərətɪv/",
   gradient: "/ˈɡreɪdiənt/",
   homography: "/hoʊˈmɑːɡrəfi/",
@@ -258,6 +259,7 @@ function WordCard({
             <h3 className="text-2xl font-semibold text-slate-50">{entry.word}</h3>
             {entry.ipa ? <span className="rounded-md bg-slate-800 px-2 py-1 text-sm font-semibold text-slate-200">{entry.ipa}</span> : null}
           </div>
+          <WordNotes entry={entry} />
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -291,6 +293,27 @@ function WordCard({
       </div>
 
     </article>
+  );
+}
+
+function WordNotes({ entry }: { entry: LexiconEntry }) {
+  const notes = [
+    entry.meaning ? { label: "Meaning", text: entry.meaning } : null,
+    entry.phonics ? { label: "Read", text: entry.phonics } : null,
+    entry.example ? { label: "Context", text: entry.example } : null,
+  ].filter((note): note is { label: string; text: string } => Boolean(note));
+
+  if (!notes.length) return null;
+
+  return (
+    <div className="mt-3 grid gap-2 text-sm leading-relaxed">
+      {notes.map((note) => (
+        <p key={note.label} className="text-slate-300">
+          <span className="mr-2 text-xs font-bold uppercase tracking-normal text-slate-500">{note.label}</span>
+          {note.text}
+        </p>
+      ))}
+    </div>
   );
 }
 

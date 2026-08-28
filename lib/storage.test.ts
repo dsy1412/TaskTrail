@@ -15,6 +15,7 @@ describe("planner storage", () => {
     expect(state.journalEntries).toEqual([]);
     expect(state.lexiconEntries.some((entry) => entry.word === "radiance")).toBe(true);
     expect(state.lexiconEntries.some((entry) => entry.word === "BRDF")).toBe(true);
+    expect(state.lexiconEntries.some((entry) => entry.word === "framing")).toBe(true);
   });
 
   it("recovers from an accidentally persisted empty state", () => {

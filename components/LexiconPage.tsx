@@ -142,15 +142,15 @@ export function LexiconPage({
   }
 
   return (
-    <section data-testid="lexicon-view" className="mx-auto grid w-full max-w-4xl gap-4">
-      <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-4">
+    <section data-testid="lexicon-view" className="mx-auto grid w-full max-w-7xl gap-3">
+      <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-400">
               <BookOpenText className="h-4 w-4" />
               Professional words
             </div>
-            <h2 className="mt-1 text-2xl font-semibold tracking-normal text-slate-50">Lexicon</h2>
+            <h2 className="mt-1 text-xl font-semibold tracking-normal text-slate-50">Lexicon</h2>
           </div>
           <div className="flex flex-1 flex-col gap-2 sm:flex-row lg:max-w-2xl">
             <input
@@ -158,12 +158,12 @@ export function LexiconPage({
               value={draft.word}
               onChange={(event) => updateDraft("word", event.target.value)}
               placeholder="posterior"
-              className="min-h-12 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 text-lg font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
+              className="min-h-10 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 text-base font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
             />
             <button
               type="submit"
               aria-label="Add word"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-4 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canEdit || !draft.word.trim() || isLookingUp}
             >
               <Plus className="h-4 w-4" />
@@ -177,7 +177,7 @@ export function LexiconPage({
             value={voiceName}
             onChange={(event) => setVoiceName(event.target.value)}
             disabled={!supported || !voices.length}
-            className="min-w-0 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-100 outline-none transition focus:border-cyan-300 disabled:opacity-60 sm:max-w-md"
+            className="min-w-0 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm font-semibold text-slate-100 outline-none transition focus:border-cyan-300 disabled:opacity-60 sm:max-w-md"
           >
             {voices.length ? (
               voices.map((voice) => (
@@ -193,7 +193,7 @@ export function LexiconPage({
             <button
               type="button"
               aria-label="Active words"
-              className={`rounded-md px-3 py-1.5 text-sm font-bold transition ${
+              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
                 !showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
               }`}
               onClick={() => setShowTrash(false)}
@@ -203,7 +203,7 @@ export function LexiconPage({
             <button
               type="button"
               aria-label="Trash words"
-              className={`rounded-md px-3 py-1.5 text-sm font-bold transition ${
+              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
                 showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
               }`}
               onClick={() => setShowTrash(true)}
@@ -214,7 +214,7 @@ export function LexiconPage({
         </div>
       </form>
 
-      <div className="grid gap-3">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         {visibleEntries.length ? (
           visibleEntries.map((entry) => (
             <WordCard
@@ -253,43 +253,42 @@ function WordCard({
   onRestore: () => void;
 }) {
   return (
-    <article data-testid="lexicon-word-card" className="glass-panel rounded-xl p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <article data-testid="lexicon-word-card" className="glass-panel rounded-xl p-3">
+      <div className="flex flex-col gap-2">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-2xl font-semibold text-slate-50">{entry.word}</h3>
-            {entry.ipa ? <span className="rounded-md bg-slate-800 px-2 py-1 text-sm font-semibold text-slate-200">{entry.ipa}</span> : null}
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="break-words text-lg font-semibold leading-tight text-slate-50">{entry.word}</h3>
+              {entry.ipa ? <p className="mt-1 text-xs font-semibold text-slate-300">{entry.ipa}</p> : null}
+            </div>
+            <div className="flex shrink-0 gap-1.5">
+              <SpeakButton label="Speak word" onClick={() => onSpeak(entry.word, 0.95)} />
+              {mode === "trash" ? (
+                <button
+                  type="button"
+                  aria-label={`Restore ${entry.word}`}
+                  title="Restore"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-400/60 bg-slate-950 text-emerald-200 transition hover:border-emerald-300 hover:text-emerald-100 disabled:opacity-60"
+                  onClick={onRestore}
+                  disabled={!canEdit}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-label={`Move ${entry.word} to trash`}
+                  title="Move to trash"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-950 text-slate-400 transition hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
+                  onClick={onDelete}
+                  disabled={!canEdit}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
           <WordNotes entry={entry} />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <SpeakButton label="Speak word" onClick={() => onSpeak(entry.word, 0.95)} />
-          <SpeakButton label="Slow word" onClick={() => onSpeak(entry.word, 0.68)} />
-          {mode === "trash" ? (
-            <button
-              type="button"
-              aria-label={`Restore ${entry.word}`}
-              title="Restore"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/60 bg-slate-950 px-3 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-300 hover:text-emerald-100 disabled:opacity-60"
-              onClick={onRestore}
-              disabled={!canEdit}
-            >
-              <RotateCcw className="h-4 w-4" />
-              Restore
-            </button>
-          ) : (
-            <button
-              type="button"
-              aria-label={`Move ${entry.word} to trash`}
-              title="Move to trash"
-              className="rounded-lg border border-slate-700 bg-slate-950 p-2 text-slate-400 transition hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
-              onClick={onDelete}
-              disabled={!canEdit}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
         </div>
       </div>
 
@@ -308,10 +307,10 @@ function WordNotes({ entry }: { entry: LexiconEntry }) {
   if (!notes.length) return null;
 
   return (
-    <div className="mt-3 grid gap-2 text-sm leading-relaxed">
+    <div className="mt-2 grid gap-1.5 text-xs leading-snug">
       {notes.map((note) => (
         <p key={note.label} className="text-slate-300">
-          <span className="mr-2 text-xs font-bold uppercase tracking-normal text-slate-500">{note.label}</span>
+          <span className="mr-1.5 font-bold uppercase tracking-normal text-slate-500">{note.label}</span>
           {note.text}
         </p>
       ))}
@@ -325,11 +324,10 @@ function SpeakButton({ label, onClick }: { label: string; onClick: () => void })
       type="button"
       aria-label={label}
       title={label}
-      className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-300 px-3 py-2 text-xs font-bold text-slate-950 shadow-sm transition hover:bg-cyan-200"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-300 text-slate-950 shadow-sm transition hover:bg-cyan-200"
       onClick={onClick}
     >
       <Volume2 className="h-4 w-4" />
-      {label.replace("Speak ", "").replace("Slow ", "Slow ")}
     </button>
   );
 }

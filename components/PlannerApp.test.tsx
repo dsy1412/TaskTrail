@@ -406,6 +406,7 @@ describe("PlannerApp", () => {
     await user.click(within(posteriorCard as HTMLElement).getByRole("button", { name: "Speak word" }));
 
     expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: "posterior", rate: 0.95 }));
+    expect(screen.queryByRole("button", { name: "Slow word" })).not.toBeInTheDocument();
   });
 
   it("moves lexicon words to trash and restores them", async () => {

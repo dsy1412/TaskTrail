@@ -1,3 +1,4 @@
+import { getLocalLexiconEnrichment, type LexiconEnrichment } from "@/lib/lexiconEnrichment";
 import type { ActivityEvent, LexiconEntry, PlannerState } from "@/lib/types";
 
 const LEXICON_TERMS_IMPORT_EVENT_ID = "lexicon_terms_cis5800_fall_2026_v1";
@@ -180,14 +181,10 @@ export function withDefaultLexiconTerms(state: PlannerState): PlannerState {
   let repairedCount = 0;
   const repairedEntries = state.lexiconEntries.map((entry) => {
     const term = termsByEntryId.get(entry.id);
-    if (!term) return entry;
-    const repairedEntry: LexiconEntry = {
-      ...entry,
-      phonics: entry.phonics || term.phonics || "",
-      meaning: entry.meaning || term.meaning,
-      example: entry.example || term.example,
-      exampleTranslation: entry.exampleTranslation || term.exampleTranslation,
-    };
+    const local = getLocalLexiconEnrichment(entry.word);
+    const enrichment = term ?? local;
+    if (!enrichment) return entry;
+    const repairedEntry = applyLexiconEnrichment(entry, enrichment);
     if (repairedEntry === entry || isSameLexiconEntry(repairedEntry, entry)) return entry;
     repairedCount += 1;
     return repairedEntry;
@@ -246,11 +243,29 @@ export function withDefaultLexiconTerms(state: PlannerState): PlannerState {
 
 function isSameLexiconEntry(left: LexiconEntry, right: LexiconEntry) {
   return (
+    left.ipa === right.ipa &&
     left.phonics === right.phonics &&
+    left.fieldContext === right.fieldContext &&
     left.meaning === right.meaning &&
+    left.association === right.association &&
     left.example === right.example &&
-    left.exampleTranslation === right.exampleTranslation
+    left.exampleTranslation === right.exampleTranslation &&
+    left.related.join("\n") === right.related.join("\n")
   );
+}
+
+function applyLexiconEnrichment(entry: LexiconEntry, enrichment: LexiconEnrichment): LexiconEntry {
+  return {
+    ...entry,
+    ipa: entry.ipa || enrichment.ipa || "",
+    phonics: entry.phonics || enrichment.phonics || "",
+    fieldContext: entry.fieldContext || enrichment.fieldContext || "",
+    meaning: entry.meaning || enrichment.meaning || "",
+    association: entry.association || enrichment.association || "",
+    example: entry.example || enrichment.example || "",
+    exampleTranslation: entry.exampleTranslation || enrichment.exampleTranslation || "",
+    related: entry.related.length ? entry.related : enrichment.related ?? [],
+  };
 }
 
 function makeSeedLexiconEntry(term: LexiconSeed): LexiconEntry {

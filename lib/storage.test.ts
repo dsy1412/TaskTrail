@@ -217,4 +217,53 @@ describe("planner storage", () => {
       exampleTranslation: expect.stringContaining("Canvas 课程主页确认了这门课的定位"),
     }));
   });
+
+  it("repairs user-added professional words with missing notes", () => {
+    window.localStorage.setItem(
+      "tasktrail.mvp.state.v1",
+      JSON.stringify({
+        tasks: [
+          {
+            id: "task_old",
+            title: "Old task",
+            module: "Project",
+            priority: "Medium",
+            estimatedDurationMinutes: 60,
+            notes: "",
+            createdAt: "2026-04-26T00:00:00.000Z",
+          },
+        ],
+        scheduleBlocks: [],
+        events: [],
+        journalEntries: [],
+        lexiconEntries: [
+          {
+            id: "lexicon_user_intensity",
+            word: "intensity",
+            ipa: "",
+            phonics: "",
+            fieldContext: "",
+            meaning: "",
+            association: "",
+            example: "",
+            exampleTranslation: "",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z",
+          },
+        ],
+      }),
+    );
+
+    const state = loadPlannerState();
+    const intensity = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_intensity");
+
+    expect(intensity).toEqual(expect.objectContaining({
+      ipa: "/ɪnˈtɛnsəti/",
+      meaning: expect.stringContaining("像素亮度或光的强弱"),
+      example: expect.stringContaining("Image intensity"),
+      exampleTranslation: expect.stringContaining("图像强度"),
+    }));
+  });
 });

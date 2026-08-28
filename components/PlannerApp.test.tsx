@@ -441,6 +441,25 @@ describe("PlannerApp", () => {
     expect(await screen.findByText("posterior")).toBeVisible();
   });
 
+  it("enriches professional words when they are added", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word or sentence"), "intensity");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const intensityTitle = await screen.findByRole("heading", { name: "intensity" });
+    expect(intensityTitle).toBeVisible();
+    const intensityCard = intensityTitle.closest("[data-testid='lexicon-word-card']");
+    expect(intensityCard).not.toBeNull();
+    expect(within(intensityCard as HTMLElement).getByText("/ɪnˈtɛnsəti/")).toBeVisible();
+    expect(within(intensityCard as HTMLElement).getByText(/像素亮度或光的强弱/)).toBeVisible();
+    expect(within(intensityCard as HTMLElement).getByText(/Image intensity mixes illumination/)).toBeVisible();
+    expect(within(intensityCard as HTMLElement).getByText(/图像强度混合了光照/)).toBeVisible();
+  });
+
   it("shows professional word notes with reading cues and source context", async () => {
     localStorage.clear();
     const user = userEvent.setup();

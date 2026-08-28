@@ -2,6 +2,7 @@
 
 import { BookOpenText, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { getLocalLexiconEnrichment } from "@/lib/lexiconEnrichment";
 import type { LexiconEntry, PlannerState } from "@/lib/types";
 
 type LexiconInput = {
@@ -363,35 +364,27 @@ function useSpeech() {
   return { voices, speak, supported };
 }
 
-async function lookupIpa(word: string) {
-  const normalized = word.trim().toLowerCase();
-  if (!normalized) return "";
-  const local = localIpa[normalized];
-  if (local) return local;
-
-  try {
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 1200);
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`, {
-      signal: controller.signal,
-    });
-    window.clearTimeout(timer);
-    if (!response.ok) return "";
-    const entries = (await response.json()) as DictionaryEntry[];
-    return entries
-      .flatMap((entry) => [entry.phonetic, ...(entry.phonetics ?? []).map((phonetic) => phonetic.text)])
-      .find((text): text is string => Boolean(text?.trim())) ?? "";
-  } catch {
-    return "";
-  }
-}
-
 type DictionaryEntry = {
   phonetic?: string;
   phonetics?: Array<{ text?: string }>;
+  meanings?: Array<{
+    definitions?: Array<{
+      definition?: string;
+      example?: string;
+      synonyms?: string[];
+    }>;
+  }>;
 };
 
 async function buildEntryInput(text: string) {
+  const local = getLocalLexiconEnrichment(text);
+  if (local) {
+    return {
+      word: text,
+      ...local,
+    };
+  }
+
   if (isSentence(text)) {
     return {
       word: text,
@@ -405,8 +398,41 @@ async function buildEntryInput(text: string) {
 
   return {
     word: text,
-    ipa: await lookupIpa(text),
+    ...(await lookupDictionaryWord(text)),
   };
+}
+
+async function lookupDictionaryWord(word: string) {
+  const normalized = word.trim().toLowerCase();
+  const fallbackIpa = localIpa[normalized] ?? "";
+  if (!normalized) return {};
+
+  try {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 1200);
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`, {
+      signal: controller.signal,
+    });
+    window.clearTimeout(timer);
+    if (!response.ok) return { ipa: fallbackIpa };
+    const entries = (await response.json()) as DictionaryEntry[];
+    const ipa = entries
+      .flatMap((entry) => [entry.phonetic, ...(entry.phonetics ?? []).map((phonetic) => phonetic.text)])
+      .find((text): text is string => Boolean(text?.trim())) ?? fallbackIpa;
+    const definition = entries
+      .flatMap((entry) => entry.meanings ?? [])
+      .flatMap((meaning) => meaning.definitions ?? [])
+      .find((definition) => Boolean(definition.definition?.trim()));
+
+    return {
+      ipa,
+      meaning: definition?.definition?.trim() ?? "",
+      example: definition?.example?.trim() ?? "",
+      related: definition?.synonyms?.slice(0, 8) ?? [],
+    };
+  } catch {
+    return { ipa: fallbackIpa };
+  }
 }
 
 function isSentence(text: string) {

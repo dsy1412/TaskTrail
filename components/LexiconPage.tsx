@@ -364,16 +364,11 @@ function useSpeech() {
   return { voices, speak, supported };
 }
 
-type DictionaryEntry = {
-  phonetic?: string;
-  phonetics?: Array<{ text?: string }>;
-  meanings?: Array<{
-    definitions?: Array<{
-      definition?: string;
-      example?: string;
-      synonyms?: string[];
-    }>;
-  }>;
+type LexiconLookupResponse = {
+  ipa?: string;
+  meaning?: string;
+  example?: string;
+  related?: string[];
 };
 
 async function buildEntryInput(text: string) {
@@ -409,26 +404,20 @@ async function lookupDictionaryWord(word: string) {
 
   try {
     const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 1200);
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`, {
+    const timer = window.setTimeout(() => controller.abort(), 1800);
+    const response = await fetch(`/api/lexicon-lookup?term=${encodeURIComponent(normalized)}`, {
       signal: controller.signal,
+      cache: "no-store",
     });
     window.clearTimeout(timer);
     if (!response.ok) return { ipa: fallbackIpa };
-    const entries = (await response.json()) as DictionaryEntry[];
-    const ipa = entries
-      .flatMap((entry) => [entry.phonetic, ...(entry.phonetics ?? []).map((phonetic) => phonetic.text)])
-      .find((text): text is string => Boolean(text?.trim())) ?? fallbackIpa;
-    const definition = entries
-      .flatMap((entry) => entry.meanings ?? [])
-      .flatMap((meaning) => meaning.definitions ?? [])
-      .find((definition) => Boolean(definition.definition?.trim()));
+    const lookup = (await response.json()) as LexiconLookupResponse;
 
     return {
-      ipa,
-      meaning: definition?.definition?.trim() ?? "",
-      example: definition?.example?.trim() ?? "",
-      related: definition?.synonyms?.slice(0, 8) ?? [],
+      ipa: lookup.ipa?.trim() || fallbackIpa,
+      meaning: lookup.meaning?.trim() ?? "",
+      example: lookup.example?.trim() ?? "",
+      related: lookup.related?.slice(0, 8) ?? [],
     };
   } catch {
     return { ipa: fallbackIpa };

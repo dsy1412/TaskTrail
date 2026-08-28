@@ -460,6 +460,24 @@ describe("PlannerApp", () => {
     expect(within(intensityCard as HTMLElement).getByText(/图像强度混合了光照/)).toBeVisible();
   });
 
+  it("enriches course framing words when they are added", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word or sentence"), "analytical");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const analyticalTitle = await screen.findByRole("heading", { name: "analytical" });
+    const analyticalCard = analyticalTitle.closest("[data-testid='lexicon-word-card']");
+    expect(analyticalCard).not.toBeNull();
+    expect(within(analyticalCard as HTMLElement).getByText("/ˌænəˈlɪtɪkəl/")).toBeVisible();
+    expect(within(analyticalCard as HTMLElement).getByText(/分析性的/)).toBeVisible();
+    expect(within(analyticalCard as HTMLElement).getByText(/course framing is geometrical/)).toBeVisible();
+    expect(within(analyticalCard as HTMLElement).getByText(/这门课的定位/)).toBeVisible();
+  });
+
   it("shows professional word notes with reading cues and source context", async () => {
     localStorage.clear();
     const user = userEvent.setup();

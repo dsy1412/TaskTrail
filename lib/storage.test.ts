@@ -252,18 +252,40 @@ describe("planner storage", () => {
             createdAt: "2026-08-28T08:00:00.000Z",
             updatedAt: "2026-08-28T08:00:00.000Z",
           },
+          {
+            id: "lexicon_user_analytical",
+            word: "analytical",
+            ipa: "",
+            phonics: "",
+            fieldContext: "",
+            meaning: "",
+            association: "",
+            example: "",
+            exampleTranslation: "",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z",
+          },
         ],
       }),
     );
 
     const state = loadPlannerState();
     const intensity = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_intensity");
+    const analytical = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_analytical");
 
     expect(intensity).toEqual(expect.objectContaining({
       ipa: "/ɪnˈtɛnsəti/",
       meaning: expect.stringContaining("像素亮度或光的强弱"),
       example: expect.stringContaining("Image intensity"),
       exampleTranslation: expect.stringContaining("图像强度"),
+    }));
+    expect(analytical).toEqual(expect.objectContaining({
+      ipa: "/ˌænəˈlɪtɪkəl/",
+      meaning: expect.stringContaining("分析性的"),
+      example: expect.stringContaining("course framing is geometrical"),
+      exampleTranslation: expect.stringContaining("这门课的定位"),
     }));
   });
 });

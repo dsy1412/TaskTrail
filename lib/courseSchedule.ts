@@ -1,23 +1,23 @@
 import { addDaysIso, timeToMinutes } from "@/lib/date";
 import type { ActivityEvent, ModuleName, PlannerState, Priority, ScheduleBlock, Task } from "@/lib/types";
 
-const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v4";
+const COURSE_IMPORT_EVENT_ID = "course_import_fall_2026_v5";
 const COURSE_SOURCE = "course_import_fall_2026";
 const TERM_START = "2026-08-25";
 const TERM_END = "2026-12-07";
 const COURSE_CREATED_AT = "2026-08-25T04:00:00.000Z";
-const COURSE_MIGRATED_AT = "2026-08-26T04:00:00.000Z";
-const removedCourseMeetingIds = ["cis5450_mw", "cis5450_f"];
+const COURSE_MIGRATED_AT = "2026-08-27T20:42:02.000Z";
+const removedCourseMeetingIds = ["cis5450_mw", "cis5450_f", "cis6250_mw"];
 
 const courseMeetings = [
   {
-    id: "cis6250_mw",
-    title: "CIS 6250 Theory of Machine Learning",
-    days: [1, 3],
-    startTime: "10:15",
-    endTime: "11:44",
-    location: "AGH 105B / AGH 105A",
-    instructor: "M. Kearns",
+    id: "cis5210_tr",
+    title: "CIS 5210 Artificial Intelligence",
+    days: [2, 4],
+    startTime: "12:00",
+    endTime: "13:29",
+    location: "MEYH B1",
+    instructor: "Christopher Callison-Burch",
   },
   {
     id: "cis5800_mw",
@@ -76,10 +76,10 @@ export function withCourseSchedule(state: PlannerState) {
     if (removedTaskIds.has(task.id) && !task.deletedAt) {
       const updated = { ...task, deletedAt: COURSE_MIGRATED_AT, queued: false };
       addEvent({
-        id: `course_event_removed_${task.id}_fall_2026_v4`,
+        id: `course_event_removed_${task.id}_fall_2026_v5`,
         type: "TASK_DELETED",
         taskId: task.id,
-        payload: { before: task, after: updated, source: COURSE_SOURCE, replacement: "CIS 5810" },
+        payload: { before: task, after: updated, source: COURSE_SOURCE, replacement: "Fall 2026 registered cart" },
         createdAt: COURSE_MIGRATED_AT,
       });
       return updated;
@@ -107,11 +107,11 @@ export function withCourseSchedule(state: PlannerState) {
     if (!removedBlockIds.has(block.id) || block.deletedAt) return block;
     const updated = { ...block, deletedAt: COURSE_MIGRATED_AT, updatedAt: COURSE_MIGRATED_AT };
     addEvent({
-      id: `course_event_removed_${block.id}_fall_2026_v4`,
+      id: `course_event_removed_${block.id}_fall_2026_v5`,
       type: "TASK_DELETED",
       taskId: block.taskId,
       scheduleBlockId: block.id,
-      payload: { before: block, after: updated, source: COURSE_SOURCE, replacement: "CIS 5810" },
+      payload: { before: block, after: updated, source: COURSE_SOURCE, replacement: "Fall 2026 registered cart" },
       createdAt: COURSE_MIGRATED_AT,
     });
     return updated;
@@ -212,6 +212,7 @@ function getMeetingDates(meeting: CourseMeeting) {
 function getMeetingDatesForId(meetingId: string) {
   if (meetingId === "cis5450_mw") return getMeetingDatesForDays([1, 3]);
   if (meetingId === "cis5450_f") return getMeetingDatesForDays([5]);
+  if (meetingId === "cis6250_mw") return getMeetingDatesForDays([1, 3]);
   return [];
 }
 

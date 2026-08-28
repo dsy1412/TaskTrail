@@ -376,29 +376,32 @@ describe("PlannerApp", () => {
     const user = userEvent.setup();
     render(<PlannerApp />);
 
-    fireEvent.change(await screen.findByLabelText("Jump to date"), { target: { value: "2026-08-26" } });
+    fireEvent.change(await screen.findByLabelText("Jump to date"), { target: { value: "2026-08-27" } });
 
     await waitFor(() => {
-      expect(screen.getAllByText("CIS 6250 Theory of Machine Learning").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("CIS 5210 Artificial Intelligence").length).toBeGreaterThan(0);
     });
-    expect(screen.getAllByText("10:15-11:44").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("12:00-13:29").length).toBeGreaterThan(0);
     expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CIS 5810 Computer Vision & Computational Photography").length).toBeGreaterThan(0);
+    expect(screen.queryByText("CIS 6250 Theory of Machine Learning")).not.toBeInTheDocument();
     expect(screen.queryByText("CIS 5450 Big Data Analytics")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Calendar" }));
 
-    const selectedDay = await screen.findByTestId("planning-day-2026-08-26");
-    expect(within(selectedDay).getByText("CIS 6250 Theory of Machine Learning")).toBeVisible();
-    expect(within(selectedDay).getByText("CIS 5800 Machine Perception")).toBeVisible();
+    const selectedDay = await screen.findByTestId("planning-day-2026-08-27");
+    expect(within(selectedDay).getByText("CIS 5210 Artificial Intelligence")).toBeVisible();
+    expect(within(selectedDay).getByText("CIS 5810 Computer Vision & Computational Photography")).toBeVisible();
+    expect(screen.queryByText("CIS 6250 Theory of Machine Learning")).not.toBeInTheDocument();
     expect(screen.queryByText("CIS 5450 Big Data Analytics")).not.toBeInTheDocument();
     expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);
 
-    await user.click(await screen.findByRole("button", { name: "Open 2026-08-27 in Today Canvas" }));
+    await user.click(await screen.findByRole("button", { name: "Open 2026-08-26 in Today Canvas" }));
 
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
-    expect(screen.getAllByText("CIS 5810 Computer Vision & Computational Photography").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("15:30-16:59").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("12:00-13:29").length).toBeGreaterThan(0);
+    expect(screen.queryByText("CIS 6250 Theory of Machine Learning")).not.toBeInTheDocument();
   });
 
   it("imports CIS 5810 assignment due dates into Today and Calendar", async () => {

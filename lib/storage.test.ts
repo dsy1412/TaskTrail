@@ -297,6 +297,21 @@ describe("planner storage", () => {
             createdAt: "2026-08-28T08:00:00.000Z",
             updatedAt: "2026-08-28T08:00:00.000Z",
           },
+          {
+            id: "lexicon_user_flux",
+            word: "Flux",
+            ipa: "/flʌks/",
+            phonics: "",
+            fieldContext: "",
+            meaning: "The act of flowing; a continuous moving on or passing by, as of a flowing stream.",
+            association: "",
+            example: "",
+            exampleTranslation: "",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z",
+          },
         ],
       }),
     );
@@ -306,6 +321,7 @@ describe("planner storage", () => {
     const analytical = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_analytical");
     const vectorCalculus = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_vector_calculus");
     const linearAlgebra = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_linear_algebra");
+    const flux = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_flux");
 
     expect(intensity).toEqual(expect.objectContaining({
       ipa: "/ɪnˈtɛnsəti/",
@@ -330,6 +346,12 @@ describe("planner storage", () => {
       meaning: expect.stringContaining("线性代数"),
       example: expect.stringContaining("vectors and matrices"),
       exampleTranslation: expect.stringContaining("向量和矩阵"),
+    }));
+    expect(flux).toEqual(expect.objectContaining({
+      ipa: "/flʌks/",
+      meaning: expect.stringContaining("通量"),
+      example: expect.stringContaining("Radiant flux"),
+      exampleTranslation: expect.stringContaining("总光能"),
     }));
   });
 });

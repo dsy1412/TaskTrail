@@ -496,6 +496,30 @@ describe("PlannerApp", () => {
     expect(within(phraseCard as HTMLElement).getByText(/优化和物理模型/)).toBeVisible();
   });
 
+  it("enriches radiometry terms when they are added", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word or sentence"), "isotropic");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("Word or sentence"), "Solid Angle");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const isotropicTitle = await screen.findByRole("heading", { name: "isotropic" });
+    const isotropicCard = isotropicTitle.closest("[data-testid='lexicon-word-card']");
+    expect(isotropicCard).not.toBeNull();
+    expect(within(isotropicCard as HTMLElement).getByText(/各向同性/)).toBeVisible();
+    expect(within(isotropicCard as HTMLElement).getByText(/Isotropic 材质/)).toBeVisible();
+
+    const solidAngleTitle = await screen.findByRole("heading", { name: "Solid Angle" });
+    const solidAngleCard = solidAngleTitle.closest("[data-testid='lexicon-word-card']");
+    expect(solidAngleCard).not.toBeNull();
+    expect(within(solidAngleCard as HTMLElement).getByText(/立体角/)).toBeVisible();
+    expect(within(solidAngleCard as HTMLElement).getByText(/单位 solid angle/)).toBeVisible();
+  });
+
   it("shows professional word notes with reading cues and source context", async () => {
     localStorage.clear();
     const user = userEvent.setup();
@@ -551,6 +575,23 @@ describe("PlannerApp", () => {
     await user.click(within(sentenceCard as HTMLElement).getByRole("button", { name: "Speak word" }));
 
     expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: sentence, rate: 0.95 }));
+  });
+
+  it("adds lecture sentence notes and translations", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    const sentence = "If I put a solar panel here, how much light energy does each square meter receive?";
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word or sentence"), sentence);
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const sentenceTitle = await screen.findByRole("heading", { name: sentence });
+    const sentenceCard = sentenceTitle.closest("[data-testid='lexicon-word-card']");
+    expect(sentenceCard).not.toBeNull();
+    expect(within(sentenceCard as HTMLElement).getByText(/直觉解释 irradiance/)).toBeVisible();
+    expect(within(sentenceCard as HTMLElement).getByText(/太阳能板/)).toBeVisible();
   });
 
   it("opens a clicked calendar day directly in the matching Today Canvas", async () => {

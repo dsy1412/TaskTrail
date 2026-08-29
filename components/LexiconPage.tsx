@@ -430,15 +430,31 @@ function isSentence(text: string) {
 }
 
 function sentenceMeaning(text: string) {
-  return normalizedSentence(text).includes("course framing as geometrical analytical and computational machine perception")
-    ? "framing 在这里是课程定位/理解框架，不是画框。"
-    : "";
+  const normalized = normalizedSentence(text);
+  if (normalized.includes("course framing as geometrical analytical and computational machine perception")) {
+    return "framing 在这里是课程定位/理解框架，不是画框。";
+  }
+  if (normalized.includes("solar panel") && normalized.includes("square meter") && normalized.includes("receive")) {
+    return "这是在用直觉解释 irradiance：每单位面积接收到多少光能。";
+  }
+  if (normalized.includes("watts measure how much energy is transferred per second")) {
+    return "这是在解释 watt 的物理意义：每秒传递多少能量。";
+  }
+  return "";
 }
 
 function sentenceTranslation(text: string) {
-  return normalizedSentence(text).includes("course framing as geometrical analytical and computational machine perception")
-    ? "Canvas 课程主页确认了这门课的定位：它从几何、分析和计算三个角度来理解 machine perception。"
-    : "";
+  const normalized = normalizedSentence(text);
+  if (normalized.includes("course framing as geometrical analytical and computational machine perception")) {
+    return "Canvas 课程主页确认了这门课的定位：它从几何、分析和计算三个角度来理解 machine perception。";
+  }
+  if (normalized.includes("solar panel") && normalized.includes("square meter") && normalized.includes("receive")) {
+    return "如果我把太阳能板放在这里，每平方米会接收到多少光能？";
+  }
+  if (normalized.includes("watts measure how much energy is transferred per second")) {
+    return "瓦特衡量的是每秒传递多少能量。";
+  }
+  return "";
 }
 
 function normalizedSentence(text: string) {

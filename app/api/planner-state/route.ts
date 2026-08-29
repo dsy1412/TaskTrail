@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions, isAllowedPlannerEmail } from "@/lib/auth";
 import { isPlannerState } from "@/lib/plannerStateSchema";
-import { createSeedState } from "@/lib/storage";
+import { createSeedState, withDefaultSchedules } from "@/lib/storage";
 import {
   getPlannerStorageDiagnostics,
   readUserPlannerState,
@@ -19,10 +19,15 @@ export async function GET() {
   }
 
   try {
-    const state = await readUserPlannerState(auth.email);
+    const storedState = await readUserPlannerState(auth.email);
+    const state = storedState ? withDefaultSchedules(storedState) : createSeedState();
+    if (storedState && JSON.stringify(state) !== JSON.stringify(storedState)) {
+      await writeUserPlannerState(auth.email, state);
+    }
+
     return NextResponse.json({
-      state: state ?? createSeedState(),
-      persisted: Boolean(state),
+      state,
+      persisted: Boolean(storedState),
       storage: getPlannerStorageDiagnostics(),
     });
   } catch (error) {
@@ -51,7 +56,7 @@ export async function PUT(request: Request) {
   }
 
   try {
-    await writeUserPlannerState(auth.email, body.state);
+    await writeUserPlannerState(auth.email, withDefaultSchedules(body.state));
     return NextResponse.json({ ok: true, storage: getPlannerStorageDiagnostics() });
   } catch (error) {
     return NextResponse.json(

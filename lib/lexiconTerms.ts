@@ -257,15 +257,19 @@ function isSameLexiconEntry(left: LexiconEntry, right: LexiconEntry) {
 function applyLexiconEnrichment(entry: LexiconEntry, enrichment: LexiconEnrichment): LexiconEntry {
   return {
     ...entry,
-    ipa: entry.ipa || enrichment.ipa || "",
-    phonics: entry.phonics || enrichment.phonics || "",
-    fieldContext: entry.fieldContext || enrichment.fieldContext || "",
-    meaning: entry.meaning || enrichment.meaning || "",
-    association: entry.association || enrichment.association || "",
-    example: entry.example || enrichment.example || "",
-    exampleTranslation: entry.exampleTranslation || enrichment.exampleTranslation || "",
+    ipa: filledText(entry.ipa, enrichment.ipa),
+    phonics: filledText(entry.phonics, enrichment.phonics),
+    fieldContext: filledText(entry.fieldContext, enrichment.fieldContext),
+    meaning: filledText(entry.meaning, enrichment.meaning),
+    association: filledText(entry.association, enrichment.association),
+    example: filledText(entry.example, enrichment.example),
+    exampleTranslation: filledText(entry.exampleTranslation, enrichment.exampleTranslation),
     related: entry.related.length ? entry.related : enrichment.related ?? [],
   };
+}
+
+function filledText(current?: string, fallback?: string) {
+  return current?.trim() ? current : fallback ?? "";
 }
 
 function makeSeedLexiconEntry(term: LexiconSeed): LexiconEntry {

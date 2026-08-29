@@ -478,6 +478,24 @@ describe("PlannerApp", () => {
     expect(within(analyticalCard as HTMLElement).getByText(/这门课的定位/)).toBeVisible();
   });
 
+  it("enriches professional phrases when they are added", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Lexicon" }));
+    await user.type(screen.getByLabelText("Word or sentence"), "Vector Calculus");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const phraseTitle = await screen.findByRole("heading", { name: "Vector Calculus" });
+    const phraseCard = phraseTitle.closest("[data-testid='lexicon-word-card']");
+    expect(phraseCard).not.toBeNull();
+    expect(within(phraseCard as HTMLElement).getByText("/ˈvɛktər ˈkælkjələs/")).toBeVisible();
+    expect(within(phraseCard as HTMLElement).getByText(/向量微积分/)).toBeVisible();
+    expect(within(phraseCard as HTMLElement).getByText(/Vector calculus explains gradients/)).toBeVisible();
+    expect(within(phraseCard as HTMLElement).getByText(/优化和物理模型/)).toBeVisible();
+  });
+
   it("shows professional word notes with reading cues and source context", async () => {
     localStorage.clear();
     const user = userEvent.setup();

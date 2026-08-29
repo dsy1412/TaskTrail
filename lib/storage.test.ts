@@ -267,6 +267,36 @@ describe("planner storage", () => {
             createdAt: "2026-08-28T08:00:00.000Z",
             updatedAt: "2026-08-28T08:00:00.000Z",
           },
+          {
+            id: "lexicon_user_vector_calculus",
+            word: "Vector Calculus",
+            ipa: "",
+            phonics: "",
+            fieldContext: "",
+            meaning: "",
+            association: "",
+            example: "",
+            exampleTranslation: "",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z",
+          },
+          {
+            id: "lexicon_user_linear_algebra",
+            word: "Linear algebra",
+            ipa: "",
+            phonics: "",
+            fieldContext: "",
+            meaning: "",
+            association: "",
+            example: "",
+            exampleTranslation: "",
+            related: [],
+            reviewCount: 0,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z",
+          },
         ],
       }),
     );
@@ -274,6 +304,8 @@ describe("planner storage", () => {
     const state = loadPlannerState();
     const intensity = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_intensity");
     const analytical = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_analytical");
+    const vectorCalculus = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_vector_calculus");
+    const linearAlgebra = state.lexiconEntries.find((entry) => entry.id === "lexicon_user_linear_algebra");
 
     expect(intensity).toEqual(expect.objectContaining({
       ipa: "/ɪnˈtɛnsəti/",
@@ -286,6 +318,18 @@ describe("planner storage", () => {
       meaning: expect.stringContaining("分析性的"),
       example: expect.stringContaining("course framing is geometrical"),
       exampleTranslation: expect.stringContaining("这门课的定位"),
+    }));
+    expect(vectorCalculus).toEqual(expect.objectContaining({
+      ipa: "/ˈvɛktər ˈkælkjələs/",
+      meaning: expect.stringContaining("向量微积分"),
+      example: expect.stringContaining("Vector calculus explains gradients"),
+      exampleTranslation: expect.stringContaining("优化和物理模型"),
+    }));
+    expect(linearAlgebra).toEqual(expect.objectContaining({
+      ipa: "/ˈlɪniər ˈældʒəbrə/",
+      meaning: expect.stringContaining("线性代数"),
+      example: expect.stringContaining("vectors and matrices"),
+      exampleTranslation: expect.stringContaining("向量和矩阵"),
     }));
   });
 });

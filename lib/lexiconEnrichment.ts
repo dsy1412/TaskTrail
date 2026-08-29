@@ -8,6 +8,16 @@ export type LexiconEnrichment = Partial<
 >;
 
 const localLexiconEnrichments: Record<string, LexiconEnrichment> = {
+  algebra: {
+    ipa: "/ˈældʒəbrə/",
+    phonics: "AL-ge-bra; stress on al",
+    fieldContext: "math foundation for ML",
+    meaning: "代数；研究符号、方程和抽象运算规则。",
+    association: "unknown x -> algebra",
+    example: "Algebra gives the symbolic language behind linear models.",
+    exampleTranslation: "Algebra 提供了线性模型背后的符号语言。",
+    related: ["linear algebra", "equation", "matrix"],
+  },
   analytical: {
     ipa: "/ˌænəˈlɪtɪkəl/",
     phonics: "a-na-LY-ti-cal; stress on ly",
@@ -17,6 +27,16 @@ const localLexiconEnrichments: Record<string, LexiconEnrichment> = {
     example: "The course framing is geometrical, analytical, and computational.",
     exampleTranslation: "这门课的定位是几何的、分析的和计算的。",
     related: ["analysis", "geometrical", "computational"],
+  },
+  calculus: {
+    ipa: "/ˈkælkjələs/",
+    phonics: "CAL-cu-lus; stress on cal",
+    fieldContext: "math foundation for vision and ML",
+    meaning: "微积分；研究变化率、导数、积分和连续变化。",
+    association: "calculate change -> calculus",
+    example: "Calculus helps describe how a loss changes with model parameters.",
+    exampleTranslation: "Calculus 帮助描述 loss 如何随模型参数变化。",
+    related: ["derivative", "gradient", "vector calculus"],
   },
   computational: {
     ipa: "/ˌkɑːmpjuˈteɪʃənəl/",
@@ -78,6 +98,26 @@ const localLexiconEnrichments: Record<string, LexiconEnrichment> = {
     exampleTranslation: "一个 pixel 记录图像中某个位置的强度。",
     related: ["image", "intensity", "sensor"],
   },
+  linear: {
+    ipa: "/ˈlɪniər/",
+    phonics: "LIN-ear; stress on lin",
+    fieldContext: "math foundation for ML",
+    meaning: "线性的；满足加法和数乘规则，常用于描述矩阵、向量和模型关系。",
+    association: "line -> linear",
+    example: "A linear model combines features with weights.",
+    exampleTranslation: "Linear model 会用权重把特征线性组合起来。",
+    related: ["linear algebra", "matrix", "vector"],
+  },
+  "linear algebra": {
+    ipa: "/ˈlɪniər ˈældʒəbrə/",
+    phonics: "LIN-ear AL-ge-bra; stress on lin and al",
+    fieldContext: "math foundation for ML, vision, graphics",
+    meaning: "线性代数；研究向量、矩阵、线性变换和方程组，是机器学习和计算机视觉的基础。",
+    association: "vectors + matrices + transformations",
+    example: "Linear algebra represents images, projections, and neural network layers with vectors and matrices.",
+    exampleTranslation: "Linear algebra 用向量和矩阵表示图像、投影和神经网络层。",
+    related: ["vector", "matrix", "projection", "eigenvector"],
+  },
   sensor: {
     ipa: "/ˈsɛnsər/",
     phonics: "sense + -or; stress on sense",
@@ -107,6 +147,16 @@ const localLexiconEnrichments: Record<string, LexiconEnrichment> = {
     example: "Computer vision is hard because image understanding is an inverse problem.",
     exampleTranslation: "Computer vision 很难，因为图像理解本质上是从结果反推原因。",
     related: ["image formation", "shape", "illumination"],
+  },
+  "vector calculus": {
+    ipa: "/ˈvɛktər ˈkælkjələs/",
+    phonics: "VEC-tor CAL-cu-lus; stress on vec and cal",
+    fieldContext: "math foundation for vision, optimization, and physics-driven ML",
+    meaning: "向量微积分；把微积分扩展到向量场和多变量函数，常用于梯度、散度、旋度和优化。",
+    association: "vector + change -> gradient field",
+    example: "Vector calculus explains gradients used in optimization and physical models.",
+    exampleTranslation: "Vector calculus 解释了优化和物理模型中使用的梯度。",
+    related: ["gradient", "calculus", "optimization", "physics-driven ML"],
   },
 };
 

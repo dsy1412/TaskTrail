@@ -629,6 +629,7 @@ describe("PlannerApp", () => {
     expect(within(selectedDay).getByText("CIS 5210 Artificial Intelligence")).toBeVisible();
     expect(within(selectedDay).getByText(/MEYH B1/)).toBeVisible();
     expect(within(selectedDay).getByText("CIS 5810 Computer Vision & Computational Photography")).toBeVisible();
+    expect(within(selectedDay).getByText(/TOWN 100/)).toBeVisible();
     expect(screen.queryByText("CIS 6250 Theory of Machine Learning")).not.toBeInTheDocument();
     expect(screen.queryByText("CIS 5450 Big Data Analytics")).not.toBeInTheDocument();
     expect(screen.getAllByText("DDL 2026-12-07").length).toBeGreaterThan(0);

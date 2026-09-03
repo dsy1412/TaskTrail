@@ -40,8 +40,6 @@ const courseMeetings = [
 ] satisfies CourseMeeting[];
 
 export function withCourseSchedule(state: PlannerState) {
-  if (state.events.some((event) => event.id === COURSE_IMPORT_EVENT_ID)) return state;
-
   const existingTaskIds = new Set(state.tasks.map((task) => task.id));
   const existingBlockIds = new Set(state.scheduleBlocks.map((block) => block.id));
   const existingEventIds = new Set(state.events.map((event) => event.id));

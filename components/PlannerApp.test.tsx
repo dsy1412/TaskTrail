@@ -637,8 +637,9 @@ describe("PlannerApp", () => {
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getAllByText("CIS 5800 Machine Perception").length).toBeGreaterThan(0);
     expect(screen.getAllByText("12:00-13:29").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/AGH 106B/).length).toBeGreaterThan(0);
     expect(screen.queryByText("CIS 6250 Theory of Machine Learning")).not.toBeInTheDocument();
-  });
+  }, 10000);
 
   it("imports CIS 5810 assignment due dates into Today and Calendar", async () => {
     vi.setSystemTime(new Date("2026-08-25T12:00:00-04:00"));

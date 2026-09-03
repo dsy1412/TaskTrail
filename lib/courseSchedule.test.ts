@@ -130,4 +130,57 @@ describe("Fall 2026 course schedule import", () => {
     );
     expect(migrated.events.some((event) => event.id === "course_import_fall_2026_v5")).toBe(true);
   });
+
+  it("repairs existing CIS 5800 notes when the import marker already exists", () => {
+    const state: PlannerState = {
+      tasks: [
+        {
+          id: "course_task_cis5800_mw",
+          title: "CIS 5800 Machine Perception",
+          module: "Study",
+          priority: "High",
+          estimatedDurationMinutes: 89,
+          notes: "Fall 2026. 12:00-13:29 in Room not shown. Instructor: C. Taylor.",
+          createdAt: "2026-08-25T04:00:00.000Z",
+          deadline: "2026-12-07",
+          queued: false,
+        },
+      ],
+      scheduleBlocks: [
+        {
+          id: "course_block_cis5800_mw_2026-08-26",
+          taskId: "course_task_cis5800_mw",
+          date: "2026-08-26",
+          timeSlot: "12:00",
+          columnIndex: 0,
+          durationMinutes: 89,
+          createdAt: "2026-08-26T12:00:00.000Z",
+          updatedAt: "2026-08-26T12:00:00.000Z",
+        },
+      ],
+      events: [
+        {
+          id: "course_import_fall_2026_v5",
+          type: "TASK_UPDATED",
+          payload: { source: "course_import_fall_2026" },
+          createdAt: "2026-08-25T04:00:00.000Z",
+        },
+      ],
+      journalEntries: [],
+      lexiconEntries: [],
+    };
+
+    const repaired = withCourseSchedule(state);
+    const cis5800 = repaired.tasks.find((task) => task.id === "course_task_cis5800_mw");
+
+    expect(cis5800?.notes).toContain("AGH 106B");
+    expect(cis5800?.notes).not.toContain("Room not shown");
+    expect(repaired.scheduleBlocks).toContainEqual(
+      expect.objectContaining({
+        id: "course_block_cis5800_mw_2026-08-31",
+        date: "2026-08-31",
+        timeSlot: "12:00",
+      }),
+    );
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, ChevronLeft, ChevronRight, Clock3, Layers3, LocateFixed, Maximize2 } from "lucide-react";
+import { CalendarRange, ChevronLeft, ChevronRight, Clock3, Layers3, LocateFixed, MapPin, Maximize2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatTimeRange, todayIsoDate } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
@@ -55,6 +55,7 @@ export function PlanningCalendar({
           module: task.module,
           priority: task.priority,
           deadline: task.deadline,
+          location: extractLocation(task.notes),
           accentColor: accent.color,
           accentSoftColor: accent.softColor,
         };
@@ -215,6 +216,12 @@ export function PlanningCalendar({
                   <Clock3 className="h-3.5 w-3.5" />
                   {formatTimeRange(block.timeSlot, block.durationMinutes)} / {formatDuration(block.durationMinutes)}
                 </p>
+                {block.location ? (
+                  <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {block.location}
+                  </p>
+                ) : null}
                 {block.deadline ? (
                   <p className="mt-1 text-xs font-semibold text-slate-400">DDL {block.deadline}</p>
                 ) : null}
@@ -341,8 +348,9 @@ function CalendarDay({
             style={{ borderLeftColor: block.accentColor, backgroundColor: block.accentSoftColor }}
           >
             <p className="truncate text-[0.72rem] font-semibold text-slate-100">{block.title}</p>
-            <p className="mt-0.5 text-[0.62rem] font-semibold text-slate-500">
+            <p className="mt-0.5 truncate text-[0.62rem] font-semibold text-slate-500">
               {formatTimeRange(block.timeSlot, block.durationMinutes)}
+              {block.location ? ` · ${block.location}` : ""}
             </p>
           </div>
         ))}
@@ -380,6 +388,7 @@ interface PlannedBlock {
   module: ModuleName;
   priority: Priority;
   deadline?: string;
+  location?: string;
   accentColor: string;
   accentSoftColor: string;
 }
@@ -440,4 +449,9 @@ function formatMinutes(minutes: number) {
   if (hours && remainder) return `${hours}h ${remainder}m`;
   if (hours) return `${hours}h`;
   return `${remainder}m`;
+}
+
+function extractLocation(notes: string) {
+  const match = notes.match(/\bin\s+(.+?)\.\s+(?:Instructor|Course dates|DDL|Source|$)/);
+  return match?.[1]?.trim() ?? "";
 }

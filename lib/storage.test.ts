@@ -100,6 +100,25 @@ describe("planner storage", () => {
     expect(state.scheduleBlocks.some((block) => block.id === "cis5810_assignment_block_project_7_hand_pose_estimation")).toBe(true);
   });
 
+  it("imports CIS 5210 Fall 2026 homework deadlines", () => {
+    const state = createSeedState();
+    const assignments = state.tasks.filter((task) => task.id.startsWith("cis5210_assignment_task_"));
+
+    expect(assignments).toHaveLength(5);
+    expect(assignments.map((task) => task.title)).toContain("CIS 5210 Homework 1: Python Skills");
+    expect(assignments.map((task) => task.title)).toContain("CIS 5210 Homework 5: Sudoku Games");
+    expect(
+      state.scheduleBlocks.some(
+        (block) => block.id === "cis5210_assignment_block_homework_1_python_skills" && block.date === "2026-09-02",
+      ),
+    ).toBe(true);
+    expect(
+      state.scheduleBlocks.some(
+        (block) => block.id === "cis5210_assignment_block_homework_5_sudoku_games" && block.date === "2026-09-30",
+      ),
+    ).toBe(true);
+  });
+
   it("migrates older persisted states with no journal or lexicon entries", () => {
     window.localStorage.setItem(
       "tasktrail.mvp.state.v1",

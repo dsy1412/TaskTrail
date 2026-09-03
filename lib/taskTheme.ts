@@ -7,7 +7,7 @@ export interface TaskAccent {
 }
 
 export function taskAccent(task: Pick<Task, "id" | "title">): TaskAccent {
-  if (task.id.startsWith("cis5810_assignment_task_")) {
+  if (task.id.startsWith("cis5810_assignment_task_") || task.id.startsWith("cis5210_assignment_task_")) {
     return {
       color: "#ef4444",
       softColor: "rgba(239, 68, 68, 0.18)",

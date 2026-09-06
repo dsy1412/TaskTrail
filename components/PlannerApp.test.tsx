@@ -745,6 +745,27 @@ describe("PlannerApp", () => {
     expect(screen.getAllByText("DDL 2026-09-20").length).toBeGreaterThan(0);
   });
 
+  it("shows the approved semester routine in Today and Calendar", async () => {
+    vi.setSystemTime(new Date("2026-09-07T12:00:00-04:00"));
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Gym training").length).toBeGreaterThan(0);
+    });
+    expect(screen.getAllByText("10:00-11:30").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Lunch").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Dinner").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("LeetCode patterns").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "Calendar" }));
+
+    const selectedDay = await screen.findByTestId("planning-day-2026-09-07");
+    expect(within(selectedDay).getByTitle("Gym training")).toBeInTheDocument();
+    expect(screen.getAllByText("LeetCode patterns").length).toBeGreaterThan(0);
+  }, 10000);
+
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {
     localStorage.clear();
     const user = userEvent.setup();

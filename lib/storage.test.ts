@@ -82,11 +82,11 @@ describe("planner storage", () => {
     expect(state.tasks.some((task) => !task.deletedAt)).toBe(true);
   });
 
-  it("seed data starts the MVP with only the primary priority column populated today", () => {
+  it("seed data keeps the starter day within the first two columns after routine import", () => {
     const state = createSeedState();
     const maxColumn = state.scheduleBlocks.reduce((max, block) => Math.max(max, block.columnIndex), 0);
 
-    expect(maxColumn).toBe(0);
+    expect(maxColumn).toBeLessThanOrEqual(1);
   });
 
   it("imports CIS 5810 Fall 2026 assignment deadlines", () => {
@@ -115,6 +115,35 @@ describe("planner storage", () => {
     expect(
       state.scheduleBlocks.some(
         (block) => block.id === "cis5210_assignment_block_homework_5_sudoku_games" && block.date === "2026-09-30",
+      ),
+    ).toBe(true);
+  });
+
+  it("imports the approved Fall 2026 semester routine", () => {
+    const state = createSeedState();
+
+    expect(state.tasks.find((task) => task.id === "semester_routine_task_weekday_gym")?.title).toBe("Gym training");
+    expect(
+      state.scheduleBlocks.some(
+        (block) =>
+          block.id === "semester_routine_block_weekday_gym_2026-09-07" &&
+          block.date === "2026-09-07" &&
+          block.timeSlot === "10:00" &&
+          block.durationMinutes === 90,
+      ),
+    ).toBe(true);
+    expect(
+      state.scheduleBlocks.some(
+        (block) =>
+          block.id === "semester_routine_block_tuth_post_gym_snack_2026-09-08" &&
+          block.timeSlot === "11:30",
+      ),
+    ).toBe(true);
+    expect(
+      state.scheduleBlocks.some(
+        (block) =>
+          block.id === "semester_routine_block_mw_dinner_2026-09-09" &&
+          block.timeSlot === "18:15",
       ),
     ).toBe(true);
   });

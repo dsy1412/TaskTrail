@@ -4,6 +4,7 @@ import { withCis5810Assignments } from "@/lib/cis5810Assignments";
 import { withCourseSchedule } from "@/lib/courseSchedule";
 import { withFall2026EventSchedule } from "@/lib/eventSchedule";
 import { withFall2026LabSemesterPlan } from "@/lib/semesterPlan";
+import { withFall2026SemesterRoutine } from "@/lib/semesterRoutine";
 import { withDefaultLexiconTerms } from "@/lib/lexiconTerms";
 import { normalizeDuration } from "@/lib/duration";
 import type {
@@ -276,7 +277,9 @@ export function withDefaultSchedules(state: PlannerState) {
     withDefaultLexiconTerms(
       withCis5210Assignments(
         withCis5810Assignments(
-          withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+          withFall2026SemesterRoutine(
+            withFall2026LabSemesterPlan(withFall2026EventSchedule(withCourseSchedule(normalizePlannerState(state)))),
+          ),
         ),
       ),
     ),

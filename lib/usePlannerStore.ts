@@ -15,7 +15,7 @@ import {
   timestamp,
   withDefaultSchedules,
 } from "@/lib/storage";
-import type { JournalEntry, LexiconEntry, ModuleName, PlannerState, Priority, Task } from "@/lib/types";
+import type { JournalEntry, LexiconEntry, ModuleName, PlannerState, Priority, ScheduleBlock, Task } from "@/lib/types";
 
 export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "temporary" | "error";
 
@@ -356,6 +356,30 @@ export function usePlannerStore({
     });
   }, [canEdit]);
 
+  const updateScheduleBlockStatus = useCallback((blockId: string, status: "done" | "skipped" | "clear") => {
+    if (!canEdit) return;
+    const updatedAt = timestamp();
+    setState((current) => {
+      const previous = current.scheduleBlocks.find((block) => block.id === blockId);
+      if (!previous) return current;
+      const statusPatch: Partial<ScheduleBlock> =
+        status === "done"
+          ? { completedAt: updatedAt, skippedAt: undefined }
+          : status === "skipped"
+            ? { completedAt: undefined, skippedAt: updatedAt }
+            : { completedAt: undefined, skippedAt: undefined };
+      const updated = { ...previous, ...statusPatch, updatedAt };
+      return {
+        ...current,
+        scheduleBlocks: current.scheduleBlocks.map((block) => (block.id === blockId ? updated : block)),
+        events: [
+          ...current.events,
+          createEvent("TASK_UPDATED", { before: previous, after: updated, scope: "scheduleBlockStatus", status }, previous.taskId, blockId),
+        ],
+      };
+    });
+  }, [canEdit]);
+
   const createJournalEntry = useCallback(
     (input: {
       date: string;
@@ -485,6 +509,7 @@ export function usePlannerStore({
     scheduleTaskOnce,
     moveScheduleBlock,
     deleteScheduleBlock,
+    updateScheduleBlockStatus,
     createJournalEntry,
     deleteJournalEntry,
     createLexiconEntry,

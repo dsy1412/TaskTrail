@@ -34,6 +34,8 @@ export interface ScheduleBlock {
   durationMinutes: number;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string;
+  skippedAt?: string;
   deletedAt?: string;
 }
 

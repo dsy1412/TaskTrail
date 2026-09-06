@@ -762,8 +762,29 @@ describe("PlannerApp", () => {
     await user.click(screen.getByRole("button", { name: "Calendar" }));
 
     const selectedDay = await screen.findByTestId("planning-day-2026-09-07");
-    expect(within(selectedDay).getByTitle("Gym training")).toBeInTheDocument();
-    expect(screen.getAllByText("LeetCode patterns").length).toBeGreaterThan(0);
+    expect(within(selectedDay).queryByTitle("Gym training")).not.toBeInTheDocument();
+    expect(within(selectedDay).getByText(/Routine/)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Planning Calendar" })).toBeVisible();
+  }, 10000);
+
+  it("records gym rest days and summarizes them without adding calendar color noise", async () => {
+    vi.setSystemTime(new Date("2026-09-07T12:00:00-04:00"));
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Gym training").length).toBeGreaterThan(0);
+    });
+
+    await user.click(screen.getAllByRole("button", { name: "Mark Gym training as rest" })[0]);
+
+    await user.click(screen.getByRole("button", { name: "Calendar" }));
+
+    const selectedDay = await screen.findByTestId("planning-day-2026-09-07");
+    expect(within(selectedDay).getByText(/Routine/)).toHaveTextContent("Rest 1");
+    expect(within(selectedDay).queryByTitle("Gym training")).not.toBeInTheDocument();
+    expect(screen.getByText("Rest 1")).toBeVisible();
   }, 10000);
 
   it("switches the canvas date with previous, today, next, and direct jump controls", async () => {

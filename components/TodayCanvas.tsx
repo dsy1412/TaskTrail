@@ -1,10 +1,11 @@
 "use client";
 
-import { Calendar, ChevronLeft, ChevronRight, Clock3, Columns3, LocateFixed, Trash2 } from "lucide-react";
+import { Calendar, Check, ChevronLeft, ChevronRight, Clock3, Columns3, LocateFixed, Pause, RotateCcw, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
 import { TimeGrid } from "@/components/TimeGrid";
 import { formatFriendlyDate, formatTimeRange } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
+import { isTrackableRoutineTask } from "@/lib/taskTheme";
 import type { PlannerState, Task } from "@/lib/types";
 
 export function TodayCanvas({
@@ -18,6 +19,7 @@ export function TodayCanvas({
   onToday,
   onSelectDate,
   onDeleteBlock,
+  onUpdateBlockStatus,
   canEdit,
 }: {
   state: PlannerState;
@@ -30,6 +32,7 @@ export function TodayCanvas({
   onToday: () => void;
   onSelectDate: (date: string) => void;
   onDeleteBlock: (blockId: string) => void;
+  onUpdateBlockStatus: (blockId: string, status: "done" | "skipped" | "clear") => void;
   canEdit: boolean;
 }) {
   return (
@@ -104,6 +107,7 @@ export function TodayCanvas({
             tasksById={tasksById}
             date={date}
             onDeleteBlock={onDeleteBlock}
+            onUpdateBlockStatus={onUpdateBlockStatus}
             canEdit={canEdit}
           />
         </div>
@@ -115,6 +119,7 @@ export function TodayCanvas({
             columnCount={columnCount}
             canvasRef={canvasRef}
             onDeleteBlock={onDeleteBlock}
+            onUpdateBlockStatus={onUpdateBlockStatus}
             canEdit={canEdit}
           />
         </div>
@@ -128,12 +133,14 @@ function MobileDayAgenda({
   tasksById,
   date,
   onDeleteBlock,
+  onUpdateBlockStatus,
   canEdit,
 }: {
   state: PlannerState;
   tasksById: Map<string, Task>;
   date: string;
   onDeleteBlock: (blockId: string) => void;
+  onUpdateBlockStatus: (blockId: string, status: "done" | "skipped" | "clear") => void;
   canEdit: boolean;
 }) {
   const blocks = state.scheduleBlocks
@@ -163,7 +170,19 @@ function MobileDayAgenda({
                     <Clock3 className="h-3.5 w-3.5" />
                     {formatDuration(task.estimatedDurationMinutes)} - {task.module}
                   </p>
+                  {block.completedAt || block.skippedAt ? (
+                    <p className={`mt-1 text-xs font-bold ${block.completedAt ? "text-emerald-200" : "text-amber-200"}`}>
+                      {block.completedAt ? "Done" : getSkippedLabel(task)}
+                    </p>
+                  ) : null}
                   {task.notes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{task.notes}</p> : null}
+                  {canEdit && isTrackableRoutineTask(task) ? (
+                    <MobileRoutineStatusControls
+                      task={task}
+                      hasStatus={Boolean(block.completedAt || block.skippedAt)}
+                      onUpdateBlockStatus={(status) => onUpdateBlockStatus(block.id, status)}
+                    />
+                  ) : null}
                 </div>
                 {canEdit ? (
                   <button
@@ -187,4 +206,54 @@ function MobileDayAgenda({
       )}
     </div>
   );
+}
+
+function MobileRoutineStatusControls({
+  task,
+  hasStatus,
+  onUpdateBlockStatus,
+}: {
+  task: Task;
+  hasStatus: boolean;
+  onUpdateBlockStatus: (status: "done" | "skipped" | "clear") => void;
+}) {
+  const skippedLabel = getSkippedLabel(task);
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      <button
+        type="button"
+        aria-label={`Mark ${task.title} done`}
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-2 py-1 text-[0.65rem] font-bold text-emerald-200"
+        onClick={() => onUpdateBlockStatus("done")}
+      >
+        <Check className="h-3 w-3" />
+        Done
+      </button>
+      <button
+        type="button"
+        aria-label={`Mark ${task.title} as ${skippedLabel.toLowerCase()}`}
+        className="inline-flex items-center gap-1 rounded-md border border-amber-300/30 bg-amber-300/10 px-2 py-1 text-[0.65rem] font-bold text-amber-200"
+        onClick={() => onUpdateBlockStatus("skipped")}
+      >
+        <Pause className="h-3 w-3" />
+        {skippedLabel}
+      </button>
+      {hasStatus ? (
+        <button
+          type="button"
+          aria-label={`Clear ${task.title} status`}
+          className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[0.65rem] font-bold text-slate-300"
+          onClick={() => onUpdateBlockStatus("clear")}
+        >
+          <RotateCcw className="h-3 w-3" />
+          Clear
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function getSkippedLabel(task: Pick<Task, "title">) {
+  return /\b(gym|workout|training)\b/i.test(task.title) ? "Rest" : "Skip";
 }

@@ -2,11 +2,11 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
-import { CalendarPlus, Clock, Eye, EyeOff, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarPlus, Check, Clock, Eye, EyeOff, GripVertical, Pause, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { formatTimeRange } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
-import { taskAccent } from "@/lib/taskTheme";
+import { isTrackableRoutineTask, taskAccent } from "@/lib/taskTheme";
 import type { ScheduleBlock, Task } from "@/lib/types";
 
 export function TaskCardPreview({ task, block }: { task: Task; block?: ScheduleBlock }) {
@@ -29,6 +29,7 @@ export function TaskCard({
   onRestore,
   onSchedule,
   onScheduleOnce,
+  onUpdateBlockStatus,
   scheduleLabel = "Today",
 }: {
   task: Task;
@@ -42,6 +43,7 @@ export function TaskCard({
   onRestore?: () => void;
   onSchedule?: () => void;
   onScheduleOnce?: () => void;
+  onUpdateBlockStatus?: (status: "done" | "skipped" | "clear") => void;
   scheduleLabel?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -93,6 +95,14 @@ export function TaskCard({
         ) : null}
         <div className="min-w-0 flex-1 select-none">
           <TaskCardBody task={task} block={block} />
+          {block && onUpdateBlockStatus && isTrackableRoutineTask(task) ? (
+            <RoutineStatusControls
+              task={task}
+              block={block}
+              compact={isScheduled}
+              onUpdateBlockStatus={onUpdateBlockStatus}
+            />
+          ) : null}
           {onSchedule || onScheduleOnce ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {onSchedule ? (
@@ -200,6 +210,10 @@ export function TaskCard({
 function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
   const accent = taskAccent(task);
   const showNotes = !block || block.durationMinutes >= 90;
+  const statusLabel = block?.completedAt ? "Done" : block?.skippedAt ? getSkippedLabel(task) : "";
+  const statusTone = block?.skippedAt
+    ? "border-amber-300/30 bg-amber-300/10 text-amber-200"
+    : "border-emerald-300/30 bg-emerald-300/10 text-emerald-200";
 
   return (
     <>
@@ -216,6 +230,11 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
         {block ? <span className="rounded-md bg-slate-800 px-2 py-0.5">{formatTimeRange(block.timeSlot, block.durationMinutes)}</span> : null}
         <span className="rounded-md bg-slate-800 px-2 py-0.5">{task.priority}</span>
         {task.deadline ? <span className="rounded-md bg-slate-800 px-2 py-0.5">DDL {task.deadline}</span> : null}
+        {statusLabel ? (
+          <span className={`rounded-md border px-2 py-0.5 ${statusTone}`}>
+            {statusLabel}
+          </span>
+        ) : null}
         <span className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-0.5">
           <Clock className="h-3 w-3" />
           {formatDuration(block?.durationMinutes ?? task.estimatedDurationMinutes)}
@@ -224,4 +243,72 @@ function TaskCardBody({ task, block }: { task: Task; block?: ScheduleBlock }) {
       {task.notes && showNotes ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{task.notes}</p> : null}
     </>
   );
+}
+
+function RoutineStatusControls({
+  task,
+  block,
+  compact,
+  onUpdateBlockStatus,
+}: {
+  task: Task;
+  block: ScheduleBlock;
+  compact: boolean;
+  onUpdateBlockStatus: (status: "done" | "skipped" | "clear") => void;
+}) {
+  const skippedLabel = getSkippedLabel(task);
+  const hasStatus = Boolean(block.completedAt || block.skippedAt);
+
+  return (
+    <div className={`mt-2 flex flex-wrap gap-1.5 ${compact ? "pr-12" : ""}`}>
+      <button
+        type="button"
+        aria-label={`Mark ${task.title} done`}
+        title="Done"
+        className={`inline-flex items-center gap-1 rounded-md border border-emerald-300/30 bg-emerald-300/10 text-[0.65rem] font-bold text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100 ${compact ? "px-1.5 py-0.5" : "px-2 py-1"}`}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          onUpdateBlockStatus("done");
+        }}
+      >
+        <Check className="h-3 w-3" />
+        {compact ? null : "Done"}
+      </button>
+      <button
+        type="button"
+        aria-label={`Mark ${task.title} as ${skippedLabel.toLowerCase()}`}
+        title={skippedLabel}
+        className={`inline-flex items-center gap-1 rounded-md border border-amber-300/30 bg-amber-300/10 text-[0.65rem] font-bold text-amber-200 transition hover:border-amber-200 hover:text-amber-100 ${compact ? "px-1.5 py-0.5" : "px-2 py-1"}`}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          onUpdateBlockStatus("skipped");
+        }}
+      >
+        <Pause className="h-3 w-3" />
+        {compact ? null : skippedLabel}
+      </button>
+      {hasStatus ? (
+        <button
+          type="button"
+          aria-label={`Clear ${task.title} status`}
+          title="Clear"
+          className={`inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-950 text-[0.65rem] font-bold text-slate-300 transition hover:border-slate-500 hover:text-slate-100 ${compact ? "px-1.5 py-0.5" : "px-2 py-1"}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onUpdateBlockStatus("clear");
+          }}
+        >
+          <RotateCcw className="h-3 w-3" />
+          {compact ? null : "Clear"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function getSkippedLabel(task: Pick<Task, "title">) {
+  return /\b(gym|workout|training)\b/i.test(task.title) ? "Rest" : "Skip";
 }

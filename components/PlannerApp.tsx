@@ -301,6 +301,7 @@ export function PlannerApp() {
                   onToday={returnToToday}
                   onSelectDate={selectDate}
                   onDeleteBlock={planner.deleteScheduleBlock}
+                  onUpdateBlockStatus={planner.updateScheduleBlockStatus}
                   canEdit={canEdit}
                 />
                 <div className="grid gap-4">

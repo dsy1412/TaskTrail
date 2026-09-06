@@ -7,6 +7,14 @@ export interface TaskAccent {
 }
 
 export function taskAccent(task: Pick<Task, "id" | "title">): TaskAccent {
+  if (isRoutineTask(task)) {
+    return {
+      color: "#64748b",
+      softColor: "rgba(100, 116, 139, 0.14)",
+      foreground: "#f8fafc",
+    };
+  }
+
   if (task.id.startsWith("cis5810_assignment_task_") || task.id.startsWith("cis5210_assignment_task_")) {
     return {
       color: "#ef4444",
@@ -23,6 +31,15 @@ export function taskAccent(task: Pick<Task, "id" | "title">): TaskAccent {
     softColor: `hsla(${hue}, 86%, 64%, 0.14)`,
     foreground: "#020617",
   };
+}
+
+export function isRoutineTask(task: Pick<Task, "id">) {
+  return task.id.startsWith("semester_routine_task_");
+}
+
+export function isTrackableRoutineTask(task: Pick<Task, "id" | "title">) {
+  if (!isRoutineTask(task)) return false;
+  return /\b(gym|workout|training)\b/i.test(task.title);
 }
 
 function hashString(value: string) {

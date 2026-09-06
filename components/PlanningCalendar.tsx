@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatTimeRange, todayIsoDate } from "@/lib/date";
 import { formatDuration } from "@/lib/duration";
 import { moduleTheme } from "@/lib/moduleTheme";
-import { taskAccent } from "@/lib/taskTheme";
+import { isRoutineTask, taskAccent } from "@/lib/taskTheme";
 import { MODULES, type ModuleName, type PlannerState, type Priority, type Task } from "@/lib/types";
 
 const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -56,6 +56,9 @@ export function PlanningCalendar({
           priority: task.priority,
           deadline: task.deadline,
           location: extractLocation(task.notes),
+          isRoutine: isRoutineTask(task),
+          isDone: Boolean(block.completedAt),
+          isSkipped: Boolean(block.skippedAt),
           accentColor: accent.color,
           accentSoftColor: accent.softColor,
         };
@@ -67,10 +70,14 @@ export function PlanningCalendar({
   }, [state.scheduleBlocks, tasksById]);
 
   const monthBlocks = month.days.flatMap((day) => (day.isCurrentMonth ? blocksByDate.get(day.date) ?? [] : []));
+  const focusBlocks = monthBlocks.filter((block) => !block.isRoutine);
   const selectedBlocks = blocksByDate.get(selectedDate) ?? [];
-  const plannedDays = new Set(monthBlocks.map((block) => block.date)).size;
-  const totalMinutes = monthBlocks.reduce((sum, block) => sum + block.durationMinutes, 0);
-  const moduleStats = summarizeModules(monthBlocks);
+  const selectedFocusBlocks = selectedBlocks.filter((block) => !block.isRoutine);
+  const selectedRoutineBlocks = selectedBlocks.filter((block) => block.isRoutine);
+  const selectedRestCount = selectedRoutineBlocks.filter((block) => block.isSkipped).length;
+  const plannedDays = new Set(focusBlocks.map((block) => block.date)).size;
+  const totalMinutes = focusBlocks.reduce((sum, block) => sum + block.durationMinutes, 0);
+  const moduleStats = summarizeModules(focusBlocks);
 
   function shiftMonth(months: number) {
     setAnchorMonth((current) => {
@@ -190,12 +197,16 @@ export function PlanningCalendar({
         </div>
 
         <div className="mt-4 space-y-2">
-          {selectedBlocks.length ? (
-            selectedBlocks.map((block) => (
+          {selectedFocusBlocks.length || selectedRoutineBlocks.length ? (
+            <>
+            {selectedFocusBlocks.map((block) => (
               <div
                 key={block.id}
                 className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 shadow-sm"
-                style={{ borderLeftColor: block.accentColor, borderLeftWidth: 4 }}
+                style={{
+                  borderLeftColor: block.isRoutine ? "rgba(100, 116, 139, 0.7)" : block.accentColor,
+                  borderLeftWidth: 4,
+                }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -225,8 +236,27 @@ export function PlanningCalendar({
                 {block.deadline ? (
                   <p className="mt-1 text-xs font-semibold text-slate-400">DDL {block.deadline}</p>
                 ) : null}
+                {block.isDone || block.isSkipped ? (
+                  <p className={`mt-1 text-xs font-bold ${block.isDone ? "text-emerald-200" : "text-amber-200"}`}>
+                    {block.isDone ? "Done" : "Rest / skipped"}
+                  </p>
+                ) : null}
               </div>
-            ))
+            ))}
+            {selectedRoutineBlocks.length ? (
+              <div
+                className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 text-sm font-semibold text-slate-300 shadow-sm"
+                title={selectedRoutineBlocks.map((block) => block.title).join(", ")}
+              >
+                Routine {selectedRoutineBlocks.length}
+                {selectedRestCount ? (
+                  <span className="ml-2 rounded-md border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-xs font-bold text-amber-200">
+                    Rest {selectedRestCount}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            </>
           ) : (
             <div className="rounded-lg border border-dashed border-slate-700 bg-slate-950/50 p-6 text-center text-sm font-semibold text-slate-400">
               No planned blocks on this day yet.
@@ -285,10 +315,14 @@ function CalendarDay({
 }) {
   const isSelected = selectedDate === day.date;
   const isToday = today === day.date;
-  const dayMinutes = blocks.reduce((sum, block) => sum + block.durationMinutes, 0);
-  const activeModules = new Set(blocks.map((block) => block.module));
+  const focusBlocks = blocks.filter((block) => !block.isRoutine);
+  const routineBlocks = blocks.filter((block) => block.isRoutine);
+  const skippedRoutineCount = routineBlocks.filter((block) => block.isSkipped).length;
+  const dayMinutes = focusBlocks.reduce((sum, block) => sum + block.durationMinutes, 0);
+  const activeModules = new Set(focusBlocks.map((block) => block.module));
   const topModules = [...activeModules].slice(0, 2);
-  const visibleTaskColors = blocks.slice(0, 5);
+  const visibleTaskColors = focusBlocks.slice(0, 5);
+  const visibleTaskCards = focusBlocks.slice(0, 2);
 
   return (
     <button
@@ -315,7 +349,7 @@ function CalendarDay({
         >
           {day.dayOfMonth}
         </span>
-        {blocks.length ? (
+        {focusBlocks.length ? (
           <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[0.65rem] font-bold text-slate-200">
             {formatDuration(dayMinutes)}
           </span>
@@ -341,7 +375,7 @@ function CalendarDay({
       </div>
 
       <div className="mt-3 space-y-1.5">
-        {blocks.slice(0, 2).map((block) => (
+        {visibleTaskCards.map((block) => (
           <div
             key={block.id}
             className="min-w-0 rounded-md border-l-2 bg-slate-900 px-2 py-1"
@@ -354,6 +388,15 @@ function CalendarDay({
             </p>
           </div>
         ))}
+        {routineBlocks.length ? (
+          <div
+            className="rounded-md border border-slate-800 bg-slate-900/70 px-2 py-1 text-[0.62rem] font-bold text-slate-400"
+            title={routineBlocks.map((block) => block.title).join(", ")}
+          >
+            Routine {routineBlocks.length}
+            {skippedRoutineCount ? ` · Rest ${skippedRoutineCount}` : ""}
+          </div>
+        ) : null}
       </div>
 
       {topModules.length ? (
@@ -389,6 +432,9 @@ interface PlannedBlock {
   priority: Priority;
   deadline?: string;
   location?: string;
+  isRoutine: boolean;
+  isDone: boolean;
+  isSkipped: boolean;
   accentColor: string;
   accentSoftColor: string;
 }

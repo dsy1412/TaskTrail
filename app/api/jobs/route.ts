@@ -4,7 +4,10 @@ import { authOptions, isAllowedPlannerEmail } from "@/lib/auth";
 import {
   aggregateJobs,
   JOB_SOURCE_DEFINITIONS,
+  parseApplyGuyJson,
+  parseQuantMarkdown,
   parseSimplifyHtml,
+  parseSpeedyMarkdown,
   parseZapplyMarkdown,
   type AggregatedJobsResponse,
   type JobSourceSummary,
@@ -29,10 +32,26 @@ export async function GET(request: Request) {
       });
       if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
       const content = await response.text();
-      const jobs =
-        source.format === "html"
-          ? parseSimplifyHtml(content, source.id)
-          : parseZapplyMarkdown(content, source.id);
+      let jobs;
+      switch (source.format) {
+        case "html":
+          jobs = parseSimplifyHtml(content, source.id);
+          break;
+        case "applyguy-internships":
+          jobs = parseApplyGuyJson(content, source.id, "Internship");
+          break;
+        case "applyguy-new-grad":
+          jobs = parseApplyGuyJson(content, source.id, "New Grad");
+          break;
+        case "speedy-markdown":
+          jobs = parseSpeedyMarkdown(content, source.id);
+          break;
+        case "quant-markdown":
+          jobs = parseQuantMarkdown(content, source.id);
+          break;
+        default:
+          jobs = parseZapplyMarkdown(content, source.id);
+      }
       return { source, jobs };
     }),
   );

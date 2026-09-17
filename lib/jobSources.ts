@@ -1,5 +1,40 @@
 export const JOB_SOURCE_DEFINITIONS = [
   {
+    id: "SimplifyJobs/Summer2027-Internships",
+    label: "Simplify Summer 2027",
+    repoUrl: "https://github.com/SimplifyJobs/Summer2027-Internships",
+    rawUrl: "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/README.md",
+    format: "html" as const,
+  },
+  {
+    id: "zapplyjobs/Internships-2027",
+    label: "Zapply Internships 2027",
+    repoUrl: "https://github.com/zapplyjobs/Internships-2027",
+    rawUrl: "https://raw.githubusercontent.com/zapplyjobs/Internships-2027/main/README.md",
+    format: "markdown" as const,
+  },
+  {
+    id: "ApplyGuy/2027-Internships",
+    label: "ApplyGuy Internships 2027",
+    repoUrl: "https://github.com/ApplyGuy/2027-Internships",
+    rawUrl: "https://raw.githubusercontent.com/ApplyGuy/2027-Internships/main/data/internships.json",
+    format: "applyguy-internships" as const,
+  },
+  {
+    id: "speedyapply/2027-AI-College-Jobs",
+    label: "SpeedyApply AI / ML",
+    repoUrl: "https://github.com/speedyapply/2027-AI-College-Jobs",
+    rawUrl: "https://raw.githubusercontent.com/speedyapply/2027-AI-College-Jobs/main/README.md",
+    format: "speedy-markdown" as const,
+  },
+  {
+    id: "northwesternfintech/2027QuantInternships",
+    label: "Northwestern Quant",
+    repoUrl: "https://github.com/northwesternfintech/2027QuantInternships",
+    rawUrl: "https://raw.githubusercontent.com/northwesternfintech/2027QuantInternships/main/README.md",
+    format: "quant-markdown" as const,
+  },
+  {
     id: "zapplyjobs/New-Grad-Jobs-2027",
     label: "Zapply New Grad 2027",
     repoUrl: "https://github.com/zapplyjobs/New-Grad-Jobs-2027",
@@ -19,6 +54,13 @@ export const JOB_SOURCE_DEFINITIONS = [
     repoUrl: "https://github.com/zapplyjobs/New-Grad-Data-Science-Jobs-2027",
     rawUrl: "https://raw.githubusercontent.com/zapplyjobs/New-Grad-Data-Science-Jobs-2027/main/README.md",
     format: "markdown" as const,
+  },
+  {
+    id: "ApplyGuy/2027-New-Grad-Jobs",
+    label: "ApplyGuy New Grad 2027",
+    repoUrl: "https://github.com/ApplyGuy/2027-New-Grad-Jobs",
+    rawUrl: "https://raw.githubusercontent.com/ApplyGuy/2027-New-Grad-Jobs/main/data/new-grad-jobs.json",
+    format: "applyguy-new-grad" as const,
   },
 ] as const;
 
@@ -101,8 +143,8 @@ export function parseSimplifyHtml(markdown: string, source: JobSourceId): Parsed
   let insideRow = false;
 
   for (const rawLine of markdown.split(/\r?\n/)) {
-    const heading = rawLine.match(/^##\s+(.+?)\s+New Grad Roles\s*$/i);
-    if (heading) category = cleanText(heading[1]) || "Other";
+    const heading = rawLine.match(/^\s*##\s+(.+?)\s+(?:New Grad|Internship) Roles\s*$/i);
+    if (heading) category = cleanCategory(heading[1]) || "Other";
 
     if (rawLine.includes("<tr>")) {
       insideRow = true;
@@ -139,6 +181,119 @@ export function parseSimplifyHtml(markdown: string, source: JobSourceId): Parsed
       category,
       kind: classifyJobKind(role),
       sources: [source],
+    });
+  }
+
+  return jobs;
+}
+
+export function parseApplyGuyJson(content: string, source: JobSourceId, kind: "Internship" | "New Grad"): ParsedJob[] {
+  const parsed = JSON.parse(content) as { jobs?: unknown };
+  if (!Array.isArray(parsed.jobs)) return [];
+
+  return parsed.jobs.flatMap((rawJob) => {
+    if (!rawJob || typeof rawJob !== "object") return [];
+    const job = rawJob as Record<string, unknown>;
+    const company = stringValue(job.company);
+    const role = stringValue(job.title);
+    const location = stringValue(job.location);
+    const url = stringValue(job.listingUrl) || stringValue(job.url);
+    if (!company || !role || !url) return [];
+
+    return [{
+      company,
+      role,
+      location,
+      url,
+      category: stringValue(job.category) || (kind === "Internship" ? "Other" : "Software Engineering"),
+      posted: stringValue(job.age) || stringValue(job.posted),
+      sponsorship: false,
+      kind,
+      sources: [source],
+    }];
+  });
+}
+
+export function parseSpeedyMarkdown(markdown: string, source: JobSourceId): ParsedJob[] {
+  const jobs: ParsedJob[] = [];
+  let category = "AI / ML";
+
+  for (const rawLine of markdown.split(/\r?\n/)) {
+    const heading = rawLine.match(/^###\s+(.+?)\s*$/);
+    if (heading) {
+      const headingText = cleanText(heading[1]);
+      category = /quant/i.test(headingText) ? "Quantitative Finance" : `AI / ML - ${headingText}`;
+      continue;
+    }
+
+    const line = rawLine.trim();
+    if (!line.startsWith("|") || !line.endsWith("|")) continue;
+    const cells = splitMarkdownRow(line);
+    if (cells.length < 6) continue;
+
+    const company = cleanText(cells[0]);
+    const role = cleanText(cells[1]);
+    const url = extractHrefUrl(cells[4]);
+    if (!company || !role || !url || company.toLowerCase() === "company" || /^-+$/.test(company)) continue;
+
+    jobs.push({
+      company,
+      role,
+      location: cleanText(cells[2]),
+      url,
+      category,
+      posted: cleanText(cells[5]),
+      sponsorship: false,
+      kind: "Internship",
+      sources: [source],
+    });
+  }
+
+  return jobs;
+}
+
+export function parseQuantMarkdown(markdown: string, source: JobSourceId): ParsedJob[] {
+  const jobs: ParsedJob[] = [];
+  let company = "";
+  let location = "";
+
+  for (const rawLine of markdown.split(/\r?\n/)) {
+    const companyHeading = rawLine.match(/^##\s+(.+?)\s*$/);
+    if (companyHeading && cleanText(companyHeading[1]) !== "Contributing" && cleanText(companyHeading[1]) !== "Using This Repository") {
+      company = cleanText(companyHeading[1]);
+      location = "";
+      continue;
+    }
+
+    const locationLine = rawLine.match(/^\*\*Locations\*\*:\s*(.+?)\s*$/i);
+    if (locationLine) {
+      location = cleanText(locationLine[1]);
+      continue;
+    }
+
+    const line = rawLine.trim();
+    if (!company || !line.startsWith("|") || !line.endsWith("|")) continue;
+    const cells = splitMarkdownRow(line);
+    if (cells.length < 2) continue;
+    const roleCode = cleanText(cells[0]);
+    if (!roleCode || /^(role|-+)$/i.test(roleCode)) continue;
+
+    const links = [...cells[1].matchAll(/\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/gi)]
+      .filter((match) => !/❌/.test(match[1]));
+    links.forEach((match) => {
+      const suffix = cleanText(match[1]).replace(/^✅\s*/, "").trim();
+      const baseRole = quantRoleName(roleCode);
+      jobs.push({
+        company,
+        role: suffix ? `${baseRole} - ${suffix}` : baseRole,
+        location,
+        url: decodeEntities(match[2]),
+        category: "Quantitative Finance",
+        posted: "",
+        sponsorship: false,
+        kind: "Internship",
+        sources: [source],
+      });
     });
   }
 
@@ -183,6 +338,30 @@ function extractMarkdownUrl(cell: string) {
   return match ? decodeEntities(match[1]) : "";
 }
 
+function extractHrefUrl(cell: string) {
+  const match = cell.match(/href=["'](https?:\/\/[^"']+)["']/i);
+  return match ? decodeEntities(match[1]) : "";
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function quantRoleName(role: string) {
+  const names: Record<string, string> = {
+    QT: "Quantitative Trading Intern",
+    QR: "Quantitative Research Intern",
+    QD: "Quantitative Developer Intern",
+    SWE: "Software Engineering Intern",
+    ML: "Machine Learning Intern",
+    HW: "Hardware Engineering Intern",
+    FPGA: "FPGA Engineering Intern",
+    "DEVOPS/SRE": "DevOps / SRE Intern",
+    "QR FELLOWSHIP": "Quantitative Research Fellowship",
+  };
+  return names[role.toUpperCase()] ?? `${role} Intern`;
+}
+
 function classifyJobKind(role: string): AggregatedJobKind {
   if (/\b(intern(ship)?|co-?op)\b/i.test(role)) return "Internship";
   if (/\b(new grad(uate)?|university grad(uate)?|early career|entry[- ]level|graduate program(me)?|engineer i\b|engineer 1\b)\b/i.test(role)) {
@@ -193,6 +372,10 @@ function classifyJobKind(role: string): AggregatedJobKind {
 
 function cleanCompany(value: string) {
   return value.replace(/[🔥🎓🇺🇸🛂🔒]/gu, "").trim();
+}
+
+function cleanCategory(value: string) {
+  return cleanText(value).replace(/^[^\p{L}\p{N}]+/u, "").trim();
 }
 
 function cleanText(value: string) {

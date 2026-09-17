@@ -159,7 +159,7 @@ export function InternshipPage({
             </div>
             <h2 className="mt-1 text-2xl font-semibold tracking-normal text-slate-50">2027 Job Feed</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-400">
-              Three public job lists are merged automatically. Duplicate company, role, and location entries appear once.
+              Maintained public job lists are merged automatically. Duplicate company, role, and location entries appear once.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[30rem]">
@@ -170,14 +170,14 @@ export function InternshipPage({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 lg:grid-cols-3">
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
           {(feed?.sources ?? []).map((source) => (
             <a
               key={source.id}
               href={source.repoUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-12 items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm transition hover:border-cyan-300/60"
+              className="flex min-h-12 min-w-[15rem] items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm transition hover:border-cyan-300/60"
             >
               <span className="min-w-0 truncate font-semibold text-slate-200">{source.label}</span>
               <span className={`shrink-0 text-xs font-bold ${source.error ? "text-rose-300" : "text-slate-400"}`}>

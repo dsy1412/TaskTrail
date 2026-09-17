@@ -419,6 +419,7 @@ describe("PlannerApp", () => {
 
     expect(await screen.findByTestId("internship-view")).toBeVisible();
     expect(await screen.findByText("Data Science Intern 2027")).toBeVisible();
+    await user.click(screen.getByText("3 GitHub sources"));
     expect(screen.getAllByText("Zapply New Grad 2027")[0]).toBeVisible();
     expect(screen.getAllByText("Simplify New Grad")[0]).toBeVisible();
     expect(screen.getAllByText("Zapply Data Science 2027")[0]).toBeVisible();

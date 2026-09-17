@@ -1,6 +1,6 @@
 "use client";
 
-import { BriefcaseBusiness, ExternalLink, RefreshCcw, Search } from "lucide-react";
+import { BriefcaseBusiness, ChevronDown, ExternalLink, RefreshCcw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   jobTrackingKey,
@@ -149,7 +149,7 @@ export function InternshipPage({
   }
 
   return (
-    <section data-testid="internship-view" className="mx-auto grid w-full max-w-[112rem] gap-4">
+    <section data-testid="internship-view" className="mx-auto grid w-full min-w-0 max-w-7xl gap-4 overflow-x-clip">
       <header className="glass-panel rounded-xl p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
@@ -170,27 +170,33 @@ export function InternshipPage({
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {(feed?.sources ?? []).map((source) => (
-            <a
-              key={source.id}
-              href={source.repoUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex min-h-12 min-w-[15rem] items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm transition hover:border-cyan-300/60"
-            >
-              <span className="min-w-0 truncate font-semibold text-slate-200">{source.label}</span>
-              <span className={`shrink-0 text-xs font-bold ${source.error ? "text-rose-300" : "text-slate-400"}`}>
-                {source.error ? "Unavailable" : `${source.count} roles`}
-              </span>
-            </a>
-          ))}
-        </div>
+        <details className="group mt-4 rounded-lg border border-slate-800 bg-slate-950/45">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold text-slate-300 [&::-webkit-details-marker]:hidden">
+            <span>{feed?.sources.length ?? 0} GitHub sources</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-slate-500 transition group-open:rotate-180" />
+          </summary>
+          <div className="grid gap-2 border-t border-slate-800 p-2 sm:grid-cols-2 lg:grid-cols-3">
+            {(feed?.sources ?? []).map((source) => (
+              <a
+                key={source.id}
+                href={source.repoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm transition hover:border-cyan-300/60"
+              >
+                <span className="min-w-0 truncate font-semibold text-slate-200">{source.label}</span>
+                <span className={`shrink-0 text-xs font-bold ${source.error ? "text-rose-300" : "text-slate-400"}`}>
+                  {source.error ? "Unavailable" : `${source.count} roles`}
+                </span>
+              </a>
+            ))}
+          </div>
+        </details>
       </header>
 
       <section className="glass-panel rounded-xl p-3">
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_repeat(5,auto)_auto]">
-          <label className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-400 focus-within:border-cyan-300">
+        <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-400 focus-within:border-cyan-300 sm:col-span-2">
             <Search className="h-4 w-4 text-slate-500" />
             <input
               aria-label="Search aggregated jobs"
@@ -245,8 +251,8 @@ export function InternshipPage({
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3 px-1 text-sm font-semibold text-slate-400">
-        <span>{loading && !feed ? "Loading three repositories..." : `${filteredJobs.length} matching roles`}</span>
+      <div className="flex flex-col gap-1 px-1 text-sm font-semibold text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <span>{loading && !feed ? "Loading GitHub sources..." : `${filteredJobs.length} matching roles`}</span>
         {feed ? <span>Updated {new Date(feed.fetchedAt).toLocaleString()}</span> : null}
       </div>
 
@@ -295,7 +301,7 @@ function JobListingRow({
   return (
     <article
       data-testid="job-listing-card"
-      className="grid gap-3 rounded-xl border border-slate-800 bg-slate-950/55 p-3 lg:grid-cols-[minmax(16rem,1.35fr)_minmax(10rem,0.8fr)_auto_auto] lg:items-center"
+      className="grid min-w-0 gap-3 rounded-xl border border-slate-800 bg-slate-950/55 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
     >
       <div className="min-w-0">
         <h3 className="break-words text-base font-semibold leading-6 text-slate-50">{job.role}</h3>
@@ -303,35 +309,37 @@ function JobListingRow({
           <span className="text-slate-200">{job.company}</span>
           <span>{job.location || "Location not listed"}</span>
         </div>
+        <div className="mt-2 flex min-w-0 flex-wrap gap-1.5 text-xs font-bold text-slate-400">
+          <span className="max-w-full truncate rounded-md bg-slate-800 px-2 py-1">{job.category}</span>
+          <span className="rounded-md bg-slate-800 px-2 py-1">{job.kind}</span>
+          {job.sponsorship ? <span className="rounded-md bg-emerald-400/12 px-2 py-1 text-emerald-200">Sponsor</span> : null}
+          {job.posted ? <span className="rounded-md bg-slate-800 px-2 py-1">{job.posted}</span> : null}
+          {job.sources.length > 1 ? <span className="rounded-md bg-cyan-300/12 px-2 py-1 text-cyan-200">{job.sources.length} sources</span> : null}
+        </div>
       </div>
-      <div className="flex min-w-0 flex-wrap gap-1.5 text-xs font-bold text-slate-400">
-        <span className="rounded-md bg-slate-800 px-2 py-1">{job.category}</span>
-        <span className="rounded-md bg-slate-800 px-2 py-1">{job.kind}</span>
-        {job.sponsorship ? <span className="rounded-md bg-emerald-400/12 px-2 py-1 text-emerald-200">Sponsor</span> : null}
-        {job.posted ? <span className="rounded-md bg-slate-800 px-2 py-1">{job.posted}</span> : null}
-        {job.sources.length > 1 ? <span className="rounded-md bg-cyan-300/12 px-2 py-1 text-cyan-200">{job.sources.length} sources</span> : null}
+      <div className="grid min-w-0 grid-cols-[minmax(8.5rem,1fr)_auto] gap-2 md:flex md:items-center">
+        <select
+          aria-label={`Track ${job.company} status`}
+          value={selectedStatus}
+          onChange={(event) => onStatusChange(event.target.value as JobApplicationStatus | "Untracked")}
+          disabled={!canEdit}
+          className={`min-h-10 min-w-0 rounded-lg border px-3 text-sm font-semibold outline-none transition focus:border-cyan-300 disabled:opacity-60 md:w-36 ${
+            application ? statusTone[application.status] : "border-slate-700 bg-slate-950 text-slate-300"
+          }`}
+        >
+          <option value="Untracked">Untracked</option>
+          {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
+        </select>
+        <a
+          href={job.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+        >
+          Apply
+          <ExternalLink className="h-4 w-4" />
+        </a>
       </div>
-      <select
-        aria-label={`Track ${job.company} status`}
-        value={selectedStatus}
-        onChange={(event) => onStatusChange(event.target.value as JobApplicationStatus | "Untracked")}
-        disabled={!canEdit}
-        className={`min-h-10 rounded-lg border px-3 text-sm font-semibold outline-none transition focus:border-cyan-300 disabled:opacity-60 ${
-          application ? statusTone[application.status] : "border-slate-700 bg-slate-950 text-slate-300"
-        }`}
-      >
-        <option value="Untracked">Untracked</option>
-        {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-      </select>
-      <a
-        href={job.url}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
-      >
-        Apply
-        <ExternalLink className="h-4 w-4" />
-      </a>
     </article>
   );
 }

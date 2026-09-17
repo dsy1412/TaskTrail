@@ -360,35 +360,77 @@ describe("PlannerApp", () => {
     expect(screen.getByTestId("task-backpack")).toBeVisible();
   });
 
-  it("opens the internship tracker and saves a sourced opportunity", async () => {
+  it("opens the aggregated job feed and tracks a sourced opportunity", async () => {
     localStorage.clear();
+    vi.mocked(fetch).mockImplementation((input) => {
+      if (String(input).startsWith("/api/jobs")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              fetchedAt: "2026-04-26T12:00:00.000Z",
+              sources: [
+                {
+                  id: "zapplyjobs/New-Grad-Jobs-2027",
+                  label: "Zapply New Grad 2027",
+                  repoUrl: "https://github.com/zapplyjobs/New-Grad-Jobs-2027",
+                  count: 1,
+                },
+                {
+                  id: "SimplifyJobs/New-Grad-Positions",
+                  label: "Simplify New Grad",
+                  repoUrl: "https://github.com/SimplifyJobs/New-Grad-Positions",
+                  count: 0,
+                },
+                {
+                  id: "zapplyjobs/New-Grad-Data-Science-Jobs-2027",
+                  label: "Zapply Data Science 2027",
+                  repoUrl: "https://github.com/zapplyjobs/New-Grad-Data-Science-Jobs-2027",
+                  count: 1,
+                },
+              ],
+              jobs: [
+                {
+                  id: "job_openai",
+                  company: "OpenAI",
+                  role: "Data Science Intern 2027",
+                  location: "San Francisco / Remote",
+                  url: "https://example.com/openai-ds-intern",
+                  category: "Data Scientist",
+                  posted: "1d",
+                  sponsorship: true,
+                  kind: "Internship",
+                  sources: [
+                    "zapplyjobs/New-Grad-Jobs-2027",
+                    "zapplyjobs/New-Grad-Data-Science-Jobs-2027",
+                  ],
+                },
+              ],
+            }),
+        } as Response);
+      }
+      return Promise.reject(new Error("API routes are not mounted in component tests"));
+    });
     const user = userEvent.setup();
     render(<PlannerApp />);
 
     await user.click(await screen.findByRole("button", { name: "Jobs" }));
 
     expect(await screen.findByTestId("internship-view")).toBeVisible();
-    expect(screen.getByText("New Grad Jobs 2027")).toBeVisible();
-    expect(screen.getByText("Simplify New Grad")).toBeVisible();
-    expect(screen.getByText("Data Science Jobs 2027")).toBeVisible();
-    expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
-
-    await user.type(screen.getByLabelText("Company"), "OpenAI");
-    await user.type(screen.getByLabelText("Role"), "Data Science Intern 2027");
-    await user.type(screen.getByLabelText("Location"), "San Francisco / Remote");
-    await user.type(screen.getByLabelText("Job link"), "https://example.com/openai-ds-intern");
-    await user.type(screen.getByLabelText("Job notes"), "Ask for referral and tailor ML resume.");
-    await user.click(screen.getByRole("button", { name: "Add job opportunity" }));
-
     expect(await screen.findByText("Data Science Intern 2027")).toBeVisible();
+    expect(screen.getAllByText("Zapply New Grad 2027")[0]).toBeVisible();
+    expect(screen.getAllByText("Simplify New Grad")[0]).toBeVisible();
+    expect(screen.getAllByText("Zapply Data Science 2027")[0]).toBeVisible();
+    expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Company")).not.toBeInTheDocument();
+
     expect(screen.getByText("OpenAI")).toBeVisible();
-    expect(screen.getByText("Ask for referral and tailor ML resume.")).toBeVisible();
+    await user.selectOptions(screen.getByLabelText("Track OpenAI status"), "Applied");
 
-    await user.selectOptions(screen.getByLabelText("Update OpenAI status"), "Applied");
-
-    const jobCard = screen.getByText("Data Science Intern 2027").closest("[data-testid='job-application-card']");
+    const jobCard = screen.getByText("Data Science Intern 2027").closest("[data-testid='job-listing-card']");
     expect(jobCard).not.toBeNull();
-    expect(within(jobCard as HTMLElement).getByText("Applied", { selector: "span" })).toBeVisible();
+    expect(within(jobCard as HTMLElement).getByLabelText("Track OpenAI status")).toHaveValue("Applied");
   });
 
   it("creates a simple word card with automatic IPA and local speech", async () => {

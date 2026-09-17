@@ -1,51 +1,18 @@
 "use client";
 
-import { BriefcaseBusiness, ExternalLink, Plus, Search, Trash2 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { BriefcaseBusiness, ExternalLink, RefreshCcw, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  jobTrackingKey,
+  type AggregatedJob,
+  type AggregatedJobKind,
+  type AggregatedJobsResponse,
+  type JobSourceId,
+} from "@/lib/jobSources";
 import type { JobApplication, JobApplicationStatus, PlannerState } from "@/lib/types";
 
-type JobInput = {
-  company: string;
-  role: string;
-  location: string;
-  url: string;
-  source: string;
-  status: JobApplicationStatus;
-  notes: string;
-};
-
-const emptyInput: JobInput = {
-  company: "",
-  role: "",
-  location: "",
-  url: "",
-  source: "zapplyjobs/New-Grad-Jobs-2027",
-  status: "Saved",
-  notes: "",
-};
-
-const jobSources = [
-  {
-    id: "zapplyjobs/New-Grad-Jobs-2027",
-    label: "New Grad Jobs 2027",
-    scope: "General SWE / tech new grad",
-    url: "https://github.com/zapplyjobs/New-Grad-Jobs-2027",
-  },
-  {
-    id: "SimplifyJobs/New-Grad-Positions",
-    label: "Simplify New Grad",
-    scope: "Broad US new grad list",
-    url: "https://github.com/SimplifyJobs/New-Grad-Positions",
-  },
-  {
-    id: "zapplyjobs/New-Grad-Data-Science-Jobs-2027",
-    label: "Data Science Jobs 2027",
-    scope: "Data science / ML / analytics",
-    url: "https://github.com/zapplyjobs/New-Grad-Data-Science-Jobs-2027",
-  },
-];
-
 const statuses: JobApplicationStatus[] = ["Saved", "Applied", "OA", "Interview", "Offer", "Rejected"];
+const PAGE_SIZE = 60;
 
 const statusTone: Record<JobApplicationStatus, string> = {
   Saved: "border-slate-600 bg-slate-800 text-slate-200",
@@ -56,6 +23,9 @@ const statusTone: Record<JobApplicationStatus, string> = {
   Rejected: "border-rose-300/40 bg-rose-300/12 text-rose-100",
 };
 
+type TrackingFilter = "All" | "Untracked" | JobApplicationStatus;
+type SponsorshipFilter = "All" | "Sponsor";
+
 export function InternshipPage({
   state,
   onCreateApplication,
@@ -64,313 +34,328 @@ export function InternshipPage({
   canEdit,
 }: {
   state: PlannerState;
-  onCreateApplication: (input: JobInput) => JobApplication | undefined;
+  onCreateApplication: (input: {
+    company: string;
+    role: string;
+    location?: string;
+    url?: string;
+    source?: string;
+    status?: JobApplicationStatus;
+    notes?: string;
+  }) => JobApplication | undefined;
   onUpdateApplication: (applicationId: string, patch: Partial<Omit<JobApplication, "id" | "createdAt">>) => void;
   onDeleteApplication: (applicationId: string) => void;
   canEdit: boolean;
 }) {
-  const [draft, setDraft] = useState<JobInput>(emptyInput);
+  const [feed, setFeed] = useState<AggregatedJobsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<JobApplicationStatus | "All">("All");
+  const [kindFilter, setKindFilter] = useState<AggregatedJobKind | "All">("Internship");
+  const [sourceFilter, setSourceFilter] = useState<JobSourceId | "All">("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [sponsorshipFilter, setSponsorshipFilter] = useState<SponsorshipFilter>("All");
+  const [trackingFilter, setTrackingFilter] = useState<TrackingFilter>("All");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const activeApplications = useMemo(() => {
-    return (state.jobApplications ?? [])
-      .filter((application) => !application.deletedAt)
-      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
-  }, [state.jobApplications]);
+  const loadJobs = useCallback(async (forceRefresh = false) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(forceRefresh ? "/api/jobs?refresh=1" : "/api/jobs", { cache: "no-store" });
+      const body = (await response.json()) as AggregatedJobsResponse & { error?: string };
+      if (!response.ok) throw new Error(body.error ?? `Job feed request failed with ${response.status}`);
+      setFeed(body);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "The GitHub job feeds could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const filteredApplications = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return activeApplications.filter((application) => {
-      const matchesStatus = statusFilter === "All" || application.status === statusFilter;
-      const matchesQuery =
-        !normalizedQuery ||
-        [application.company, application.role, application.location, application.source, application.notes].some((value) =>
-          value.toLowerCase().includes(normalizedQuery),
-        );
-      return matchesStatus && matchesQuery;
-    });
-  }, [activeApplications, query, statusFilter]);
+  useEffect(() => {
+    void loadJobs();
+  }, [loadJobs]);
 
-  const metrics = useMemo(() => {
-    const active = activeApplications.filter((application) => !["Rejected", "Offer"].includes(application.status));
-    return {
-      saved: activeApplications.filter((application) => application.status === "Saved").length,
-      applied: activeApplications.filter((application) => application.status === "Applied").length,
-      pipeline: active.filter((application) => ["OA", "Interview"].includes(application.status)).length,
-      total: activeApplications.length,
-    };
+  const activeApplications = useMemo(
+    () => (state.jobApplications ?? []).filter((application) => !application.deletedAt),
+    [state.jobApplications],
+  );
+
+  const trackingByJob = useMemo(() => {
+    const map = new Map<string, JobApplication>();
+    [...activeApplications]
+      .sort((left, right) => left.updatedAt.localeCompare(right.updatedAt))
+      .forEach((application) => map.set(jobTrackingKey(application), application));
+    return map;
   }, [activeApplications]);
 
-  function updateDraft<K extends keyof JobInput>(field: K, value: JobInput[K]) {
-    setDraft((current) => ({ ...current, [field]: value }));
-  }
+  const categories = useMemo(
+    () => [...new Set((feed?.jobs ?? []).map((job) => job.category))].sort((left, right) => left.localeCompare(right)),
+    [feed?.jobs],
+  );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canEdit || !draft.company.trim() || !draft.role.trim()) return;
-    onCreateApplication(draft);
-    setDraft((current) => ({
-      ...emptyInput,
-      source: current.source,
-    }));
+  const filteredJobs = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return (feed?.jobs ?? []).filter((job) => {
+      const tracked = trackingByJob.get(jobTrackingKey(job));
+      const matchesQuery =
+        !normalizedQuery ||
+        [job.company, job.role, job.location, job.category].some((value) => value.toLowerCase().includes(normalizedQuery));
+      const matchesKind = kindFilter === "All" || job.kind === kindFilter;
+      const matchesSource = sourceFilter === "All" || job.sources.includes(sourceFilter);
+      const matchesCategory = categoryFilter === "All" || job.category === categoryFilter;
+      const matchesSponsorship = sponsorshipFilter === "All" || job.sponsorship;
+      const matchesTracking =
+        trackingFilter === "All" ||
+        (trackingFilter === "Untracked" ? !tracked : tracked?.status === trackingFilter);
+      return matchesQuery && matchesKind && matchesSource && matchesCategory && matchesSponsorship && matchesTracking;
+    });
+  }, [categoryFilter, feed?.jobs, kindFilter, query, sourceFilter, sponsorshipFilter, trackingByJob, trackingFilter]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [categoryFilter, kindFilter, query, sourceFilter, sponsorshipFilter, trackingFilter]);
+
+  const metrics = useMemo(() => {
+    const jobs = feed?.jobs ?? [];
+    return {
+      total: jobs.length,
+      internships: jobs.filter((job) => job.kind === "Internship").length,
+      sponsored: jobs.filter((job) => job.sponsorship).length,
+      tracked: activeApplications.length,
+    };
+  }, [activeApplications.length, feed?.jobs]);
+
+  function updateTracking(job: AggregatedJob, status: JobApplicationStatus | "Untracked") {
+    if (!canEdit) return;
+    const existing = trackingByJob.get(jobTrackingKey(job));
+    if (status === "Untracked") {
+      if (existing) onDeleteApplication(existing.id);
+      return;
+    }
+    if (existing) {
+      onUpdateApplication(existing.id, { status });
+      return;
+    }
+    onCreateApplication({
+      company: job.company,
+      role: job.role,
+      location: job.location,
+      url: job.url,
+      source: job.sources.join(", "),
+      status,
+    });
   }
 
   return (
     <section data-testid="internship-view" className="mx-auto grid w-full max-w-[112rem] gap-4">
       <header className="glass-panel rounded-xl p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-400">
               <BriefcaseBusiness className="h-4 w-4 text-cyan-300" />
-              2027 search
+              Live GitHub aggregation
             </div>
-            <h2 className="mt-1 text-2xl font-semibold tracking-normal text-slate-50">Internship Hunt</h2>
+            <h2 className="mt-1 text-2xl font-semibold tracking-normal text-slate-50">2027 Job Feed</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-400">
-              Track roles from the three GitHub lists, keep the source link, and move each opportunity through your own pipeline.
+              Three public job lists are merged automatically. Duplicate company, role, and location entries appear once.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[28rem]">
-            <MetricTile label="Saved" value={metrics.saved} />
-            <MetricTile label="Applied" value={metrics.applied} />
-            <MetricTile label="Pipeline" value={metrics.pipeline} />
-            <MetricTile label="Total" value={metrics.total} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[30rem]">
+            <MetricTile label="All roles" value={metrics.total} />
+            <MetricTile label="Internships" value={metrics.internships} />
+            <MetricTile label="Sponsor" value={metrics.sponsored} />
+            <MetricTile label="Tracked" value={metrics.tracked} />
           </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 lg:grid-cols-3">
+          {(feed?.sources ?? []).map((source) => (
+            <a
+              key={source.id}
+              href={source.repoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-12 items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm transition hover:border-cyan-300/60"
+            >
+              <span className="min-w-0 truncate font-semibold text-slate-200">{source.label}</span>
+              <span className={`shrink-0 text-xs font-bold ${source.error ? "text-rose-300" : "text-slate-400"}`}>
+                {source.error ? "Unavailable" : `${source.count} roles`}
+              </span>
+            </a>
+          ))}
         </div>
       </header>
 
-      <section className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <aside className="grid gap-4 xl:sticky xl:top-3 xl:self-start">
-          <div className="glass-panel rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-slate-50">Sources</h3>
-            <div className="mt-3 grid gap-2">
-              {jobSources.map((source) => (
-                <div key={source.id} className="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-100">{source.label}</p>
-                      <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{source.scope}</p>
-                    </div>
-                    <a
-                      aria-label={`Open ${source.label}`}
-                      title="Open source"
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-950 text-slate-300 transition hover:border-cyan-300 hover:text-cyan-200"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </div>
-                  <button
-                    type="button"
-                    className="mt-2 rounded-md border border-slate-700 px-2 py-1 text-xs font-bold text-slate-300 transition hover:border-cyan-300 hover:text-cyan-200"
-                    onClick={() => updateDraft("source", source.id)}
-                  >
-                    Use as source
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-slate-50">Add opportunity</h3>
-              <button
-                type="submit"
-                aria-label="Add job opportunity"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!canEdit || !draft.company.trim() || !draft.role.trim()}
-              >
-                <Plus className="h-4 w-4" />
-                Add
-              </button>
-            </div>
-            <div className="mt-3 grid gap-2">
-              <input
-                aria-label="Company"
-                value={draft.company}
-                onChange={(event) => updateDraft("company", event.target.value)}
-                placeholder="Company"
-                className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-              />
-              <input
-                aria-label="Role"
-                value={draft.role}
-                onChange={(event) => updateDraft("role", event.target.value)}
-                placeholder="Role"
-                className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-              />
-              <input
-                aria-label="Location"
-                value={draft.location}
-                onChange={(event) => updateDraft("location", event.target.value)}
-                placeholder="Location / Remote"
-                className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-              />
-              <input
-                aria-label="Job link"
-                value={draft.url}
-                onChange={(event) => updateDraft("url", event.target.value)}
-                placeholder="Application link"
-                className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-              />
-              <select
-                aria-label="Job source"
-                value={draft.source}
-                onChange={(event) => updateDraft("source", event.target.value)}
-                className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-cyan-300"
-              >
-                {jobSources.map((source) => (
-                  <option key={source.id} value={source.id}>
-                    {source.id}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Job status"
-                value={draft.status}
-                onChange={(event) => updateDraft("status", event.target.value as JobApplicationStatus)}
-                className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-cyan-300"
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-              <textarea
-                aria-label="Job notes"
-                value={draft.notes}
-                onChange={(event) => updateDraft("notes", event.target.value)}
-                placeholder="Next step, referral, deadline, resume variant"
-                className="min-h-20 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold leading-6 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
-              />
-            </div>
-          </form>
-        </aside>
-
-        <div className="grid gap-3">
-          <div className="glass-panel rounded-xl p-3">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-400 focus-within:border-cyan-300">
-                <Search className="h-4 w-4 text-slate-500" />
-                <input
-                  aria-label="Search job applications"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search company, role, notes"
-                  className="min-w-0 flex-1 bg-transparent py-3 text-slate-100 outline-none placeholder:text-slate-500"
-                />
-              </label>
-              <div className="flex gap-1 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-1">
-                {["All", ...statuses].map((status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    className={`rounded-md px-3 py-2 text-xs font-bold transition ${
-                      statusFilter === status ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
-                    }`}
-                    onClick={() => setStatusFilter(status as JobApplicationStatus | "All")}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-2 xl:grid-cols-2">
-            {filteredApplications.length ? (
-              filteredApplications.map((application) => (
-                <JobApplicationCard
-                  key={application.id}
-                  application={application}
-                  canEdit={canEdit}
-                  onUpdateApplication={(patch) => onUpdateApplication(application.id, patch)}
-                  onDeleteApplication={() => onDeleteApplication(application.id)}
-                />
-              ))
-            ) : (
-              <div className="glass-panel rounded-xl border-dashed p-8 text-center text-sm font-semibold text-slate-400 xl:col-span-2">
-                No opportunities match this view.
-              </div>
-            )}
-          </div>
+      <section className="glass-panel rounded-xl p-3">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_repeat(5,auto)_auto]">
+          <label className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-400 focus-within:border-cyan-300">
+            <Search className="h-4 w-4 text-slate-500" />
+            <input
+              aria-label="Search aggregated jobs"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Company, role, location"
+              className="min-w-0 flex-1 bg-transparent py-3 text-slate-100 outline-none placeholder:text-slate-500"
+            />
+          </label>
+          <FilterSelect label="Role type" value={kindFilter} onChange={(value) => setKindFilter(value as AggregatedJobKind | "All")}>
+            <option value="All">All types</option>
+            <option value="Internship">Intern / co-op</option>
+            <option value="New Grad">New grad</option>
+            <option value="Other">Other</option>
+          </FilterSelect>
+          <FilterSelect label="Job source" value={sourceFilter} onChange={(value) => setSourceFilter(value as JobSourceId | "All")}>
+            <option value="All">All sources</option>
+            {(feed?.sources ?? []).map((source) => (
+              <option key={source.id} value={source.id}>{source.label}</option>
+            ))}
+          </FilterSelect>
+          <FilterSelect label="Job category" value={categoryFilter} onChange={setCategoryFilter}>
+            <option value="All">All fields</option>
+            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+          </FilterSelect>
+          <FilterSelect label="Sponsorship" value={sponsorshipFilter} onChange={(value) => setSponsorshipFilter(value as SponsorshipFilter)}>
+            <option value="All">Any visa</option>
+            <option value="Sponsor">Sponsor shown</option>
+          </FilterSelect>
+          <FilterSelect label="Application tracking" value={trackingFilter} onChange={(value) => setTrackingFilter(value as TrackingFilter)}>
+            <option value="All">Any progress</option>
+            <option value="Untracked">Untracked</option>
+            {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
+          </FilterSelect>
+          <button
+            type="button"
+            aria-label="Refresh GitHub job feeds"
+            title="Refresh GitHub job feeds"
+            onClick={() => void loadJobs(true)}
+            disabled={loading}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-300 transition hover:border-cyan-300 hover:text-cyan-200 disabled:opacity-60"
+          >
+            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
         </div>
       </section>
+
+      {error ? (
+        <div className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm font-semibold text-rose-100">
+          GitHub feed error: {error}
+        </div>
+      ) : null}
+
+      <div className="flex items-center justify-between gap-3 px-1 text-sm font-semibold text-slate-400">
+        <span>{loading && !feed ? "Loading three repositories..." : `${filteredJobs.length} matching roles`}</span>
+        {feed ? <span>Updated {new Date(feed.fetchedAt).toLocaleString()}</span> : null}
+      </div>
+
+      <div className="grid gap-2">
+        {filteredJobs.slice(0, visibleCount).map((job) => (
+          <JobListingRow
+            key={job.id}
+            job={job}
+            application={trackingByJob.get(jobTrackingKey(job))}
+            canEdit={canEdit}
+            onStatusChange={(status) => updateTracking(job, status)}
+          />
+        ))}
+        {!loading && !filteredJobs.length ? (
+          <div className="glass-panel rounded-xl border-dashed p-8 text-center text-sm font-semibold text-slate-400">
+            No roles match these filters.
+          </div>
+        ) : null}
+      </div>
+
+      {visibleCount < filteredJobs.length ? (
+        <button
+          type="button"
+          onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+          className="mx-auto min-h-11 rounded-lg border border-slate-700 bg-slate-950 px-5 text-sm font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-100"
+        >
+          Show {Math.min(PAGE_SIZE, filteredJobs.length - visibleCount)} more
+        </button>
+      ) : null}
     </section>
   );
 }
 
-function JobApplicationCard({
+function JobListingRow({
+  job,
   application,
   canEdit,
-  onUpdateApplication,
-  onDeleteApplication,
+  onStatusChange,
 }: {
-  application: JobApplication;
+  job: AggregatedJob;
+  application?: JobApplication;
   canEdit: boolean;
-  onUpdateApplication: (patch: Partial<Omit<JobApplication, "id" | "createdAt">>) => void;
-  onDeleteApplication: () => void;
+  onStatusChange: (status: JobApplicationStatus | "Untracked") => void;
+}) {
+  const selectedStatus = application?.status ?? "Untracked";
+  return (
+    <article
+      data-testid="job-listing-card"
+      className="grid gap-3 rounded-xl border border-slate-800 bg-slate-950/55 p-3 lg:grid-cols-[minmax(16rem,1.35fr)_minmax(10rem,0.8fr)_auto_auto] lg:items-center"
+    >
+      <div className="min-w-0">
+        <h3 className="break-words text-base font-semibold leading-6 text-slate-50">{job.role}</h3>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-slate-400">
+          <span className="text-slate-200">{job.company}</span>
+          <span>{job.location || "Location not listed"}</span>
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-wrap gap-1.5 text-xs font-bold text-slate-400">
+        <span className="rounded-md bg-slate-800 px-2 py-1">{job.category}</span>
+        <span className="rounded-md bg-slate-800 px-2 py-1">{job.kind}</span>
+        {job.sponsorship ? <span className="rounded-md bg-emerald-400/12 px-2 py-1 text-emerald-200">Sponsor</span> : null}
+        {job.posted ? <span className="rounded-md bg-slate-800 px-2 py-1">{job.posted}</span> : null}
+        {job.sources.length > 1 ? <span className="rounded-md bg-cyan-300/12 px-2 py-1 text-cyan-200">{job.sources.length} sources</span> : null}
+      </div>
+      <select
+        aria-label={`Track ${job.company} status`}
+        value={selectedStatus}
+        onChange={(event) => onStatusChange(event.target.value as JobApplicationStatus | "Untracked")}
+        disabled={!canEdit}
+        className={`min-h-10 rounded-lg border px-3 text-sm font-semibold outline-none transition focus:border-cyan-300 disabled:opacity-60 ${
+          application ? statusTone[application.status] : "border-slate-700 bg-slate-950 text-slate-300"
+        }`}
+      >
+        <option value="Untracked">Untracked</option>
+        {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
+      </select>
+      <a
+        href={job.url}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+      >
+        Apply
+        <ExternalLink className="h-4 w-4" />
+      </a>
+    </article>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: ReactNode;
 }) {
   return (
-    <article data-testid="job-application-card" className="glass-panel rounded-xl p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="break-words text-lg font-semibold leading-6 text-slate-50">{application.role}</h3>
-          <p className="mt-1 text-sm font-semibold text-slate-300">{application.company}</p>
-        </div>
-        <span className={`shrink-0 rounded-md border px-2 py-1 text-xs font-bold ${statusTone[application.status]}`}>
-          {application.status}
-        </span>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-400">
-        {application.location ? <span className="rounded-md bg-slate-800 px-2 py-1">{application.location}</span> : null}
-        {application.source ? <span className="rounded-md bg-slate-800 px-2 py-1">{application.source}</span> : null}
-      </div>
-
-      {application.notes ? <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">{application.notes}</p> : null}
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <select
-          aria-label={`Update ${application.company} status`}
-          value={application.status}
-          onChange={(event) => onUpdateApplication({ status: event.target.value as JobApplicationStatus })}
-          disabled={!canEdit}
-          className="min-h-10 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-cyan-300 disabled:opacity-60"
-        >
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-        {application.url ? (
-          <a
-            href={application.url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-300 transition hover:border-cyan-300 hover:text-cyan-200"
-          >
-            Open
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        ) : null}
-        <button
-          type="button"
-          aria-label={`Delete ${application.company} ${application.role}`}
-          title="Delete opportunity"
-          className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-950 text-slate-400 transition hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
-          onClick={onDeleteApplication}
-          disabled={!canEdit}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-    </article>
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="min-h-11 min-w-0 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-200 outline-none transition focus:border-cyan-300"
+    >
+      {children}
+    </select>
   );
 }
 

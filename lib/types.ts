@@ -56,6 +56,22 @@ export interface JournalEntry {
 
 export type JournalFontStyle = "clean" | "serif" | "mono";
 
+export type JobApplicationStatus = "Saved" | "Applied" | "OA" | "Interview" | "Offer" | "Rejected";
+
+export interface JobApplication {
+  id: string;
+  company: string;
+  role: string;
+  location: string;
+  url: string;
+  source: string;
+  status: JobApplicationStatus;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
 export interface LexiconEntry {
   id: string;
   word: string;
@@ -81,6 +97,9 @@ export type ActivityEventType =
   | "TASK_UPDATED"
   | "JOURNAL_CREATED"
   | "JOURNAL_DELETED"
+  | "JOB_CREATED"
+  | "JOB_UPDATED"
+  | "JOB_DELETED"
   | "LEXICON_CREATED"
   | "LEXICON_UPDATED"
   | "LEXICON_DELETED";
@@ -109,6 +128,7 @@ export interface PlannerState {
   scheduleBlocks: ScheduleBlock[];
   events: ActivityEvent[];
   journalEntries: JournalEntry[];
+  jobApplications?: JobApplication[];
   lexiconEntries: LexiconEntry[];
 }
 

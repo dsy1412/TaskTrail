@@ -9,6 +9,7 @@ export function isPlannerState(value: unknown): value is PlannerState {
     Array.isArray(candidate.scheduleBlocks) &&
     Array.isArray(candidate.events) &&
     (candidate.journalEntries === undefined || Array.isArray(candidate.journalEntries)) &&
+    (candidate.jobApplications === undefined || Array.isArray(candidate.jobApplications)) &&
     (candidate.lexiconEntries === undefined || Array.isArray(candidate.lexiconEntries))
   );
 }

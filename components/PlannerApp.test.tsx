@@ -41,6 +41,7 @@ describe("PlannerApp", () => {
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("mobile-day-agenda")).toBeInTheDocument();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Jobs" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Lexicon" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Degree" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Add task" })[0]).toBeVisible();
@@ -357,6 +358,37 @@ describe("PlannerApp", () => {
 
     expect(await screen.findByRole("heading", { name: "Today Canvas" })).toBeVisible();
     expect(screen.getByTestId("task-backpack")).toBeVisible();
+  });
+
+  it("opens the internship tracker and saves a sourced opportunity", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<PlannerApp />);
+
+    await user.click(await screen.findByRole("button", { name: "Jobs" }));
+
+    expect(await screen.findByTestId("internship-view")).toBeVisible();
+    expect(screen.getByText("New Grad Jobs 2027")).toBeVisible();
+    expect(screen.getByText("Simplify New Grad")).toBeVisible();
+    expect(screen.getByText("Data Science Jobs 2027")).toBeVisible();
+    expect(screen.queryByTestId("task-backpack")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Company"), "OpenAI");
+    await user.type(screen.getByLabelText("Role"), "Data Science Intern 2027");
+    await user.type(screen.getByLabelText("Location"), "San Francisco / Remote");
+    await user.type(screen.getByLabelText("Job link"), "https://example.com/openai-ds-intern");
+    await user.type(screen.getByLabelText("Job notes"), "Ask for referral and tailor ML resume.");
+    await user.click(screen.getByRole("button", { name: "Add job opportunity" }));
+
+    expect(await screen.findByText("Data Science Intern 2027")).toBeVisible();
+    expect(screen.getByText("OpenAI")).toBeVisible();
+    expect(screen.getByText("Ask for referral and tailor ML resume.")).toBeVisible();
+
+    await user.selectOptions(screen.getByLabelText("Update OpenAI status"), "Applied");
+
+    const jobCard = screen.getByText("Data Science Intern 2027").closest("[data-testid='job-application-card']");
+    expect(jobCard).not.toBeNull();
+    expect(within(jobCard as HTMLElement).getByText("Applied", { selector: "span" })).toBeVisible();
   });
 
   it("creates a simple word card with automatic IPA and local speech", async () => {

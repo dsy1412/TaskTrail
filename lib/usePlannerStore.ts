@@ -7,6 +7,7 @@ import {
   createEvent,
   createSeedState,
   loadPlannerState,
+  makeJobApplication,
   makeJournalEntry,
   makeLexiconEntry,
   makeScheduleBlock,
@@ -15,7 +16,17 @@ import {
   timestamp,
   withDefaultSchedules,
 } from "@/lib/storage";
-import type { JournalEntry, LexiconEntry, ModuleName, PlannerState, Priority, ScheduleBlock, Task } from "@/lib/types";
+import type {
+  JobApplication,
+  JobApplicationStatus,
+  JournalEntry,
+  LexiconEntry,
+  ModuleName,
+  PlannerState,
+  Priority,
+  ScheduleBlock,
+  Task,
+} from "@/lib/types";
 
 export type PlannerSyncStatus = "readonly" | "loading" | "local" | "saving" | "synced" | "temporary" | "error";
 
@@ -403,6 +414,61 @@ export function usePlannerStore({
     [canEdit],
   );
 
+  const createJobApplication = useCallback(
+    (input: {
+      company: string;
+      role: string;
+      location?: string;
+      url?: string;
+      source?: string;
+      status?: JobApplicationStatus;
+      notes?: string;
+    }) => {
+      const application = makeJobApplication(input);
+      if (!canEdit) return application;
+      setState((current) => ({
+        ...current,
+        jobApplications: [...(current.jobApplications ?? []), application],
+        events: [...current.events, createEvent("JOB_CREATED", { application })],
+      }));
+      return application;
+    },
+    [canEdit],
+  );
+
+  const updateJobApplication = useCallback((applicationId: string, patch: Partial<Omit<JobApplication, "id" | "createdAt">>) => {
+    if (!canEdit) return;
+    setState((current) => {
+      const previous = (current.jobApplications ?? []).find((application) => application.id === applicationId);
+      if (!previous) return current;
+      const updated: JobApplication = { ...previous, ...patch, updatedAt: timestamp() };
+      return {
+        ...current,
+        jobApplications: (current.jobApplications ?? []).map((application) =>
+          application.id === applicationId ? updated : application,
+        ),
+        events: [...current.events, createEvent("JOB_UPDATED", { before: previous, after: updated })],
+      };
+    });
+  }, [canEdit]);
+
+  const deleteJobApplication = useCallback((applicationId: string) => {
+    if (!canEdit) return;
+    const deletedAt = timestamp();
+    setState((current) => {
+      const application = (current.jobApplications ?? []).find((candidate) => candidate.id === applicationId);
+      if (!application) return current;
+      const deletedApplication: JobApplication = { ...application, deletedAt, updatedAt: deletedAt };
+      return {
+        ...current,
+        jobApplications: (current.jobApplications ?? []).map((candidate) =>
+          candidate.id === applicationId ? deletedApplication : candidate,
+        ),
+        events: [...current.events, createEvent("JOB_DELETED", { application: deletedApplication })],
+      };
+    });
+  }, [canEdit]);
+
   const createLexiconEntry = useCallback(
     (input: {
       word: string;
@@ -512,6 +578,9 @@ export function usePlannerStore({
     updateScheduleBlockStatus,
     createJournalEntry,
     deleteJournalEntry,
+    createJobApplication,
+    updateJobApplication,
+    deleteJobApplication,
     createLexiconEntry,
     updateLexiconEntry,
     deleteLexiconEntry,

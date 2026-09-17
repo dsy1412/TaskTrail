@@ -14,6 +14,7 @@ import {
 import {
   AlertTriangle,
   BookOpenText,
+  BriefcaseBusiness,
   CalendarDays,
   CalendarRange,
   Cloud,
@@ -31,6 +32,7 @@ import { TaskBackpack } from "@/components/TaskBackpack";
 import { TaskCardPreview } from "@/components/TaskCard";
 import { TodayCanvas } from "@/components/TodayCanvas";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { InternshipPage } from "@/components/InternshipPage";
 import { LexiconPage } from "@/components/LexiconPage";
 import { PlanningCalendar } from "@/components/PlanningCalendar";
 import { VibeJournal } from "@/components/VibeJournal";
@@ -46,7 +48,7 @@ export function PlannerApp() {
   const canEdit = authStatus === "authenticated";
   const planner = usePlannerStore({ canEdit, syncToCloud: canEdit });
   const [hasMounted, setHasMounted] = useState(false);
-  const [view, setView] = useState<"today" | "calendar" | "lexicon" | "degree">("today");
+  const [view, setView] = useState<"today" | "calendar" | "internships" | "lexicon" | "degree">("today");
   const [draftColumnCount, setDraftColumnCount] = useState(1);
   const [selectedDate, setSelectedDate] = useState(todayIsoDate());
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -237,7 +239,7 @@ export function PlannerApp() {
                 onRefreshSync={planner.refreshPlannerState}
               />
             </div>
-            <div className="glass-panel grid w-full grid-cols-2 rounded-xl p-1 sm:w-auto sm:grid-cols-4 lg:col-start-2 lg:row-start-1 lg:justify-self-center">
+            <div className="glass-panel grid w-full grid-cols-2 rounded-xl p-1 sm:w-auto sm:grid-cols-5 lg:col-start-2 lg:row-start-1 lg:justify-self-center">
               <button
                 type="button"
                 className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
@@ -257,6 +259,16 @@ export function PlannerApp() {
               >
                 <CalendarRange className="h-4 w-4" />
                 Calendar
+              </button>
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition sm:px-4 ${
+                  view === "internships" ? "bg-cyan-300 text-slate-950 shadow-soft" : "text-slate-400 hover:text-slate-100"
+                }`}
+                onClick={() => setView("internships")}
+              >
+                <BriefcaseBusiness className="h-4 w-4" />
+                Jobs
               </button>
               <button
                 type="button"
@@ -328,6 +340,15 @@ export function PlannerApp() {
           ) : null}
 
           {view === "degree" ? <DegreePlanContent /> : null}
+          {view === "internships" ? (
+            <InternshipPage
+              state={planner.state}
+              onCreateApplication={planner.createJobApplication}
+              onUpdateApplication={planner.updateJobApplication}
+              onDeleteApplication={planner.deleteJobApplication}
+              canEdit={canEdit}
+            />
+          ) : null}
           {view === "lexicon" ? (
             <LexiconPage
               state={planner.state}

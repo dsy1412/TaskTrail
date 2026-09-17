@@ -10,6 +10,8 @@ import { normalizeDuration } from "@/lib/duration";
 import type {
   ActivityEvent,
   ActivityEventType,
+  JobApplication,
+  JobApplicationStatus,
   JournalEntry,
   LexiconEntry,
   ModuleName,
@@ -133,7 +135,7 @@ export function createSeedState(): PlannerState {
     ),
   ];
 
-  return withDefaultSchedules({ tasks, scheduleBlocks, events, journalEntries: [], lexiconEntries: [] });
+  return withDefaultSchedules({ tasks, scheduleBlocks, events, journalEntries: [], jobApplications: [], lexiconEntries: [] });
 }
 
 export function loadPlannerState(): PlannerState {
@@ -239,6 +241,30 @@ export function makeJournalEntry(input: {
   };
 }
 
+export function makeJobApplication(input: {
+  company: string;
+  role: string;
+  location?: string;
+  url?: string;
+  source?: string;
+  status?: JobApplicationStatus;
+  notes?: string;
+}): JobApplication {
+  const createdAt = now();
+  return {
+    id: id("job"),
+    company: input.company.trim() || "Company",
+    role: input.role.trim() || "Role",
+    location: input.location?.trim() ?? "",
+    url: input.url?.trim() ?? "",
+    source: input.source?.trim() ?? "",
+    status: input.status ?? "Saved",
+    notes: input.notes?.trim() ?? "",
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
 export function makeLexiconEntry(input: {
   word: string;
   ipa?: string;
@@ -290,6 +316,7 @@ export function normalizePlannerState(state: PlannerState): PlannerState {
   return {
     ...state,
     journalEntries: Array.isArray(state.journalEntries) ? state.journalEntries : [],
+    jobApplications: Array.isArray(state.jobApplications) ? state.jobApplications : [],
     lexiconEntries: Array.isArray(state.lexiconEntries)
       ? state.lexiconEntries.map((entry) => ({
           ...entry,

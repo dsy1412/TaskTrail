@@ -6,6 +6,8 @@ import {
   parseSimplifyHtml,
   parseSpeedyMarkdown,
   parseZapplyMarkdown,
+  sortAggregatedJobs,
+  type AggregatedJob,
 } from "@/lib/jobSources";
 
 describe("job source aggregation", () => {
@@ -113,8 +115,30 @@ describe("job source aggregation", () => {
     expect(jobs[0]).toEqual(expect.objectContaining({
       company: "Schonfeld",
       category: "Quantitative Finance",
+      salary: "$106/hr",
+      salaryHourlyUsd: 106,
       url: "https://example.com/apply",
     }));
+  });
+
+  it("sorts known companies first and supports salary-first ordering", () => {
+    const base: Omit<AggregatedJob, "id" | "company" | "url" | "salary" | "salaryHourlyUsd"> = {
+      role: "Software Engineer Intern",
+      location: "New York, NY",
+      category: "Software Engineering",
+      posted: "1d",
+      sponsorship: false,
+      kind: "Internship",
+      sources: ["speedyapply/2027-AI-College-Jobs"],
+    };
+    const jobs: AggregatedJob[] = [
+      { ...base, id: "unknown", company: "Small Startup", url: "https://example.com/startup", salary: "$150/hr", salaryHourlyUsd: 150 },
+      { ...base, id: "google", company: "Google", url: "https://example.com/google", salary: "$60/hr", salaryHourlyUsd: 60 },
+      { ...base, id: "meta", company: "Meta", url: "https://example.com/meta", salary: "$55/hr", salaryHourlyUsd: 55 },
+    ];
+
+    expect(sortAggregatedJobs(jobs, "prominence").map((job) => job.id)).toEqual(["google", "meta", "unknown"]);
+    expect(sortAggregatedJobs(jobs, "salary").map((job) => job.id)).toEqual(["unknown", "google", "meta"]);
   });
 
   it("expands quant role variants into separate direct applications", () => {

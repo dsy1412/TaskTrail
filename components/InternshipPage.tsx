@@ -4,9 +4,11 @@ import { BriefcaseBusiness, ChevronDown, ExternalLink, RefreshCcw, Search } from
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   jobTrackingKey,
+  sortAggregatedJobs,
   type AggregatedJob,
   type AggregatedJobKind,
   type AggregatedJobsResponse,
+  type JobSortMode,
   type JobSourceId,
 } from "@/lib/jobSources";
 import type { JobApplication, JobApplicationStatus, PlannerState } from "@/lib/types";
@@ -56,6 +58,7 @@ export function InternshipPage({
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sponsorshipFilter, setSponsorshipFilter] = useState<SponsorshipFilter>("All");
   const [trackingFilter, setTrackingFilter] = useState<TrackingFilter>("All");
+  const [sortMode, setSortMode] = useState<JobSortMode>("prominence");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const loadJobs = useCallback(async (forceRefresh = false) => {
@@ -97,7 +100,7 @@ export function InternshipPage({
 
   const filteredJobs = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return (feed?.jobs ?? []).filter((job) => {
+    const matches = (feed?.jobs ?? []).filter((job) => {
       const tracked = trackingByJob.get(jobTrackingKey(job));
       const matchesQuery =
         !normalizedQuery ||
@@ -111,11 +114,12 @@ export function InternshipPage({
         (trackingFilter === "Untracked" ? !tracked : tracked?.status === trackingFilter);
       return matchesQuery && matchesKind && matchesSource && matchesCategory && matchesSponsorship && matchesTracking;
     });
-  }, [categoryFilter, feed?.jobs, kindFilter, query, sourceFilter, sponsorshipFilter, trackingByJob, trackingFilter]);
+    return sortAggregatedJobs(matches, sortMode);
+  }, [categoryFilter, feed?.jobs, kindFilter, query, sortMode, sourceFilter, sponsorshipFilter, trackingByJob, trackingFilter]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [categoryFilter, kindFilter, query, sourceFilter, sponsorshipFilter, trackingFilter]);
+  }, [categoryFilter, kindFilter, query, sortMode, sourceFilter, sponsorshipFilter, trackingFilter]);
 
   const metrics = useMemo(() => {
     const jobs = feed?.jobs ?? [];
@@ -231,6 +235,10 @@ export function InternshipPage({
             <option value="Untracked">Untracked</option>
             {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
           </FilterSelect>
+          <FilterSelect label="Sort jobs" value={sortMode} onChange={(value) => setSortMode(value as JobSortMode)}>
+            <option value="prominence">Known companies first</option>
+            <option value="salary">Salary high to low</option>
+          </FilterSelect>
           <button
             type="button"
             aria-label="Refresh GitHub job feeds"
@@ -313,6 +321,7 @@ function JobListingRow({
           <span className="max-w-full truncate rounded-md bg-slate-800 px-2 py-1">{job.category}</span>
           <span className="rounded-md bg-slate-800 px-2 py-1">{job.kind}</span>
           {job.sponsorship ? <span className="rounded-md bg-emerald-400/12 px-2 py-1 text-emerald-200">Sponsor</span> : null}
+          {job.salary ? <span className="rounded-md bg-emerald-400/12 px-2 py-1 text-emerald-200">{job.salary}</span> : null}
           {job.posted ? <span className="rounded-md bg-slate-800 px-2 py-1">{job.posted}</span> : null}
           {job.sources.length > 1 ? <span className="rounded-md bg-cyan-300/12 px-2 py-1 text-cyan-200">{job.sources.length} sources</span> : null}
         </div>

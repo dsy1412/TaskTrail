@@ -66,6 +66,7 @@ export const JOB_SOURCE_DEFINITIONS = [
 
 export type JobSourceId = (typeof JOB_SOURCE_DEFINITIONS)[number]["id"];
 export type AggregatedJobKind = "Internship" | "New Grad" | "Other";
+export type JobSortMode = "prominence" | "salary";
 
 export interface AggregatedJob {
   id: string;
@@ -75,6 +76,8 @@ export interface AggregatedJob {
   url: string;
   category: string;
   posted: string;
+  salary?: string;
+  salaryHourlyUsd?: number;
   sponsorship: boolean;
   kind: AggregatedJobKind;
   sources: JobSourceId[];
@@ -234,6 +237,8 @@ export function parseSpeedyMarkdown(markdown: string, source: JobSourceId): Pars
     const company = cleanText(cells[0]);
     const role = cleanText(cells[1]);
     const url = extractHrefUrl(cells[4]);
+    const salaryText = cleanText(cells[3]);
+    const salary = /\$\s*[\d,.]+/.test(salaryText) ? salaryText : "";
     if (!company || !role || !url || company.toLowerCase() === "company" || /^-+$/.test(company)) continue;
 
     jobs.push({
@@ -243,6 +248,8 @@ export function parseSpeedyMarkdown(markdown: string, source: JobSourceId): Pars
       url,
       category,
       posted: cleanText(cells[5]),
+      salary,
+      salaryHourlyUsd: parseSalaryHourlyUsd(salary),
       sponsorship: false,
       kind: "Internship",
       sources: [source],
@@ -314,6 +321,7 @@ export function aggregateJobs(groups: ParsedJob[][]): AggregatedJob[] {
     merged.set(key, {
       ...existing,
       url: preferDirectUrl(existing.url, job.url),
+      ...preferredSalary(existing, job),
       sponsorship: existing.sponsorship || job.sponsorship,
       sources: [...new Set([...existing.sources, ...job.sources])],
     });
@@ -323,6 +331,36 @@ export function aggregateJobs(groups: ParsedJob[][]): AggregatedJob[] {
     ...job,
     id: `job_${stableHash(key)}`,
   }));
+}
+
+export function sortAggregatedJobs(jobs: AggregatedJob[], mode: JobSortMode) {
+  return jobs
+    .map((job, index) => ({ job, index }))
+    .sort((left, right) => {
+      const salaryDifference = salaryScore(right.job) - salaryScore(left.job);
+      const prominenceDifference = companyProminence(right.job.company) - companyProminence(left.job.company);
+
+      if (mode === "salary") {
+        return salaryDifference || prominenceDifference || left.index - right.index;
+      }
+      return prominenceDifference || salaryDifference || left.index - right.index;
+    })
+    .map(({ job }) => job);
+}
+
+export function parseSalaryHourlyUsd(value: string) {
+  const matches = [...value.matchAll(/\$\s*([\d,.]+)\s*(k)?\s*(?:\/|per\s*)?\s*(hr|hour|yr|year|mo|month)?/gi)];
+  const hourlyValues = matches.flatMap((match) => {
+    const rawAmount = Number(match[1].replace(/,/g, ""));
+    if (!Number.isFinite(rawAmount)) return [];
+    const amount = match[2] ? rawAmount * 1000 : rawAmount;
+    const period = match[3]?.toLowerCase();
+    if (period === "yr" || period === "year") return [amount / 2080];
+    if (period === "mo" || period === "month") return [(amount * 12) / 2080];
+    if (period === "hr" || period === "hour") return [amount];
+    return amount > 500 ? [amount / 2080] : [amount];
+  });
+  return hourlyValues.length ? Math.max(...hourlyValues) : undefined;
 }
 
 export function jobTrackingKey(job: Pick<AggregatedJob, "company" | "role" | "location">) {
@@ -414,6 +452,54 @@ function preferDirectUrl(left: string, right: string) {
   const leftIsAggregator = /zapply\.jobs|simplify\.jobs\/p\//i.test(left);
   const rightIsAggregator = /zapply\.jobs|simplify\.jobs\/p\//i.test(right);
   return leftIsAggregator && !rightIsAggregator ? right : left;
+}
+
+function preferredSalary(left: ParsedJob, right: ParsedJob) {
+  const preferred = salaryScore(right) > salaryScore(left) ? right : left;
+  const salary = preferred.salary || left.salary || right.salary;
+  const salaryHourlyUsd = preferred.salaryHourlyUsd ?? left.salaryHourlyUsd ?? right.salaryHourlyUsd;
+  return {
+    ...(salary ? { salary } : {}),
+    ...(salaryHourlyUsd !== undefined ? { salaryHourlyUsd } : {}),
+  };
+}
+
+function salaryScore(job: Pick<AggregatedJob, "salaryHourlyUsd">) {
+  return job.salaryHourlyUsd ?? -1;
+}
+
+const COMPANY_PROMINENCE = new Map<string, number>([
+  ...[
+    "OpenAI", "Anthropic", "Google", "Google DeepMind", "Meta", "Microsoft", "Apple", "Amazon", "NVIDIA",
+    "Netflix", "Tesla", "SpaceX", "xAI", "Databricks", "Jane Street", "Citadel", "Citadel Securities",
+    "Hudson River Trading", "Two Sigma", "D. E. Shaw", "Jump Trading", "Five Rings", "Optiver",
+    "IMC Trading", "DRW", "Susquehanna International Group",
+  ].map((company) => [normalizeCompanyName(company), 5] as const),
+  ...[
+    "Waymo", "Stripe", "Bloomberg", "Palantir", "Uber", "Airbnb", "Adobe", "Salesforce", "LinkedIn",
+    "TikTok", "ByteDance", "Snowflake", "Figma", "Roblox", "Coinbase", "DoorDash", "Pinterest", "Snap",
+    "Reddit", "Cloudflare", "MongoDB", "Rippling", "Scale AI", "Lyft", "Discord", "Samsara", "Ramp",
+    "Anduril", "Cohere", "Hugging Face", "Mistral AI", "Perplexity", "Applied Intuition", "CoreWeave",
+  ].map((company) => [normalizeCompanyName(company), 4] as const),
+  ...[
+    "IBM", "Oracle", "Intel", "AMD", "Qualcomm", "Cisco", "Walmart", "JPMorgan Chase", "Goldman Sachs",
+    "Morgan Stanley", "Capital One", "American Express", "Visa", "Mastercard", "PayPal", "Expedia", "Dell",
+    "HP", "Samsung", "Sony", "Spotify",
+  ].map((company) => [normalizeCompanyName(company), 3] as const),
+]);
+
+function companyProminence(company: string) {
+  const normalized = normalizeCompanyName(company);
+  const padded = ` ${normalized} `;
+  let score = 0;
+  COMPANY_PROMINENCE.forEach((candidateScore, candidate) => {
+    if (normalized === candidate || padded.includes(` ${candidate} `)) score = Math.max(score, candidateScore);
+  });
+  return score;
+}
+
+function normalizeCompanyName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 function stableHash(value: string) {

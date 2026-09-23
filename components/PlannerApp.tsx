@@ -353,6 +353,7 @@ export function PlannerApp() {
             <LexiconPage
               state={planner.state}
               onCreateEntry={planner.createLexiconEntry}
+              onUpdateEntry={planner.updateLexiconEntry}
               onDeleteEntry={planner.deleteLexiconEntry}
               onRestoreEntry={planner.restoreLexiconEntry}
               canEdit={canEdit}

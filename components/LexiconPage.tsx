@@ -1,12 +1,25 @@
 "use client";
 
-import { BookOpenText, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
+import { BookOpenText, Plus, RotateCcw, Sparkles, Trash2, Volume2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getLocalLexiconEnrichment } from "@/lib/lexiconEnrichment";
+import { containsChineseText, isSentenceInput } from "@/lib/lexiconLookup";
 import type { LexiconEntry, PlannerState } from "@/lib/types";
 
 type LexiconInput = {
   word: string;
+};
+
+type LexiconEntryInput = {
+  word: string;
+  ipa?: string;
+  phonics?: string;
+  fieldContext?: string;
+  meaning?: string;
+  association?: string;
+  example?: string;
+  exampleTranslation?: string;
+  related?: string[];
 };
 
 const emptyInput: LexiconInput = {
@@ -77,22 +90,14 @@ const localIpa: Record<string, string> = {
 export function LexiconPage({
   state,
   onCreateEntry,
+  onUpdateEntry,
   onDeleteEntry,
   onRestoreEntry,
   canEdit,
 }: {
   state: PlannerState;
-  onCreateEntry: (input: {
-    word: string;
-    ipa?: string;
-    phonics?: string;
-    fieldContext?: string;
-    meaning?: string;
-    association?: string;
-    example?: string;
-    exampleTranslation?: string;
-    related?: string[];
-  }) => LexiconEntry | undefined;
+  onCreateEntry: (input: LexiconEntryInput) => LexiconEntry | undefined;
+  onUpdateEntry: (entryId: string, patch: Partial<Omit<LexiconEntry, "id" | "createdAt">>) => void;
   onDeleteEntry: (entryId: string) => void;
   onRestoreEntry: (entryId: string) => void;
   canEdit: boolean;
@@ -100,6 +105,9 @@ export function LexiconPage({
   const [draft, setDraft] = useState<LexiconInput>(emptyInput);
   const [voiceName, setVoiceName] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [repairingEntryId, setRepairingEntryId] = useState("");
+  const [batchProgress, setBatchProgress] = useState("");
+  const [lookupMessage, setLookupMessage] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const { voices, speak, supported } = useSpeech();
 
@@ -121,6 +129,10 @@ export function LexiconPage({
   }, [state.lexiconEntries]);
 
   const visibleEntries = showTrash ? deletedEntries : activeEntries;
+  const incompleteEntries = useMemo(
+    () => activeEntries.filter(entryNeedsEnrichment),
+    [activeEntries],
+  );
 
   function updateDraft(field: keyof LexiconInput, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -131,11 +143,48 @@ export function LexiconPage({
     if (!draft.word.trim() || !canEdit) return;
     const text = draft.word.trim();
     setIsLookingUp(true);
+    setLookupMessage("");
     speakText(text, 0.9);
-    const entryInput = await buildEntryInput(text);
-    onCreateEntry(entryInput);
-    setDraft(emptyInput);
-    setIsLookingUp(false);
+    try {
+      const result = await buildEntryInput(text);
+      onCreateEntry(result.input);
+      setDraft(emptyInput);
+      setLookupMessage(result.warning ?? "Added with online notes and translation.");
+    } catch {
+      setLookupMessage("Online lookup failed. Please try again.");
+    } finally {
+      setIsLookingUp(false);
+    }
+  }
+
+  async function completeEntry(entry: LexiconEntry, quiet = false) {
+    setRepairingEntryId(entry.id);
+    if (!quiet) setLookupMessage("");
+    try {
+      const result = await buildEntryInput(entry.word);
+      const patch = missingEnrichmentPatch(entry, result.input);
+      if (Object.keys(patch).length) onUpdateEntry(entry.id, patch);
+      if (!quiet) setLookupMessage(result.warning ?? `Completed notes for ${entry.word}.`);
+    } finally {
+      setRepairingEntryId("");
+    }
+  }
+
+  async function completeMissingEntries() {
+    const targets = incompleteEntries.slice(0, 8);
+    if (!targets.length || batchProgress) return;
+    setLookupMessage("");
+    try {
+      for (let index = 0; index < targets.length; index += 1) {
+        setBatchProgress(`${index + 1}/${targets.length}`);
+        await completeEntry(targets[index], true);
+      }
+      setLookupMessage(`Completed ${targets.length} cards. Run again if more remain.`);
+    } catch {
+      setLookupMessage("Some cards could not be completed. Please try again.");
+    } finally {
+      setBatchProgress("");
+    }
   }
 
   function speakText(text: string, rate: number) {
@@ -190,29 +239,44 @@ export function LexiconPage({
               <option value="">System English</option>
             )}
           </select>
-          <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 p-1">
-            <button
-              type="button"
-              aria-label="Active words"
-              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                !showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
-              }`}
-              onClick={() => setShowTrash(false)}
-            >
-              Active {activeEntries.length}
-            </button>
-            <button
-              type="button"
-              aria-label="Trash words"
-              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
-              }`}
-              onClick={() => setShowTrash(true)}
-            >
-              Trash {deletedEntries.length}
-            </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {!showTrash && incompleteEntries.length ? (
+              <button
+                type="button"
+                aria-label="Complete missing lexicon notes"
+                className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/60 bg-cyan-300/10 px-3 text-xs font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 disabled:opacity-60"
+                onClick={completeMissingEntries}
+                disabled={!canEdit || Boolean(batchProgress)}
+              >
+                <Sparkles className="h-4 w-4" />
+                {batchProgress ? `Completing ${batchProgress}` : `Complete missing ${Math.min(incompleteEntries.length, 8)}`}
+              </button>
+            ) : null}
+            <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 p-1">
+              <button
+                type="button"
+                aria-label="Active words"
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                  !showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+                }`}
+                onClick={() => setShowTrash(false)}
+              >
+                Active {activeEntries.length}
+              </button>
+              <button
+                type="button"
+                aria-label="Trash words"
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                  showTrash ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:text-slate-100"
+                }`}
+                onClick={() => setShowTrash(true)}
+              >
+                Trash {deletedEntries.length}
+              </button>
+            </div>
           </div>
         </div>
+        {lookupMessage ? <p className="mt-2 text-xs font-semibold text-slate-400" role="status">{lookupMessage}</p> : null}
       </form>
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -223,7 +287,10 @@ export function LexiconPage({
               entry={entry}
               mode={showTrash ? "trash" : "active"}
               canEdit={canEdit}
+              needsEnrichment={entryNeedsEnrichment(entry)}
+              isRepairing={repairingEntryId === entry.id}
               onSpeak={speakText}
+              onComplete={() => completeEntry(entry)}
               onDelete={() => onDeleteEntry(entry.id)}
               onRestore={() => onRestoreEntry(entry.id)}
             />
@@ -242,14 +309,20 @@ function WordCard({
   entry,
   mode,
   canEdit,
+  needsEnrichment,
+  isRepairing,
   onSpeak,
+  onComplete,
   onDelete,
   onRestore,
 }: {
   entry: LexiconEntry;
   mode: "active" | "trash";
   canEdit: boolean;
+  needsEnrichment: boolean;
+  isRepairing: boolean;
   onSpeak: (text: string, rate: number) => void;
+  onComplete: () => void;
   onDelete: () => void;
   onRestore: () => void;
 }) {
@@ -264,6 +337,18 @@ function WordCard({
             </div>
             <div className="flex shrink-0 gap-1.5">
               <SpeakButton label="Speak word" onClick={() => onSpeak(entry.word, 0.95)} />
+              {mode === "active" && needsEnrichment ? (
+                <button
+                  type="button"
+                  aria-label={`Complete notes for ${entry.word}`}
+                  title="Complete notes"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-300/60 bg-slate-950 text-cyan-200 transition hover:border-cyan-200 hover:text-cyan-100 disabled:opacity-60"
+                  onClick={onComplete}
+                  disabled={!canEdit || isRepairing}
+                >
+                  <Sparkles className={`h-4 w-4 ${isRepairing ? "animate-pulse" : ""}`} />
+                </button>
+              ) : null}
               {mode === "trash" ? (
                 <button
                   type="button"
@@ -366,67 +451,92 @@ function useSpeech() {
 
 type LexiconLookupResponse = {
   ipa?: string;
+  phonics?: string;
+  fieldContext?: string;
   meaning?: string;
   example?: string;
+  exampleTranslation?: string;
   related?: string[];
+  warning?: string;
 };
 
 async function buildEntryInput(text: string) {
   const local = getLocalLexiconEnrichment(text);
   if (local) {
     return {
-      word: text,
-      ...local,
+      input: { word: text, ...local },
     };
   }
 
-  if (isSentence(text)) {
-    return {
-      word: text,
-      ipa: "",
-      phonics: "Sentence: tap play to hear the full line.",
-      fieldContext: "Saved sentence",
-      meaning: sentenceMeaning(text),
-      exampleTranslation: sentenceTranslation(text),
-    };
-  }
-
-  return {
-    word: text,
-    ...(await lookupDictionaryWord(text)),
-  };
+  return lookupLexiconText(text);
 }
 
-async function lookupDictionaryWord(word: string) {
-  const normalized = word.trim().toLowerCase();
+async function lookupLexiconText(text: string): Promise<{ input: LexiconEntryInput; warning?: string }> {
+  const normalized = text.trim().toLowerCase();
   const fallbackIpa = localIpa[normalized] ?? "";
-  if (!normalized) return {};
+  const sentence = isSentenceInput(text);
+  const fallback: LexiconEntryInput = {
+    word: text,
+    ipa: fallbackIpa,
+    phonics: sentence ? "Sentence: tap play to hear the full line." : "",
+    fieldContext: sentence ? "Saved sentence" : "",
+    meaning: sentenceMeaning(text),
+    exampleTranslation: sentenceTranslation(text),
+  };
+  if (!normalized) return { input: fallback };
 
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 8000);
   try {
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 1800);
     const response = await fetch(`/api/lexicon-lookup?term=${encodeURIComponent(normalized)}`, {
       signal: controller.signal,
       cache: "no-store",
     });
-    window.clearTimeout(timer);
-    if (!response.ok) return { ipa: fallbackIpa };
+    if (!response.ok) {
+      return { input: fallback, warning: "Online lookup failed. The card was saved and can be completed later." };
+    }
     const lookup = (await response.json()) as LexiconLookupResponse;
 
     return {
-      ipa: lookup.ipa?.trim() || fallbackIpa,
-      meaning: lookup.meaning?.trim() ?? "",
-      example: lookup.example?.trim() ?? "",
-      related: lookup.related?.slice(0, 8) ?? [],
+      input: {
+        word: text,
+        ipa: lookup.ipa?.trim() || fallback.ipa,
+        phonics: lookup.phonics?.trim() || fallback.phonics,
+        fieldContext: lookup.fieldContext?.trim() || fallback.fieldContext,
+        meaning: lookup.meaning?.trim() || fallback.meaning,
+        example: lookup.example?.trim() ?? "",
+        exampleTranslation: lookup.exampleTranslation?.trim() || fallback.exampleTranslation,
+        related: lookup.related?.slice(0, 8) ?? [],
+      },
+      warning: lookup.warning?.trim() || undefined,
     };
   } catch {
-    return { ipa: fallbackIpa };
+    return { input: fallback, warning: "Online lookup timed out. The card was saved and can be completed later." };
+  } finally {
+    window.clearTimeout(timer);
   }
 }
 
-function isSentence(text: string) {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  return words.length >= 4 || /[.!?]$/.test(text.trim());
+function entryNeedsEnrichment(entry: LexiconEntry) {
+  const needsChinese = !containsChineseText(entry.meaning) && !containsChineseText(entry.exampleTranslation);
+  const needsIpa = !isSentenceInput(entry.word) && !entry.ipa.trim();
+  const needsExampleTranslation = Boolean(entry.example.trim()) && !containsChineseText(entry.exampleTranslation);
+  return needsChinese || needsIpa || needsExampleTranslation;
+}
+
+function missingEnrichmentPatch(entry: LexiconEntry, input: LexiconEntryInput) {
+  const patch: Partial<Omit<LexiconEntry, "id" | "createdAt">> = {};
+  if (!entry.ipa && input.ipa) patch.ipa = input.ipa;
+  if (!entry.phonics && input.phonics) patch.phonics = input.phonics;
+  if (!entry.fieldContext && input.fieldContext) patch.fieldContext = input.fieldContext;
+  if ((!entry.meaning || !containsChineseText(entry.meaning)) && input.meaning) patch.meaning = input.meaning;
+  if (!entry.association && input.association) patch.association = input.association;
+  if (!entry.example && input.example) patch.example = input.example;
+  if ((!entry.exampleTranslation || !containsChineseText(entry.exampleTranslation)) && input.exampleTranslation) {
+    patch.exampleTranslation = input.exampleTranslation;
+  }
+  if (!entry.related.length && input.related?.length) patch.related = input.related;
+  return patch;
 }
 
 function sentenceMeaning(text: string) {

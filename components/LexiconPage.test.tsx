@@ -73,6 +73,30 @@ describe("LexiconPage online enrichment", () => {
       exampleTranslation: "她学习哲学。",
     })));
   });
+
+  it("completes every missing card with one batch action", async () => {
+    vi.mocked(fetch).mockResolvedValue(lookupResponse());
+    const entries = Array.from({ length: 10 }, (_, index) => makeLexiconEntry({ word: `term ${index + 1}` }));
+    const onUpdateEntry = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <LexiconPage
+        state={{ ...emptyState, lexiconEntries: entries }}
+        onCreateEntry={vi.fn()}
+        onUpdateEntry={onUpdateEntry}
+        onDeleteEntry={vi.fn()}
+        onRestoreEntry={vi.fn()}
+        canEdit
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Complete all missing lexicon notes" }));
+
+    await waitFor(() => expect(onUpdateEntry).toHaveBeenCalledTimes(10));
+    expect(fetch).toHaveBeenCalledTimes(10);
+    expect(screen.getByRole("status")).toHaveTextContent("Completed all 10 missing cards.");
+  });
 });
 
 function lookupResponse() {

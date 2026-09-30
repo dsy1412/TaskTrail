@@ -106,7 +106,7 @@ export function LexiconPage({
   const [voiceName, setVoiceName] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [repairingEntryId, setRepairingEntryId] = useState("");
-  const [batchProgress, setBatchProgress] = useState("");
+  const [batchProgress, setBatchProgress] = useState<{ completed: number; total: number; failed: number } | null>(null);
   const [lookupMessage, setLookupMessage] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const { voices, speak, supported } = useSpeech();
@@ -164,26 +164,45 @@ export function LexiconPage({
       const result = await buildEntryInput(entry.word);
       const patch = missingEnrichmentPatch(entry, result.input);
       if (Object.keys(patch).length) onUpdateEntry(entry.id, patch);
-      if (!quiet) setLookupMessage(result.warning ?? `Completed notes for ${entry.word}.`);
+      const completed = !entryNeedsEnrichment({ ...entry, ...patch });
+      if (!quiet) {
+        setLookupMessage(
+          completed
+            ? `Completed notes for ${entry.word}.`
+            : result.warning ?? `Some notes for ${entry.word} are still missing. Try again later.`,
+        );
+      }
+      return completed;
+    } catch {
+      if (!quiet) setLookupMessage(`Could not complete ${entry.word}. Try again later.`);
+      return false;
     } finally {
       setRepairingEntryId("");
     }
   }
 
   async function completeMissingEntries() {
-    const targets = incompleteEntries.slice(0, 8);
+    const targets = [...incompleteEntries];
     if (!targets.length || batchProgress) return;
     setLookupMessage("");
+    let failed = 0;
+    setBatchProgress({ completed: 0, total: targets.length, failed: 0 });
     try {
       for (let index = 0; index < targets.length; index += 1) {
-        setBatchProgress(`${index + 1}/${targets.length}`);
-        await completeEntry(targets[index], true);
+        const completed = await completeEntry(targets[index], true);
+        if (!completed) failed += 1;
+        setBatchProgress({ completed: index + 1, total: targets.length, failed });
       }
-      setLookupMessage(`Completed ${targets.length} cards. Run again if more remain.`);
+      const successful = targets.length - failed;
+      setLookupMessage(
+        failed
+          ? `Completed ${successful} cards; ${failed} still need notes and can be retried later.`
+          : `Completed all ${targets.length} missing cards.`,
+      );
     } catch {
       setLookupMessage("Some cards could not be completed. Please try again.");
     } finally {
-      setBatchProgress("");
+      setBatchProgress(null);
     }
   }
 
@@ -243,13 +262,15 @@ export function LexiconPage({
             {!showTrash && incompleteEntries.length ? (
               <button
                 type="button"
-                aria-label="Complete missing lexicon notes"
+                aria-label="Complete all missing lexicon notes"
                 className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/60 bg-cyan-300/10 px-3 text-xs font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 disabled:opacity-60"
                 onClick={completeMissingEntries}
                 disabled={!canEdit || Boolean(batchProgress)}
               >
                 <Sparkles className="h-4 w-4" />
-                {batchProgress ? `Completing ${batchProgress}` : `Complete missing ${Math.min(incompleteEntries.length, 8)}`}
+                {batchProgress
+                  ? `Completing ${batchProgress.completed}/${batchProgress.total}`
+                  : `Complete all ${incompleteEntries.length}`}
               </button>
             ) : null}
             <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 p-1">
